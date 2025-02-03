@@ -13,6 +13,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Neon Nexus: Ultimate Gauntlet – Levels Edition (Expanded)</title>
   <style>
     :root {
@@ -98,10 +99,13 @@
       top: calc(110px * var(--ui-scale));
       right: calc(20px * var(--ui-scale));
       z-index: 50;
-      padding: calc(15px * var(--ui-scale));
+      margin: calc(10px * var(--ui-scale));
+      padding: calc(10px * var(--ui-scale)) calc(20px * var(--ui-scale));
       background: rgba(0,0,0,0.5);
       border: calc(2px * var(--ui-scale)) solid #0ff;
       color: #0ff;
+      box-shadow: 0px 0px 10px 2px #0ff;
+      border-radius: 10px;
       font-size: calc(20px * var(--ui-scale));
       display: none;
     }
@@ -109,13 +113,13 @@
     @media only screen and (max-width: 768px) {
       /* Increase overlay font sizes */
       #overlay h1 {
-        font-size: calc(2.5em * var(--ui-scale));
+        font-size: calc(42px * var(--ui-scale));
       }
       #overlay p {
-        font-size: calc(1.8em * var(--ui-scale));
+        font-size: calc(24px * var(--ui-scale));
       }
       .button {
-        font-size: calc(1.5em * var(--ui-scale));
+        font-size: calc(24px * var(--ui-scale));
         padding: calc(15px * var(--ui-scale)) calc(30px * var(--ui-scale));
       }
     }
@@ -150,34 +154,68 @@
     // =================== Canvas & Initialization ===================
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
-    let width = canvas.width = window.innerWidth;
-    let height = canvas.height = window.innerHeight;
-    window.addEventListener("resize", () => {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    });
+
+    // We will store width/height in these, but NOT assign them to canvas yet.
+    let width, height;
+    let dpr = window.devicePixelRatio || 1;
+    const isMobile = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
+    let cssGridSize = (isMobile) ? (50 * (1 / dpr)) : 50;
+    let cssGridSize2 = (isMobile) ? (60 * (1 / dpr)) : 60;
+    let cssGridSize40 = (isMobile) ? (40 * (1 / dpr)) : 40;
+    let actualGridSize = cssGridSize;
+    let actualGridSize2 = cssGridSize2;
+    let actualGridSize40 = cssGridSize40; 
+
+    function onResize() {
+      // 1) Use CSS pixel dimensions for your game logic:
+      width = window.innerWidth;
+      height = window.innerHeight;
+      
+      // 2) Device pixel ratio (high‑DPI “retina” scaling factor)
+      dpr = window.devicePixelRatio || 1;
+
+      
+      // 3) Visually, the canvas should fill the screen in CSS pixels:
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
+      
+      // 4) Internally, give the canvas more pixels (for crispness):
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      
+      // 5) Make 1 “unit” in your drawing code == 1 CSS pixel:
+      // If browser supports resetTransform():
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      
+    }
+
+    // Attach it:
+    window.addEventListener("resize", onResize);
+    // Call once on load:
+    onResize();
+
 
     // =================== Device Detection & UI Setup ===================
-    const isMobile = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
     const leftJoystickElem = document.getElementById("leftJoystick");
     const rightJoystickElem = document.getElementById("rightJoystick");
     const mobilePauseButton = document.getElementById("mobilePauseButton");
+    let scaleFactor = (isMobile) ? (1 / dpr) : 1;
     if(isMobile) {
       leftJoystickElem.style.display = "block";
       rightJoystickElem.style.display = "block";
       mobilePauseButton.style.display = "block";
       document.getElementById("startHint").innerHTML = "Tap anywhere to begin";
     }
-    let uiScale = isMobile ? 1.7 : 1; // Increase scale on mobile
+    let uiScale = isMobile ? 1.6 : 1; // Increase scale on mobile
 
     // =================== Update Scale Function ===================
     function updateScale() {
       if (isMobile) {
         // On mobile, use landscape or portrait-specific scales.
         if (window.innerWidth > window.innerHeight) {
-          uiScale = 0.8;    // mobile landscape
+          uiScale = 1.6 / dpr;    // mobile landscape
         } else {
-          uiScale = 1.7;  // mobile portrait
+          uiScale = 1.6 / dpr;  // mobile portrait
         }
       } else {
         // On desktop, always use scale 1.
@@ -193,8 +231,7 @@
 
     // Add resize listener to update canvas dimensions and scale on orientation change
     window.addEventListener("resize", () => {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      onResize();
       updateScale();
     });
 
@@ -205,6 +242,7 @@
     let currentLevel = 1;
     let levelDuration = 30000; // 30 sec per wave
     let levelTimer = levelDuration;
+    let maxLevelDuration = 180000;
     // Permanent upgrades (affect damage, speed, fire rate)
     const permanentUpgrades = {
       damage: 1,
@@ -254,6 +292,12 @@
         spawnTwoBosses();
         givePlayerMagnetEffect();
       }
+      if(e.key.toLowerCase() === "n") {
+        nextLevel();
+      }
+      if(e.key.toLowerCase() === "m") {
+        showPowerUpMenu();
+      }
     });
     window.addEventListener("keyup", (e) => {
       keys[e.key.toLowerCase()] = false;
@@ -266,7 +310,7 @@
     canvas.addEventListener("mousedown", () => { mouse.down = true; });
     canvas.addEventListener("mouseup", () => { mouse.down = false; });
     mobilePauseButton.addEventListener("click", () => {
-      if(gameState === "playing") pauseGame();
+      if(gameState === "playing") showPowerUpMenu();
     });
     document.addEventListener("pointerdown", (e) => {
       if (gameState === "menu" || gameState === "gameover") {
@@ -382,6 +426,7 @@
     }
 
     // =================== Biomes / Backgrounds ===================
+   
     const biomes = [
       {
         name: "Neon Arena",
@@ -390,14 +435,14 @@
           ctx.fillRect(0,0,width,height);
           const gridSize = 50;
           ctx.strokeStyle = "#222";
-          ctx.lineWidth = 1;
-          for(let x = 0; x < width; x += gridSize){
+          ctx.lineWidth = 1 * scaleFactor;
+          for(let x = 0; x < width; x += actualGridSize){
             ctx.beginPath();
             ctx.moveTo(x,0);
             ctx.lineTo(x,height);
             ctx.stroke();
           }
-          for(let y = 0; y < height; y += gridSize){
+          for(let y = 0; y < height; y += actualGridSize){
             ctx.beginPath();
             ctx.moveTo(0,y);
             ctx.lineTo(width,y);
@@ -415,14 +460,14 @@
           ctx.fillRect(0,0,width,height);
           const gridSize = 60;
           ctx.strokeStyle = "rgba(0,255,100,0.2)";
-          ctx.lineWidth = 1;
-          for(let x = 0; x < width; x += gridSize){
+          ctx.lineWidth = 1 * scaleFactor;
+          for(let x = 0; x < width; x += actualGridSize2){
             ctx.beginPath();
             ctx.moveTo(x,0);
             ctx.lineTo(x,height);
             ctx.stroke();
           }
-          for(let y = 0; y < height; y += gridSize){
+          for(let y = 0; y < height; y += actualGridSize2){
             ctx.beginPath();
             ctx.moveTo(0,y);
             ctx.lineTo(width,y);
@@ -464,7 +509,7 @@
               width, Math.random() * height
             );
             ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 2 * scaleFactor;
             ctx.stroke();
           }
         }
@@ -472,25 +517,18 @@
       {
         name: "Glitch Zone",
         drawBackground: function() {
-          // Чёрный фон с случайными яркими прямоугольниками и линиями для эффекта    глитча
-          ctx.fillStyle = "#000";
-          ctx.fillRect(0, 0, width, height);
-          for (let i = 0; i < 30; i++) {
-            ctx.fillStyle = `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.    random() * 256)}, ${Math.floor(Math.random() * 256)}, 0.2)`;
-            let x = Math.random() * width;
-            let y = Math.random() * height;
-            let w = Math.random() * 50;
-            let h = Math.random() * 20;
-            ctx.fillRect(x, y, w, h);
-          }
-          for (let i = 0; i < 10; i++) {
-            ctx.beginPath();
-            let y = Math.random() * height;
-            ctx.moveTo(0, y);
-            ctx.lineTo(width, y);
-            ctx.strokeStyle = "rgba(255,255,255,0.1)";
-            ctx.lineWidth = Math.random() * 3;
-            ctx.stroke();
+          // Always draw the (current) glitchCanvas first.
+          ctx.drawImage(glitchCanvas, 0, 0);
+          
+          if (!isMobile) {
+            // Desktop: re-generate glitch EVERY frame
+            generateGlitchPattern();
+          } else {
+            // Mobile: only update glitch e.g. once every 10 frames
+            glitchFrameCounter++;
+            if (glitchFrameCounter % 10 === 0) {
+              generateGlitchPattern();
+            }
           }
         }
       },
@@ -509,14 +547,14 @@
             ctx.fillStyle = "#fff";
             let x = Math.random() * width;
             let y = Math.random() * height;
-            ctx.fillRect(x, y, 1.5, 1.5);
+            ctx.fillRect(x, y, 1.5 * scaleFactor, 1.5 * scaleFactor);
           }
           // Лёгкие круговые вспышки для эффекта космических рифтов
           for (let i = 0; i < 5; i++) {
             ctx.beginPath();
-            ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 100,     0, Math.PI * 2);
+            ctx.arc(Math.random() * width, Math.random() * height, Math.random() * (100 * scaleFactor),     0, Math.PI * 2);
             ctx.strokeStyle = "rgba(255, 0, 255, 0.1)";
-            ctx.lineWidth = 5;
+            ctx.lineWidth = 5 * scaleFactor;
             ctx.stroke();
           }
         }
@@ -528,16 +566,16 @@
           ctx.fillStyle = "#001";
           ctx.fillRect(0, 0, width, height);
           ctx.strokeStyle = "#0f0";
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 2 * scaleFactor;
           // Вертикальные линии
-          for (let x = 0; x < width; x += 40) {
+          for (let x = 0; x < width; x += actualGridSize40) {
             ctx.beginPath();
             ctx.moveTo(x, 0);
             ctx.lineTo(x, height);
             ctx.stroke();
           }
           // Горизонтальные линии
-          for (let y = 0; y < height; y += 40) {
+          for (let y = 0; y < height; y += actualGridSize40) {
             ctx.beginPath();
             ctx.moveTo(0, y);
             ctx.lineTo(width, y);
@@ -548,7 +586,7 @@
             let x = Math.random() * width;
             let y = Math.random() * height;
             ctx.beginPath();
-            ctx.arc(x, y, 3, 0, Math.PI * 2);
+            ctx.arc(x, y, 3 * scaleFactor, 0, Math.PI * 2);
             ctx.fillStyle = "#0f0";
             ctx.fill();
           }
@@ -568,7 +606,7 @@
             ctx.moveTo(x, height);
             ctx.lineTo(x, height - treeHeight);
             ctx.strokeStyle = "rgba(0,255,150,0.7)";
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 4 * scaleFactor;
             ctx.shadowColor = "rgba(0,255,150,0.7)";
             ctx.shadowBlur = 10;
             ctx.stroke();
@@ -581,16 +619,59 @@
       return biomes[(currentLevel - 1) % biomes.length];
     }
 
+    // Outside your draw function, create an offscreen canvas & context
+    const glitchCanvas = document.createElement('canvas');
+    const glitchCtx = glitchCanvas.getContext('2d');
+
+    // We'll keep a frame counter so we can throttle updates on mobile
+    let glitchFrameCounter = 0;
+
+    // This function draws a new random glitch pattern onto glitchCanvas
+    function generateGlitchPattern() {
+      glitchCanvas.width = width;    // match your main canvas dimensions
+      glitchCanvas.height = height;
+      
+      // 1) Solid black background
+      glitchCtx.fillStyle = "#000";
+      glitchCtx.fillRect(0, 0, width, height);
+      
+      // 2) Random color rectangles
+      for (let i = 0; i < 30; i++) {
+        glitchCtx.fillStyle = `rgba(
+          ${Math.floor(Math.random() * 256)},
+          ${Math.floor(Math.random() * 256)},
+          ${Math.floor(Math.random() * 256)},
+          0.2
+        )`;
+        let x = Math.random() * width;
+        let y = Math.random() * height;
+        let w = Math.random() * (50 * scaleFactor);
+        let h = Math.random() * (20 * scaleFactor);
+        glitchCtx.fillRect(x, y, w, h);
+      }
+      
+      // 3) Random horizontal lines
+      for (let i = 0; i < 10; i++) {
+        glitchCtx.beginPath();
+        let y = Math.random() * height;
+        glitchCtx.moveTo(0, y);
+        glitchCtx.lineTo(width, y);
+        glitchCtx.strokeStyle = "rgba(255,255,255,0.1)";
+        glitchCtx.lineWidth = (Math.random() * 3) * scaleFactor;
+        glitchCtx.stroke();
+      }
+    }
+
     // =================== Classes ===================
     // --- Player ---
     class Player {
       constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.radius = 15;
+        this.radius = 15  * scaleFactor;
         this.maxHP = 100;
         this.currentHP = 100;
-        this.baseSpeed = 3;
+        this.baseSpeed = 3 * scaleFactor;
         this.speed = this.baseSpeed;
         // Temporary power‑ups (duration in ms)
         this.activePowerUps = {
@@ -721,10 +802,14 @@
         this.x = Math.max(this.radius, Math.min(width - this.radius, this.x));
         this.y = Math.max(this.radius, Math.min(height - this.radius, this.y));
         // Aiming: desktop uses mouse; mobile uses right joystick if active
-        if(isMobile && rightJoystick.active && (rightJoystick.dx || rightJoystick.dy)) {
-          this.angle = rightJoystick.angle;
-        } else {
+        if (!isMobile) {
+          // Desktop: aim with mouse
           this.angle = Math.atan2(mouse.y - this.y, mouse.x - this.x);
+        } else {
+          // Mobile: only use right joystick if active
+          if (rightJoystick.active && (rightJoystick.dx || rightJoystick.dy)) {
+            this.angle = rightJoystick.angle;
+          }
         }
       }
       draw() {
@@ -733,9 +818,9 @@
         ctx.rotate(this.angle);
         // Если активирован магнит, отрисовываем область его действия
         if (this.activePowerUps.scoreMagnet && this.activePowerUps.scoreMagnet.duration > 0) {
-          let baseAttractionRange = 200; // базовая дистанция (в пикселях)
-          let additionalRangePerStack = 100; // прибавка за каждый дополнительный стэк
-          let magnetRange = baseAttractionRange + additionalRangePerStack * (this.activePowerUps.scoreMagnet.stacks - 1);
+          let baseAttractionRange = 200 * scaleFactor; // базовая дистанция (в пикселях)
+          let additionalRangePerStack = 100 * scaleFactor; // прибавка за каждый дополнительный стэк
+          let magnetRange = (baseAttractionRange + additionalRangePerStack * (this.activePowerUps.scoreMagnet.stacks - 1));
 
           ctx.beginPath();
           ctx.arc(0, 0, magnetRange, 0, Math.PI * 2);
@@ -748,7 +833,7 @@
         // Используем проверку длительности для щита:
         if(this.activePowerUps.shield.duration > 0) {
           ctx.beginPath();
-          ctx.arc(0,0,this.radius+8,0,Math.PI*2);
+          ctx.arc(0,0,this.radius+(8* scaleFactor),0,Math.PI*2);
           ctx.fillStyle = "rgba(0,200,255,0.3)";
           ctx.fill();
         }
@@ -756,9 +841,9 @@
         ctx.shadowColor = "#0ff";
         ctx.shadowBlur = 20;
         ctx.beginPath();
-        ctx.moveTo(20,0);
-        ctx.lineTo(-10,10);
-        ctx.lineTo(-10,-10);
+        ctx.moveTo( (20*scaleFactor), 0 );
+        ctx.lineTo( (-10*scaleFactor),  (10*scaleFactor) );
+        ctx.lineTo( (-10*scaleFactor), (-10*scaleFactor) );
         ctx.closePath();
         ctx.fill();
         ctx.restore();
@@ -786,7 +871,7 @@
         if (!player) return;
       
         // Задаём желаемое расстояние от игрока
-        const followDistance = 30; // можно менять по вкусу
+        const followDistance = 30 * scaleFactor; // можно менять по вкусу
         // Вычисляем желаемую позицию относительно игрока с учётом угла игрока и смещения
         const desiredX = player.x + Math.cos(player.angle + this.offsetAngle) * followDistance;
         const desiredY = player.y + Math.sin(player.angle + this.offsetAngle) * followDistance;
@@ -794,14 +879,14 @@
 
       
         // Перемещаем друга к желаемой позиции
-        const diffX = desiredX - this.x;
-        const diffY = desiredY - this.y;
-        const dist = Math.hypot(diffX, diffY);
-        const catchUpSpeed = 0.4 * deltaTime;
+        const diffX = (desiredX - this.x) * scaleFactor;
+        const diffY = (desiredY - this.y) * scaleFactor;
+        const dist = (Math.hypot(diffX, diffY));
+        const catchUpSpeed = (0.4 * deltaTime) * scaleFactor;
         if (dist > 1) {
           const moveDist = Math.min(catchUpSpeed, dist);
-          this.x += (diffX / dist) * moveDist;
-          this.y += (diffY / dist) * moveDist;
+          this.x += (diffX / dist) * moveDist * scaleFactor;
+          this.y += (diffY / dist) * moveDist * scaleFactor;
         }
       
         // Автонаведение: ищем ближайшего врага для прицеливания
@@ -824,7 +909,7 @@
       
         // Плавное поворот: постепенно приближаем this.angle к targetAngle
         let angleDiff = normalizeAngle(targetAngle - this.angle);
-        const rotationSpeed = 0.005 * deltaTime; // настройте скорость поворота по необходимости
+        const rotationSpeed = 0.010 * deltaTime * scaleFactor; // настройте скорость поворота по необходимости
         if (Math.abs(angleDiff) < rotationSpeed) {
           this.angle = targetAngle;
         } else {
@@ -837,7 +922,7 @@
 
         let friendStacks = player.activePowerUps.friend.stacks || 1;
         if (player.activePowerUps.friend && player.activePowerUps.friend.stacks >= 3) {
-          friendFireRate = 400 / (1 + 0.5 * (friendStacks - 1));  // при 3+ стэках – ускоряем стрельбу
+          friendFireRate = (400 / (1 + 0.5 * (friendStacks - 1))) * scaleFactor;  // при 3+ стэках – ускоряем стрельбу
         }
         if (this.shootCooldown <= 0 && Math.abs(normalizeAngle(targetAngle - this.angle)) < 0.1) {
           let bullet = new Bullet(this.x, this.y, this.angle);
@@ -856,14 +941,14 @@
         ctx.shadowBlur = 20;
         ctx.beginPath();
         // Рисуем уменьшенную копию фигуры игрока (масштаб 0.5)
-        ctx.moveTo(20 * 0.5, 0);
-        ctx.lineTo(-10 * 0.5, 10 * 0.5);
-        ctx.lineTo(-10 * 0.5, -10 * 0.5);
+        ctx.moveTo((20 * 0.5) * scaleFactor, 0);
+        ctx.lineTo((-10 * 0.5) * scaleFactor, (10 * 0.5) * scaleFactor);
+        ctx.lineTo((-10 * 0.5) * scaleFactor, (-10 * 0.5) * scaleFactor);
         ctx.closePath();
         ctx.fill();
 
         ctx.strokeStyle = "#0ff";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2 * scaleFactor;
         ctx.stroke();
 
         ctx.restore();
@@ -876,8 +961,8 @@
         this.x = x;
         this.y = y;
         this.angle = angle;
-        this.speed = 6;
-        this.radius = 4;
+        this.speed = 6 * scaleFactor;
+        this.radius = 4 * scaleFactor;
         this.damage = 1 * permanentUpgrades.damage * dmgFactor;
         // Special properties (default off)
         this.piercing = false;
@@ -942,8 +1027,8 @@
       draw() {
         ctx.save();
         if (this.fromFriend) {
-          ctx.fillStyle = "rgba(163, 31, 163, 0.4)";  
-          ctx.shadowColor = "rgba(163, 31, 163, 0.4)";
+          ctx.fillStyle = "rgba(163, 31, 163, 0.7)";  
+          ctx.shadowColor = "rgba(163, 31, 163, 0.7)";
         } else if (this.fromBoss || this.fromEnemy) {
           ctx.fillStyle = "#f00";
           ctx.shadowColor = "#f00";
@@ -971,76 +1056,76 @@
         // Set properties based on type
         switch(type) {
           case "basic":
-            this.radius = 15;
-            this.speed = 1.5;
+            this.radius = 15 * scaleFactor;
+            this.speed = 1.5 * scaleFactor;
             this.hp = 1;
             this.color = "#ff4444";
             break;
           case "elite":  // Танк
-            this.radius = 20;
-            this.speed = 0.5; // fixed slower speed
+            this.radius = 20 * scaleFactor;
+            this.speed = 0.5 * scaleFactor; // fixed slower speed
             this.hp = 5;
             this.color = "#ff8000";
             break;
           case "freeze":  //Замораживает
-            this.radius = 15;
-            this.speed = 2.0;
+            this.radius = 15 * scaleFactor;
+            this.speed = 2.0 * scaleFactor;
             this.hp = 1;
             this.color = "#00f";
             break;
           case "shooter": // Должен стрелять (исправлено)
-            this.radius = 15;
-            this.speed = 1.2;
+            this.radius = 15 * scaleFactor;
+            this.speed = 1.2 * scaleFactor;
             this.hp = 2;
             this.color = "#f0f";
             this.shootCooldown = 2000;
             this.bulletDamage = 15;  // Новый параметр: урон от пули врага
             break;
           case "parasite":  // Забирает возможность стрелять
-            this.radius = 12;
-            this.speed = 3.0;
+            this.radius = 12 * scaleFactor;
+            this.speed = 3.0 * scaleFactor;
             this.hp = 1;
             this.color = "#0f0";
             break;
           case "emp":
-            this.radius = 18;
-            this.speed = 1.5;
+            this.radius = 18 * scaleFactor;
+            this.speed = 1.5 * scaleFactor;
             this.hp = 2;
             this.color = "#ff0";
             this.shootCooldown = 2500;
             this.bulletDamage = 10;  // Урон от пули emp-врага
             break;
           case "shielded":
-            this.radius = 20;
-            this.speed = 1.5;
+            this.radius = 20 * scaleFactor;
+            this.speed = 1.5 * scaleFactor;
             this.hp = 3;
             this.color = "#0ff";
             this.shield = true;
             this.shieldHP = 5;
             break;
           case "sharpshooter":
-            this.radius = 15;
-            this.speed = 0.8;
+            this.radius = 15 * scaleFactor;
+            this.speed = 0.8 * scaleFactor;
             this.hp = 2;
             this.color = "#608"; // purple tone
             this.shootCooldown = 3000;
             this.bulletDamage = 35;  // Урон от пули sharpshooter
             break;
           case "exploder":
-            this.radius = 15;
-            this.speed = 1.2;
+            this.radius = 15 * scaleFactor;
+            this.speed = 1.2 * scaleFactor;
             this.hp = 1;
             this.color = "#fa0"; // orange
             break;
           case "splitter":
-            this.radius = 18;
-            this.speed = 1.0;
+            this.radius = 18 * scaleFactor;
+            this.speed = 1.0 * scaleFactor;
             this.hp = 3;
             this.color = "#0a0"; // dark green            
             break;
           default:
-            this.radius = 15;
-            this.speed = 1.5;
+            this.radius = 15 * scaleFactor;
+            this.speed = 1.5 * scaleFactor;
             this.hp = 1;
             this.color = "#ff4444";
         }
@@ -1063,7 +1148,7 @@
           const dx = player.x - this.x;
           const dy = player.y - this.y;
           const dist = Math.hypot(dx, dy);
-          const preferredDistance = 250;
+          const preferredDistance = 250 * scaleFactor;
           if(dist > preferredDistance) {
             this.shootCooldown -= deltaTime;
             this.x += (dx/dist) * this.speed * (deltaTime/16);
@@ -1076,7 +1161,7 @@
               let spawnY = this.y + Math.sin(angle) * (this.radius + 5);
               let b = new Bullet(spawnX, spawnY, angle);
               b.fromEnemy = true;         // Помечаем как пуля врага
-              b.speed = 6;
+              b.speed = 6 * scaleFactor;
               b.damage = this.bulletDamage; // Урон берётся из врага
               bullets.push(b);
               this.shootCooldown = 2000;
@@ -1089,7 +1174,7 @@
              let angle = Math.atan2(player.y - this.y, player.x - this.x);
              let b = new Bullet(this.x, this.y, angle);
              b.empBlast = true;
-             b.speed = 4;
+             b.speed = 4 * scaleFactor;
              b.damage = this.bulletDamage;
              b.fromEnemy = true;  // Помечаем как пуля врага
              bullets.push(b);
@@ -1100,7 +1185,7 @@
           const dx = player.x - this.x;
           const dy = player.y - this.y;
           const dist = Math.hypot(dx, dy);
-          const preferredDistance = 550;
+          const preferredDistance = 550 * scaleFactor;
           if(dist > preferredDistance) {
             this.shootCooldown -= deltaTime;
             this.x += (dx/dist) * this.speed * (deltaTime/16);
@@ -1113,8 +1198,8 @@
               let spawnY = this.y + Math.sin(angle) * this.radius;
               let b = new Bullet(spawnX, spawnY, angle);
               b.fromEnemy = true;        // Помечаем как пуля врага
-              b.radius = 8;
-              b.speed = 7;
+              b.radius = 8 * scaleFactor;
+              b.speed = 7 * scaleFactor;
               b.damage = this.bulletDamage;
               bullets.push(b);
               this.shootCooldown = 3000;
@@ -1163,15 +1248,17 @@
         this.y = (typeof y === 'number') ? y : 100;
         
         // Базовый размер босса
-        this.baseRadius = 60 / Math.pow(2, Math.floor((currentLevel - 1) / 5));
-        this.radius = this.baseRadius;
+        const minBossSize = 20;
+        this.baseRadius = Math.max(60 / Math.pow(2, Math.floor((currentLevel - 1) / 5)), minBossSize);
+        this.radius = this.baseRadius * scaleFactor;
         
         // Базовые HP и скорость
         this.bossBaseHP = 50;
         let bossDifficulty = currentLevel < 4 ? 0.6 : 1;
         this.maxHP = Math.floor((this.bossBaseHP + currentLevel * 25) * bossDifficulty);
         this.hp = this.maxHP;
-        this.speed = (1 + currentLevel * 0.1) * bossDifficulty;
+        const MAX_BOSS_SPEED = 5 * scaleFactor;
+        this.speed = Math.min(((1 + currentLevel * 0.1) * bossDifficulty) * scaleFactor, MAX_BOSS_SPEED);
         
         // Определяем титул босса
         if (currentLevel % 15 === 0) this.tier = "Emperor";
@@ -1236,7 +1323,7 @@
             for (let offset of [-0.1, 0, 0.1]) {
               let b = new Bullet(this.x, this.y, baseAngle + offset);
               b.fromBoss = true;
-              b.speed = 5;
+              b.speed = 5 * scaleFactor;
               b.damage = 20;
               bullets.push(b);
             }
@@ -1246,7 +1333,7 @@
             for (let offset of [-0.2, -0.1, 0, 0.1, 0.2]) {
               let b = new Bullet(this.x, this.y, baseAngle + offset);
               b.fromBoss = true;
-              b.speed = 6;
+              b.speed = 6 * scaleFactor;
               b.damage = 25;
               bullets.push(b);
             }
@@ -1256,7 +1343,7 @@
             for (let offset of [-0.1, 0, 0.1]) {
               let b = new Bullet(this.x, this.y, baseAngle + offset);
               b.fromBoss = true;
-              b.speed = 6;
+              b.speed = 6 * scaleFactor;
               b.damage = 30;
               b.homing = true;
               bullets.push(b);
@@ -1267,7 +1354,7 @@
               let angle = i * (Math.PI * 2 / 8);
               let b = new Bullet(this.x, this.y, angle);
               b.fromBoss = true;
-              b.speed = 7;
+              b.speed = 7 * scaleFactor;
               b.damage = 20;
               bullets.push(b);
             }
@@ -1277,7 +1364,7 @@
             for (let offset of [-0.3, -0.15, 0, 0.15, 0.3]) {
               let b = new Bullet(this.x, this.y, baseAngle + offset);
               b.fromBoss = true;
-              b.speed = 8;
+              b.speed = 8 * scaleFactor;
               b.damage = 35;
               bullets.push(b);
             }
@@ -1315,9 +1402,12 @@
         ctx.strokeStyle = "#fff";
         ctx.strokeRect(width / 2 - (barWidth * uiScale) / 2, barY * uiScale, barWidth * uiScale, barHeight * uiScale);
         
+        ctx.save();
         ctx.fillStyle = "#fff";
         ctx.font = (18 * uiScale) + "px Arial";
-        ctx.fillText(this.tier + " Boss", (width / 2 - 40) * uiScale, (barY - 5) * uiScale);
+        ctx.textAlign = "center";
+        ctx.fillText(this.tier + " Boss", width / 2, (barY - 5) * uiScale);
+        ctx.restore();
       }
     }
 
@@ -1326,7 +1416,7 @@
       constructor(x,y) {
         this.x = x;
         this.y = y;
-        this.radius = 8;
+        this.radius = 8 * scaleFactor;
         this.angle = Math.random()*Math.PI*2;
       }
       update(deltaTime) {
@@ -1342,8 +1432,8 @@
           let dist = Math.hypot(dx, dy);
     
           // Параметры притяжения: базовая дистанция и прирост дистанции с каждым стэком
-          let baseAttractionRange = 200; // базовая дистанция притяжения (в пикселях)
-          let additionalRangePerStack = 100; // прибавка к дистанции за каждый дополнительный стэк
+          let baseAttractionRange = 200 * scaleFactor; // базовая дистанция притяжения (в пикселях)
+          let additionalRangePerStack = 100 * scaleFactor; // прибавка к дистанции за каждый дополнительный стэк
           // Вычисляем общую дистанцию притяжения в зависимости от количества стэков
           let attractionRange =
             baseAttractionRange +
@@ -1351,7 +1441,7 @@
     
           // Если объект находится в пределах дистанции притяжения, притягиваем его
           if (dist < attractionRange) {
-            let baseAttractSpeed = 1; // базовая скорость притяжения
+            let baseAttractSpeed = 1 * scaleFactor; // базовая скорость притяжения
             // Увеличиваем скорость притяжения пропорционально количеству стэков
             let attractSpeed = baseAttractSpeed * player.activePowerUps.scoreMagnet.stacks * deltaTime;
             this.x += (dx / dist) * attractSpeed;
@@ -1378,9 +1468,9 @@
       constructor(x,y,color) {
         this.x = x;
         this.y = y;
-        this.radius = Math.random()*3 + 2;
+        this.radius = (Math.random()*3 + 2) * scaleFactor;
         this.angle = Math.random()*Math.PI*2;
-        this.speed = Math.random()*2 + 1;
+        this.speed = (Math.random()*2 + 1) * scaleFactor;
         this.life = 100;
         this.color = color;
       }
@@ -1443,7 +1533,7 @@
     function spawnTwoBosses() {
       if(gameState !== "playing") return;
       let bossCount = 2;  // как для 7 уровня
-      let baseRadius = 60;
+      let baseRadius = 60 * scaleFactor;
       if(currentLevel > 5) baseRadius *= 0.5;
       let spawnCircleRadius = baseRadius / Math.sin(Math.PI / bossCount);
       let centerX = width / 2;
@@ -1696,6 +1786,9 @@
     }
     function nextLevel() {
       currentLevel++;
+      if (currentLevel > 5) {
+        levelDuration = Math.min(levelDuration + 10000, maxLevelDuration);
+      }
       levelTimer = levelDuration;
       enemySpawnTimer = 0;
       // Очищаем массивы
@@ -1733,6 +1826,7 @@
     function restartGame() {
       score = 0;
       currentLevel = 1;
+      levelDuration = 30000;
       levelTimer = levelDuration;
       permanentUpgrades.damage = 1;
       permanentUpgrades.speed = 1;
@@ -1798,7 +1892,7 @@
             bosses.push(new Boss());
           } else {
             // Вычисляем базовый радиус, который уже учитывает уменьшение при currentLevel > 5
-            let baseRadius = 60;
+            let baseRadius = 60 * scaleFactor;
             if (currentLevel > 5) baseRadius *= 0.5;
             // Для равномерного расположения вычисляем радиус окружности так,
             // чтобы расстояние между центрами соседних боссов было равно 2 * baseRadius.
@@ -1833,8 +1927,9 @@
         fireCooldown -= deltaTime;
         if (fireCooldown <= 0) {
           fireCooldown = effectiveFireRate;
-          const bx = player.x + Math.cos(player.angle) * 20;
-          const by = player.y + Math.sin(player.angle) * 20;
+          const bulletOffset = player.radius;
+          const bx = player.x + Math.cos(player.angle) * bulletOffset;
+          const by = player.y + Math.sin(player.angle) * bulletOffset;
           // Вычисляем коэффициент урона: damageBoost увеличивает урон на +1 за каждый стэк
           let dmgFactor = 1;
           if (player.activePowerUps.damageBoost.duration > 0) {
@@ -1897,7 +1992,7 @@
                 b.lifeSteal = true;
               }
               if (player.activePowerUps.overcharge.duration > 0) {
-                  b.speed *= (1 + 0.5 * player.activePowerUps.overcharge.stacks);
+                  b.speed *= ((1 + 0.5 * player.activePowerUps.overcharge.stacks) * scaleFactor);
               }
               newBullets.push(b);
             }
@@ -1932,7 +2027,7 @@
               b.lifeSteal = true;
             }
             if (player.activePowerUps.overcharge.duration > 0) {
-                b.speed *= (1 + 0.5 * player.activePowerUps.overcharge.stacks);
+                b.speed *= ((1 + 0.5 * player.activePowerUps.overcharge.stacks) * scaleFactor);
             }
             newBullets.push(b);
           }
@@ -2027,7 +2122,7 @@
           if(circleCollision(enemies[i], b)) {
             // Если пуля с бомбой – наносим урон всем врагам в радиусе
             if(b.bomb) {
-              const bombRadius = 80;
+              const bombRadius = 80 * scaleFactor;
               for(let k = enemies.length - 1; k >= 0; k--){
                 const dx = enemies[k].x - b.x;
                 const dy = enemies[k].y - b.y;
@@ -2286,6 +2381,8 @@
             ctx.rotate(-Math.PI / 2);
             ctx.fillText("Boss fight in " + Math.ceil(levelTimer / 1000) + "s!!", 0, 0);
           } else {
+            ctx.save();
+            ctx.fillStyle = "#f00";
             ctx.font = (18 * uiScale) + "px Arial";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
@@ -2440,6 +2537,7 @@
       gameState = "playing";
       score = 0;
       currentLevel = 1;
+      levelDuration = 30000;
       levelTimer = levelDuration;
       permanentUpgrades.damage = 1;
       permanentUpgrades.speed = 1;
