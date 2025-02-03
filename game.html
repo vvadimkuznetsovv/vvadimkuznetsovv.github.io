@@ -13,7 +13,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Neon Nexus: Ultimate Gauntlet – Levels Edition (Expanded)</title>
   <style>
     :root {
@@ -58,7 +57,13 @@
       border: calc(2px * var(--ui-scale)) solid #0ff;
       color: #0ff;
       font-size: calc(18px * var(--ui-scale));
+      box-shadow: 0px 0px 10px 2px #0ff;
+      border-radius: 10px;
       cursor: pointer;
+    }
+    .cyan_color {
+      color: #0ff;
+      text-shadow: 0px 0px 10px #0ff;
     }
     .button:hover {
       background: #0ff;
@@ -104,13 +109,13 @@
     @media only screen and (max-width: 768px) {
       /* Increase overlay font sizes */
       #overlay h1 {
-        font-size: calc(42px * var(--ui-scale));
+        font-size: calc(2.5em * var(--ui-scale));
       }
       #overlay p {
-        font-size: calc(24px * var(--ui-scale));
+        font-size: calc(1.8em * var(--ui-scale));
       }
       .button {
-        font-size: calc(24px * var(--ui-scale));
+        font-size: calc(1.5em * var(--ui-scale));
         padding: calc(15px * var(--ui-scale)) calc(30px * var(--ui-scale));
       }
     }
@@ -145,66 +150,34 @@
     // =================== Canvas & Initialization ===================
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
-
-    // We will store width/height in these, but NOT assign them to canvas yet.
-    let width, height;
-    let dpr = window.devicePixelRatio || 1;
-    const isMobile = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
-    let cssGridSize = (isMobile) ? (50 * (1 / dpr)) : 70;;
-    let cssGridSize2 = (isMobile) ? (60 * (1 / dpr)) : 70;
-    let actualGridSize = cssGridSize;
-    let actualGridSize2 = cssGridSize2; 
-
-    function onResize() {
-      // 1) Use CSS pixel dimensions for your game logic:
-      width = window.innerWidth;
-      height = window.innerHeight;
-      
-      // 2) Device pixel ratio (high‑DPI “retina” scaling factor)
-      dpr = window.devicePixelRatio || 1;
-
-      
-      // 3) Visually, the canvas should fill the screen in CSS pixels:
-      canvas.style.width = width + "px";
-      canvas.style.height = height + "px";
-      
-      // 4) Internally, give the canvas more pixels (for crispness):
-      canvas.width = Math.floor(width * dpr);
-      canvas.height = Math.floor(height * dpr);
-      
-      // 5) Make 1 “unit” in your drawing code == 1 CSS pixel:
-      // If browser supports resetTransform():
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      
-    }
-
-    // Attach it:
-    window.addEventListener("resize", onResize);
-    // Call once on load:
-    onResize();
-
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+    window.addEventListener("resize", () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
 
     // =================== Device Detection & UI Setup ===================
+    const isMobile = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
     const leftJoystickElem = document.getElementById("leftJoystick");
     const rightJoystickElem = document.getElementById("rightJoystick");
     const mobilePauseButton = document.getElementById("mobilePauseButton");
-    let scaleFactor = (isMobile) ? (1 / dpr) : 1;
     if(isMobile) {
       leftJoystickElem.style.display = "block";
       rightJoystickElem.style.display = "block";
       mobilePauseButton.style.display = "block";
       document.getElementById("startHint").innerHTML = "Tap anywhere to begin";
     }
-    let uiScale = isMobile ? 1.6 : 1; // Increase scale on mobile
+    let uiScale = isMobile ? 1.7 : 1; // Increase scale on mobile
 
     // =================== Update Scale Function ===================
     function updateScale() {
       if (isMobile) {
         // On mobile, use landscape or portrait-specific scales.
         if (window.innerWidth > window.innerHeight) {
-          uiScale = 1.6 / dpr;    // mobile landscape
+          uiScale = 0.8;    // mobile landscape
         } else {
-          uiScale = 1.6 / dpr;  // mobile portrait
+          uiScale = 1.7;  // mobile portrait
         }
       } else {
         // On desktop, always use scale 1.
@@ -220,7 +193,8 @@
 
     // Add resize listener to update canvas dimensions and scale on orientation change
     window.addEventListener("resize", () => {
-      onResize();
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
       updateScale();
     });
 
@@ -257,6 +231,8 @@
     let bosses = [];
     // --- Новый массив для отображения урона (плавающие красные числа) ---
     let damageTexts = [];
+    // *** NEW: Массив для объектов-друзей (Friend) ***
+    let friends = [];
 
     // =================== Input Handling ===================
     const keys = {};
@@ -274,7 +250,9 @@
       // **  BUTTON P: SPAWN 2 BOSSES (LEVEL 7)  **
       // ************************************
       if(e.key.toLowerCase() === "p") {
-        givePlayerMagnetEffect()
+        addFriendPowerUp();
+        spawnTwoBosses();
+        givePlayerMagnetEffect();
       }
     });
     window.addEventListener("keyup", (e) => {
@@ -404,7 +382,6 @@
     }
 
     // =================== Biomes / Backgrounds ===================
-   
     const biomes = [
       {
         name: "Neon Arena",
@@ -414,13 +391,13 @@
           const gridSize = 50;
           ctx.strokeStyle = "#222";
           ctx.lineWidth = 1;
-          for(let x = 0; x < width; x += actualGridSize){
+          for(let x = 0; x < width; x += gridSize){
             ctx.beginPath();
             ctx.moveTo(x,0);
             ctx.lineTo(x,height);
             ctx.stroke();
           }
-          for(let y = 0; y < height; y += actualGridSize){
+          for(let y = 0; y < height; y += gridSize){
             ctx.beginPath();
             ctx.moveTo(0,y);
             ctx.lineTo(width,y);
@@ -439,13 +416,13 @@
           const gridSize = 60;
           ctx.strokeStyle = "rgba(0,255,100,0.2)";
           ctx.lineWidth = 1;
-          for(let x = 0; x < width; x += actualGridSize2){
+          for(let x = 0; x < width; x += gridSize){
             ctx.beginPath();
             ctx.moveTo(x,0);
             ctx.lineTo(x,height);
             ctx.stroke();
           }
-          for(let y = 0; y < height; y += actualGridSize2){
+          for(let y = 0; y < height; y += gridSize){
             ctx.beginPath();
             ctx.moveTo(0,y);
             ctx.lineTo(width,y);
@@ -465,6 +442,139 @@
             ctx.fillRect(x,y,2,2);
           }
         }
+      },
+      // Новые биомы:
+      {
+        name: "Aurora Borealis",
+        drawBackground: function() {
+          // Используем линейный градиент для имитации северного сияния
+          let grad = ctx.createLinearGradient(0, 0, 0, height);
+          grad.addColorStop(0, "#1a237e");
+          grad.addColorStop(0.5, "#43a047");
+          grad.addColorStop(1, "#fdd835");
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, width, height);
+          // Добавляем плавные линии, имитирующие сияние
+          for (let i = 0; i < 10; i++) {
+            ctx.beginPath();
+            ctx.moveTo(0, Math.random() * height);
+            ctx.bezierCurveTo(
+              width * 0.3, Math.random() * height,
+              width * 0.7, Math.random() * height,
+              width, Math.random() * height
+            );
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+        }
+      },
+      {
+        name: "Glitch Zone",
+        drawBackground: function() {
+          // Чёрный фон с случайными яркими прямоугольниками и линиями для эффекта    глитча
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, width, height);
+          for (let i = 0; i < 30; i++) {
+            ctx.fillStyle = `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.    random() * 256)}, ${Math.floor(Math.random() * 256)}, 0.2)`;
+            let x = Math.random() * width;
+            let y = Math.random() * height;
+            let w = Math.random() * 50;
+            let h = Math.random() * 20;
+            ctx.fillRect(x, y, w, h);
+          }
+          for (let i = 0; i < 10; i++) {
+            ctx.beginPath();
+            let y = Math.random() * height;
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.strokeStyle = "rgba(255,255,255,0.1)";
+            ctx.lineWidth = Math.random() * 3;
+            ctx.stroke();
+          }
+        }
+      },
+      {
+        name: "Cosmic Rift",
+        drawBackground: function() {
+          // Радиационный градиент, создающий космическое настроение
+          let grad = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2,    height / 2, Math.max(width, height) / 2);
+          grad.addColorStop(0, "#0d0d0d");
+          grad.addColorStop(0.5, "#1a1a1a");
+          grad.addColorStop(1, "#000");
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, width, height);
+          // Рисуем звёзды
+          for (let i = 0; i < 100; i++) {
+            ctx.fillStyle = "#fff";
+            let x = Math.random() * width;
+            let y = Math.random() * height;
+            ctx.fillRect(x, y, 1.5, 1.5);
+          }
+          // Лёгкие круговые вспышки для эффекта космических рифтов
+          for (let i = 0; i < 5; i++) {
+            ctx.beginPath();
+            ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 100,     0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(255, 0, 255, 0.1)";
+            ctx.lineWidth = 5;
+            ctx.stroke();
+          }
+        }
+      },
+      {
+        name: "Retro Circuit",
+        drawBackground: function() {
+          // Фон в стиле печатной платы
+          ctx.fillStyle = "#001";
+          ctx.fillRect(0, 0, width, height);
+          ctx.strokeStyle = "#0f0";
+          ctx.lineWidth = 2;
+          // Вертикальные линии
+          for (let x = 0; x < width; x += 40) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+          }
+          // Горизонтальные линии
+          for (let y = 0; y < height; y += 40) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+          }
+          // Рисуем случайные "узлы" для имитации контактов
+          for (let i = 0; i < 20; i++) {
+            let x = Math.random() * width;
+            let y = Math.random() * height;
+            ctx.beginPath();
+            ctx.arc(x, y, 3, 0, Math.PI * 2);
+            ctx.fillStyle = "#0f0";
+            ctx.fill();
+          }
+        }
+      },
+      {
+        name: "Neon Forest",
+        drawBackground: function() {
+          // Тёмный фон с неоновыми "деревьями"
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, width, height);
+          // Рисуем неоновые столбы (как абстрактные деревья)
+          for (let i = 0; i < 10; i++) {
+            let x = Math.random() * width;
+            let treeHeight = Math.random() * (height / 2) + height / 4;
+            ctx.beginPath();
+            ctx.moveTo(x, height);
+            ctx.lineTo(x, height - treeHeight);
+            ctx.strokeStyle = "rgba(0,255,150,0.7)";
+            ctx.lineWidth = 4;
+            ctx.shadowColor = "rgba(0,255,150,0.7)";
+            ctx.shadowBlur = 10;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+          }
+        }
       }
     ];
     function getCurrentBiome() {
@@ -477,10 +587,10 @@
       constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.radius = 15  * scaleFactor;
+        this.radius = 15;
         this.maxHP = 100;
         this.currentHP = 100;
-        this.baseSpeed = 3 * scaleFactor;
+        this.baseSpeed = 3;
         this.speed = this.baseSpeed;
         // Temporary power‑ups (duration in ms)
         this.activePowerUps = {
@@ -520,7 +630,9 @@
           // *** NEW: временное увеличение здоровья (увеличивает maxHP на +20) ***
           healthBoost: { duration: 0, stacks: 0, bonus: 0 },
           // *** NEW: магнит очков (притягивает коллекционные объекты) ***
-          scoreMagnet: { duration: 0, stacks: 0 }
+          scoreMagnet: { duration: 0, stacks: 0 },
+          // *** NEW: Friend power‑up – при получении появляется друг рядом с игроком ***
+          friend: { duration: 0, stacks: 0 }
         };
         // Additional status effects (негативные эффекты)
         this.frozenTime = 0;
@@ -531,17 +643,45 @@
       update(deltaTime) {
         // Обновление таймеров усилений: уменьшаем время и сбрасываем стеки, когда время истекает
         for (let key in this.activePowerUps) {
-          if (this.activePowerUps[key].duration > 0) {
-            this.activePowerUps[key].duration -= deltaTime;
-            if (this.activePowerUps[key].duration <= 0) {
-              // Если истёк эффект Health Boost – снимаем бонус с maxHP
-              if(key === "healthBoost" && this.activePowerUps[key].bonus) {
-                 this.maxHP -= this.activePowerUps[key].bonus;
-                 if(this.currentHP > this.maxHP) this.currentHP = this.maxHP;
-                 this.activePowerUps[key].bonus = 0;
+          let pu = this.activePowerUps[key];
+          if (pu.duration > 0) {
+            // Сохраняем предыдущее количество стэков, чтобы понять, сколько стэков "упало" за этот кадр
+            let previousStacks = pu.stacks || 0;
+            
+            // Обновляем время действия эффекта
+            pu.duration -= deltaTime;
+            if (pu.duration < 0) pu.duration = 0;
+            
+            // Получаем отображаемое имя для определения времени одного стэка
+            let displayName = getPowerUpDisplayName(key);
+            let timePerStack = powerUpDurations[displayName] || 30000;
+            
+            // Используем Math.ceil, чтобы при любом положительном оставшемся времени было минимум 1 стэк
+            pu.stacks = pu.duration > 0 ? Math.ceil(pu.duration / timePerStack) : 0;
+        
+            // Если это Health Boost – снимаем бонус постепенно (по 50 за каждый потерянный стэк)
+            if (key === "healthBoost") {
+              const bonusPerStack = 50; // бонус, который даёт один стэк
+              let expiredStacks = previousStacks - pu.stacks;
+              if (expiredStacks > 0) {
+                let bonusToRemove = bonusPerStack * expiredStacks;
+                this.maxHP -= bonusToRemove;
+                if (this.currentHP > this.maxHP) this.currentHP = this.maxHP;
+                pu.bonus -= bonusToRemove;
+                if (pu.bonus < 0) pu.bonus = 0;  // на всякий случай – не допускаем отрицательного бонуса
               }
-              this.activePowerUps[key].stacks = 0;
-              this.activePowerUps[key].duration = 0;
+            }
+        
+            // Если число стэков стало 0, обнуляем параметры эффекта
+            if (pu.stacks <= 0) {
+              pu.duration = 0;
+              pu.stacks = 0;
+              // На случай, если остаётся небольшой остаточный бонус для Health Boost – удаляем его полностью
+              if (key === "healthBoost" && pu.bonus > 0) {
+                this.maxHP -= pu.bonus;
+                if (this.currentHP > this.maxHP) this.currentHP = this.maxHP;
+                pu.bonus = 0;
+              }
             }
           }
         }
@@ -593,13 +733,13 @@
         ctx.rotate(this.angle);
         // Если активирован магнит, отрисовываем область его действия
         if (this.activePowerUps.scoreMagnet && this.activePowerUps.scoreMagnet.duration > 0) {
-          let baseAttractionRange = 200 * scaleFactor; // базовая дистанция (в пикселях)
-          let additionalRangePerStack = 100 * scaleFactor; // прибавка за каждый дополнительный стэк
-          let magnetRange = (baseAttractionRange + additionalRangePerStack * (this.activePowerUps.scoreMagnet.stacks - 1));
+          let baseAttractionRange = 200; // базовая дистанция (в пикселях)
+          let additionalRangePerStack = 100; // прибавка за каждый дополнительный стэк
+          let magnetRange = baseAttractionRange + additionalRangePerStack * (this.activePowerUps.scoreMagnet.stacks - 1);
 
           ctx.beginPath();
           ctx.arc(0, 0, magnetRange, 0, Math.PI * 2);
-          ctx.strokeStyle = 'rgba(0, 255, 0, 0.2)'; // полупрозрачный зелёный цвет
+          ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)'; // полупрозрачный зелёный цвет
           ctx.shadowColor = 'rgba(0, 255, 0, 0.5)';
           ctx.shadowBlur = 5;
           ctx.lineWidth = 1;
@@ -608,7 +748,7 @@
         // Используем проверку длительности для щита:
         if(this.activePowerUps.shield.duration > 0) {
           ctx.beginPath();
-          ctx.arc(0,0,this.radius+(8* scaleFactor),0,Math.PI*2);
+          ctx.arc(0,0,this.radius+8,0,Math.PI*2);
           ctx.fillStyle = "rgba(0,200,255,0.3)";
           ctx.fill();
         }
@@ -616,11 +756,116 @@
         ctx.shadowColor = "#0ff";
         ctx.shadowBlur = 20;
         ctx.beginPath();
-        ctx.moveTo( (20*scaleFactor), 0 );
-        ctx.lineTo( (-10*scaleFactor),  (10*scaleFactor) );
-        ctx.lineTo( (-10*scaleFactor), (-10*scaleFactor) );
+        ctx.moveTo(20,0);
+        ctx.lineTo(-10,10);
+        ctx.lineTo(-10,-10);
         ctx.closePath();
         ctx.fill();
+        ctx.restore();
+      }
+    }
+    // Помогательная функция для нормализации угла в диапазоне [-π, π]
+    function normalizeAngle(angle) {
+      while (angle > Math.PI) { angle -= 2 * Math.PI; }
+      while (angle < -Math.PI) { angle += 2 * Math.PI; }
+      return angle;
+    }
+
+    // =================== Изменённый класс Friend ===================
+    class Friend {
+      constructor(offsetAngle) {
+        this.offsetAngle = offsetAngle; // фиксированный угол смещения относительно игрока
+        this.shootCooldown = 0;
+        // Инициализируем позицию в текущем положении игрока (если он уже существует)
+        this.x = player ? player.x : 0;
+        this.y = player ? player.y : 0;
+        // Инициализируем угол "друга" равным углу игрока
+        this.angle = player ? player.angle : 0;
+      }
+      update(deltaTime) {
+        if (!player) return;
+      
+        // Задаём желаемое расстояние от игрока
+        const followDistance = 30; // можно менять по вкусу
+        // Вычисляем желаемую позицию относительно игрока с учётом угла игрока и смещения
+        const desiredX = player.x + Math.cos(player.angle + this.offsetAngle) * followDistance;
+        const desiredY = player.y + Math.sin(player.angle + this.offsetAngle) * followDistance;
+
+
+      
+        // Перемещаем друга к желаемой позиции
+        const diffX = desiredX - this.x;
+        const diffY = desiredY - this.y;
+        const dist = Math.hypot(diffX, diffY);
+        const catchUpSpeed = 0.4 * deltaTime;
+        if (dist > 1) {
+          const moveDist = Math.min(catchUpSpeed, dist);
+          this.x += (diffX / dist) * moveDist;
+          this.y += (diffY / dist) * moveDist;
+        }
+      
+        // Автонаведение: ищем ближайшего врага для прицеливания
+        let nearest = null;
+        let minEnemyDist = Infinity;
+        for (let enemy of enemies) {
+          const dx = enemy.x - this.x;
+          const dy = enemy.y - this.y;
+          const d = Math.hypot(dx, dy);
+          if (d < minEnemyDist) {
+            minEnemyDist = d;
+            nearest = enemy;
+          }
+        }
+        // Если враг найден – целевой угол по направлению к нему, иначе используем угол игрока
+        let targetAngle = player.angle;
+        if (nearest) {
+          targetAngle = Math.atan2(nearest.y - this.y, nearest.x - this.x);
+        }
+      
+        // Плавное поворот: постепенно приближаем this.angle к targetAngle
+        let angleDiff = normalizeAngle(targetAngle - this.angle);
+        const rotationSpeed = 0.005 * deltaTime; // настройте скорость поворота по необходимости
+        if (Math.abs(angleDiff) < rotationSpeed) {
+          this.angle = targetAngle;
+        } else {
+          this.angle += Math.sign(angleDiff) * rotationSpeed;
+        }
+      
+        // Логика стрельбы: стреляем только если угол почти совпадает с целевым (порог 0.1 радиана)
+        this.shootCooldown -= deltaTime;
+        let friendFireRate = 400; // базовый интервал в мс
+
+        let friendStacks = player.activePowerUps.friend.stacks || 1;
+        if (player.activePowerUps.friend && player.activePowerUps.friend.stacks >= 3) {
+          friendFireRate = 400 / (1 + 0.5 * (friendStacks - 1));  // при 3+ стэках – ускоряем стрельбу
+        }
+        if (this.shootCooldown <= 0 && Math.abs(normalizeAngle(targetAngle - this.angle)) < 0.1) {
+          let bullet = new Bullet(this.x, this.y, this.angle);
+          bullet.fromFriend = true;  // Помечаем пулю как выпущенную другом
+          bullets.push(bullet);
+          this.shootCooldown = friendFireRate;
+        }        
+      }
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        // Используем угол, рассчитанный для объекта Friend
+        ctx.rotate(this.angle);
+        ctx.fillStyle = "#A31FA3"; // фиолетовый цвет
+        ctx.shadowColor = "#A31FA3";
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        // Рисуем уменьшенную копию фигуры игрока (масштаб 0.5)
+        ctx.moveTo(20 * 0.5, 0);
+        ctx.lineTo(-10 * 0.5, 10 * 0.5);
+        ctx.lineTo(-10 * 0.5, -10 * 0.5);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = "#0ff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
         ctx.restore();
       }
     }
@@ -631,8 +876,8 @@
         this.x = x;
         this.y = y;
         this.angle = angle;
-        this.speed = 6 * scaleFactor;
-        this.radius = 4 * scaleFactor;
+        this.speed = 6;
+        this.radius = 4;
         this.damage = 1 * permanentUpgrades.damage * dmgFactor;
         // Special properties (default off)
         this.piercing = false;
@@ -696,11 +941,19 @@
       }
       draw() {
         ctx.save();
-        ctx.fillStyle = (this.fromBoss || this.fromEnemy) ? "#f00" : "#ff0";
-        ctx.shadowColor = (this.fromBoss || this.fromEnemy) ? "#f00" : "#ff0";
+        if (this.fromFriend) {
+          ctx.fillStyle = "rgba(163, 31, 163, 0.4)";  
+          ctx.shadowColor = "rgba(163, 31, 163, 0.4)";
+        } else if (this.fromBoss || this.fromEnemy) {
+          ctx.fillStyle = "#f00";
+          ctx.shadowColor = "#f00";
+        } else {
+          ctx.fillStyle = "#ff0";
+          ctx.shadowColor = "#ff0";
+        }
         ctx.shadowBlur = 10;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       }
@@ -718,76 +971,76 @@
         // Set properties based on type
         switch(type) {
           case "basic":
-            this.radius = 15 * scaleFactor;
-            this.speed = 1.5 * scaleFactor;
+            this.radius = 15;
+            this.speed = 1.5;
             this.hp = 1;
             this.color = "#ff4444";
             break;
           case "elite":  // Танк
-            this.radius = 20 * scaleFactor;
-            this.speed = 0.5 * scaleFactor; // fixed slower speed
+            this.radius = 20;
+            this.speed = 0.5; // fixed slower speed
             this.hp = 5;
             this.color = "#ff8000";
             break;
           case "freeze":  //Замораживает
-            this.radius = 15 * scaleFactor;
-            this.speed = 2.0 * scaleFactor;
+            this.radius = 15;
+            this.speed = 2.0;
             this.hp = 1;
             this.color = "#00f";
             break;
           case "shooter": // Должен стрелять (исправлено)
-            this.radius = 15 * scaleFactor;
-            this.speed = 1.2 * scaleFactor;
+            this.radius = 15;
+            this.speed = 1.2;
             this.hp = 2;
             this.color = "#f0f";
             this.shootCooldown = 2000;
             this.bulletDamage = 15;  // Новый параметр: урон от пули врага
             break;
           case "parasite":  // Забирает возможность стрелять
-            this.radius = 12 * scaleFactor;
-            this.speed = 3.0 * scaleFactor;
+            this.radius = 12;
+            this.speed = 3.0;
             this.hp = 1;
             this.color = "#0f0";
             break;
           case "emp":
-            this.radius = 18 * scaleFactor;
-            this.speed = 1.5 * scaleFactor;
+            this.radius = 18;
+            this.speed = 1.5;
             this.hp = 2;
             this.color = "#ff0";
             this.shootCooldown = 2500;
             this.bulletDamage = 10;  // Урон от пули emp-врага
             break;
           case "shielded":
-            this.radius = 20 * scaleFactor;
-            this.speed = 1.5 * scaleFactor;
+            this.radius = 20;
+            this.speed = 1.5;
             this.hp = 3;
             this.color = "#0ff";
             this.shield = true;
             this.shieldHP = 5;
             break;
           case "sharpshooter":
-            this.radius = 15 * scaleFactor;
-            this.speed = 0.8 * scaleFactor;
+            this.radius = 15;
+            this.speed = 0.8;
             this.hp = 2;
             this.color = "#608"; // purple tone
             this.shootCooldown = 3000;
             this.bulletDamage = 35;  // Урон от пули sharpshooter
             break;
           case "exploder":
-            this.radius = 15 * scaleFactor;
-            this.speed = 1.2 * scaleFactor;
+            this.radius = 15;
+            this.speed = 1.2;
             this.hp = 1;
             this.color = "#fa0"; // orange
             break;
           case "splitter":
-            this.radius = 18 * scaleFactor;
-            this.speed = 1.0 * scaleFactor;
+            this.radius = 18;
+            this.speed = 1.0;
             this.hp = 3;
             this.color = "#0a0"; // dark green            
             break;
           default:
-            this.radius = 15 * scaleFactor;
-            this.speed = 1.5 * scaleFactor;
+            this.radius = 15;
+            this.speed = 1.5;
             this.hp = 1;
             this.color = "#ff4444";
         }
@@ -823,7 +1076,7 @@
               let spawnY = this.y + Math.sin(angle) * (this.radius + 5);
               let b = new Bullet(spawnX, spawnY, angle);
               b.fromEnemy = true;         // Помечаем как пуля врага
-              b.speed = 6 * scaleFactor;
+              b.speed = 6;
               b.damage = this.bulletDamage; // Урон берётся из врага
               bullets.push(b);
               this.shootCooldown = 2000;
@@ -836,7 +1089,7 @@
              let angle = Math.atan2(player.y - this.y, player.x - this.x);
              let b = new Bullet(this.x, this.y, angle);
              b.empBlast = true;
-             b.speed = 4 * scaleFactor;
+             b.speed = 4;
              b.damage = this.bulletDamage;
              b.fromEnemy = true;  // Помечаем как пуля врага
              bullets.push(b);
@@ -860,8 +1113,8 @@
               let spawnY = this.y + Math.sin(angle) * this.radius;
               let b = new Bullet(spawnX, spawnY, angle);
               b.fromEnemy = true;        // Помечаем как пуля врага
-              b.radius = 8 * scaleFactor;
-              b.speed = 7 * scaleFactor;
+              b.radius = 8;
+              b.speed = 7;
               b.damage = this.bulletDamage;
               bullets.push(b);
               this.shootCooldown = 3000;
@@ -911,14 +1164,14 @@
         
         // Базовый размер босса
         this.baseRadius = 60 / Math.pow(2, Math.floor((currentLevel - 1) / 5));
-        this.radius = this.baseRadius * scaleFactor;
+        this.radius = this.baseRadius;
         
         // Базовые HP и скорость
         this.bossBaseHP = 50;
         let bossDifficulty = currentLevel < 4 ? 0.6 : 1;
         this.maxHP = Math.floor((this.bossBaseHP + currentLevel * 25) * bossDifficulty);
         this.hp = this.maxHP;
-        this.speed = ((1 + currentLevel * 0.1) * bossDifficulty) * scaleFactor;
+        this.speed = (1 + currentLevel * 0.1) * bossDifficulty;
         
         // Определяем титул босса
         if (currentLevel % 15 === 0) this.tier = "Emperor";
@@ -983,7 +1236,7 @@
             for (let offset of [-0.1, 0, 0.1]) {
               let b = new Bullet(this.x, this.y, baseAngle + offset);
               b.fromBoss = true;
-              b.speed = 5 * scaleFactor;
+              b.speed = 5;
               b.damage = 20;
               bullets.push(b);
             }
@@ -993,7 +1246,7 @@
             for (let offset of [-0.2, -0.1, 0, 0.1, 0.2]) {
               let b = new Bullet(this.x, this.y, baseAngle + offset);
               b.fromBoss = true;
-              b.speed = 6 * scaleFactor;
+              b.speed = 6;
               b.damage = 25;
               bullets.push(b);
             }
@@ -1003,7 +1256,7 @@
             for (let offset of [-0.1, 0, 0.1]) {
               let b = new Bullet(this.x, this.y, baseAngle + offset);
               b.fromBoss = true;
-              b.speed = 6 * scaleFactor;
+              b.speed = 6;
               b.damage = 30;
               b.homing = true;
               bullets.push(b);
@@ -1014,7 +1267,7 @@
               let angle = i * (Math.PI * 2 / 8);
               let b = new Bullet(this.x, this.y, angle);
               b.fromBoss = true;
-              b.speed = 7 * scaleFactor;
+              b.speed = 7;
               b.damage = 20;
               bullets.push(b);
             }
@@ -1024,7 +1277,7 @@
             for (let offset of [-0.3, -0.15, 0, 0.15, 0.3]) {
               let b = new Bullet(this.x, this.y, baseAngle + offset);
               b.fromBoss = true;
-              b.speed = 8 * scaleFactor;
+              b.speed = 8;
               b.damage = 35;
               bullets.push(b);
             }
@@ -1073,7 +1326,7 @@
       constructor(x,y) {
         this.x = x;
         this.y = y;
-        this.radius = 8 * scaleFactor;
+        this.radius = 8;
         this.angle = Math.random()*Math.PI*2;
       }
       update(deltaTime) {
@@ -1098,7 +1351,7 @@
     
           // Если объект находится в пределах дистанции притяжения, притягиваем его
           if (dist < attractionRange) {
-            let baseAttractSpeed = 1 * scaleFactor; // базовая скорость притяжения
+            let baseAttractSpeed = 1; // базовая скорость притяжения
             // Увеличиваем скорость притяжения пропорционально количеству стэков
             let attractSpeed = baseAttractSpeed * player.activePowerUps.scoreMagnet.stacks * deltaTime;
             this.x += (dx / dist) * attractSpeed;
@@ -1125,9 +1378,9 @@
       constructor(x,y,color) {
         this.x = x;
         this.y = y;
-        this.radius = (Math.random()*3 + 2) * scaleFactor;
+        this.radius = Math.random()*3 + 2;
         this.angle = Math.random()*Math.PI*2;
-        this.speed = (Math.random()*2 + 1) * scaleFactor;
+        this.speed = Math.random()*2 + 1;
         this.life = 100;
         this.color = color;
       }
@@ -1190,7 +1443,7 @@
     function spawnTwoBosses() {
       if(gameState !== "playing") return;
       let bossCount = 2;  // как для 7 уровня
-      let baseRadius = 60 * scaleFactor;
+      let baseRadius = 60;
       if(currentLevel > 5) baseRadius *= 0.5;
       let spawnCircleRadius = baseRadius / Math.sin(Math.PI / bossCount);
       let centerX = width / 2;
@@ -1219,6 +1472,25 @@
           player.currentHP += bonusHealth;
       }
     }
+    function addFriendPowerUp() {
+      if (!player) return;
+      
+      const key = "friend"; // Ключ для эффекта Friend в объекте activePowerUps
+      // Используем длительность, заданную в словаре powerUpDurations (или 40000 мс по умолчанию)
+      const friendDuration = powerUpDurations["Friend"] || 40000;
+      
+      // Если эффекта ещё нет (или его длительность равна 0)
+      if (player.activePowerUps[key].duration <= 0) {
+        player.activePowerUps[key].duration = friendDuration;
+        player.activePowerUps[key].stacks = 1;
+      } else {
+        // Если эффект уже активен – увеличиваем длительность и число стэков
+        player.activePowerUps[key].duration += friendDuration;
+        player.activePowerUps[key].stacks += 1;
+      }
+      
+      console.log(`Friend power-up applied. Current stacks: ${player.activePowerUps[key].stacks}`);
+    }
 
     // =================== Power‑Up Mapping ===================
     // This mapping ensures that "Double Shot" becomes the property "doubleShot" etc.
@@ -1241,7 +1513,8 @@
       "Scatter Shot": "scatterShot",
       "Health Boost": "healthBoost",          // *** NEW: временное увеличение здоровья (увеличивает maxHP на +20) ***
       "Restore Health": "healthRestore",       // *** NEW: мгновенное Restore Health
-      "Magnet": "scoreMagnet"            // *** NEW: притягивает коллекционные объекты (25с)
+      "Magnet": "scoreMagnet",            // *** NEW: притягивает коллекционные объекты (25с)
+      "Friend": "friend" 
     };
 
     // =================== Temporary Power‑Up Pool & Durations ===================
@@ -1250,7 +1523,7 @@
       "Damage Boost", "Piercing", "Homing", "Bomb", "Freeze Blast",
       "Reflective", "Life Steal", "EMP Blast", "Critical Strike", "Overcharge",
       "Scatter Shot",
-      "Health Boost", "Restore Health", "Magnet"  // *** NEW: добавленные варианты
+      "Health Boost", "Restore Health", "Magnet", "Friend"  // *** NEW: добавленные варианты
     ];
     const powerUpDurations = {
       "Reflective": 10000, // 10 секунд для Reflective
@@ -1259,7 +1532,9 @@
       "Shield": 25000,
       "EMP Blast": 40000,
       "Health Boost": 25000,         // *** NEW: 25 секунд
-      "Magnet": 25000          // *** NEW: 25 секунд
+      "Magnet": 25000,          // *** NEW: 25 секунд
+      "Friend": 40000
+
       // Для "Restore Health" временная длительность не нужна (эффект мгновенный)
     };
 
@@ -1308,31 +1583,43 @@
     // =================== Функция применения усиления ===================
     function applyPowerUp(choice) {
       // *** NEW: При выборе "Restore Health" – мгновенное восстановление 30 HP (учитывая текущий maxHP) ***
+      const key = powerUpMap[choice];
       if (choice === "Restore Health") {
+          // Пример мгновенного эффекта
           player.currentHP = Math.min(player.maxHP, player.currentHP + 30);
+          powerMeter = 0;
+          resumeGame();
+          return;
       } else if (choice === "Health Boost") {
           // Изменено: теперь Health Boost даёт бонус +50 к maxHP и +50 к текущему здоровью
           let bonusHealth = 50;
-          if (player.activePowerUps.healthBoost.duration <= 0) {
-              player.activePowerUps.healthBoost.duration = powerUpDurations["Health Boost"] || 25000;
-              player.activePowerUps.healthBoost.stacks = 1;
-              player.activePowerUps.healthBoost.bonus = bonusHealth;
-          } else {
-              player.activePowerUps.healthBoost.duration += powerUpDurations["Health Boost"] || 25000;
-              player.activePowerUps.healthBoost.stacks += 1;
-              player.activePowerUps.healthBoost.bonus += bonusHealth;
-          }
-          player.maxHP += bonusHealth;
-          player.currentHP += bonusHealth;
-      } else {
-        const key = powerUpMap[choice];
-        if (key && player) {
-          const durationToAdd = powerUpDurations[choice] || 30000;
+          const timePerStack = powerUpDurations[choice] || 30000;
           if (player.activePowerUps[key].duration <= 0) {
-            player.activePowerUps[key] = { duration: durationToAdd, stacks: 1 };
+            // если эффекта не было
+            player.activePowerUps[key].duration = timePerStack;
+            player.activePowerUps[key].bonus = 50; // например, +50 к макс.хп
           } else {
-            player.activePowerUps[key].duration += durationToAdd;
-            player.activePowerUps[key].stacks += 1;
+            // если эффект активен
+            player.activePowerUps[key].duration += timePerStack;
+            // бонус накапливаем, если хотите, чтобы каждый стэк HealthBoost ещё и +50 HP давал
+            player.activePowerUps[key].bonus += 50; 
+          }
+          // сразу же увеличим HP игрока
+          player.maxHP += 50;
+          player.currentHP += 50;
+          powerMeter = 0;
+          resumeGame();
+          return;
+      } else {
+        if (key && player) {
+          const timePerStack = powerUpDurations[choice] || 30000;
+
+          // если эффект не активен (duration ≤ 0)
+          if (player.activePowerUps[key].duration <= 0) {
+            player.activePowerUps[key].duration = timePerStack;
+          } else {
+            // увеличиваем время
+            player.activePowerUps[key].duration += timePerStack;
           }
         }
       }
@@ -1466,19 +1753,21 @@
     }
     function mainMenu() {
       gameState = "menu";
-      document.getElementById("overlay").innerHTML = `<h1>Neon Nexus: Ultimate Gauntlet</h1>
-      <p id="overlayText">Move with WASD, aim with your mouse (or use on‑screen joysticks on mobile), and auto‑fire is enabled.<br>
+      document.getElementById("overlay").innerHTML = `<h1 class="cyan_color" >Neon Nexus: Ultimate Gauntlet</h1>
+      <p id="overlayText">Move with WASD, aim with your mouse (or use on‑screen joysticks on mobile),</br> and auto‑fire is enabled.<br>
          Fill your power meter by defeating enemies and choose temporary power‑ups.<br>
          Survive waves and defeat bosses to earn permanent upgrades!</p>
-      <p id="startHint">${isMobile ? "Tap anywhere" : "Press SPACE"} to begin</p>`;
+      <p id="startHint">${isMobile ? "Tap anywhere" : "Press SPACE"} to begin</p>
+      <p class="cyan_color" >The game was made by the developers</br>of the game "Fearful Obscured Grounds"</p>`;
       document.getElementById("overlay").classList.remove("hidden");
     }
     function showGameOver() {
       gameState = "gameover";
       const overlay = document.getElementById("overlay");
-      overlay.innerHTML = `<h1>Game Over</h1>
+      overlay.innerHTML = `<h1 class="cyan_color" >Game Over</h1>
         <p>Your Score: ${Math.floor(score)}</p>
-        <p>${isMobile ? "Tap anywhere" : "Press SPACE"} to restart</p>`;
+        <p>${isMobile ? "Tap anywhere" : "Press SPACE"} to restart</p>
+        <p class="cyan_color" >The game was made by the developers</br> of the game "Fearful Obscured Grounds"</p>`;
       overlay.classList.remove("hidden");
     }
 
@@ -1509,7 +1798,7 @@
             bosses.push(new Boss());
           } else {
             // Вычисляем базовый радиус, который уже учитывает уменьшение при currentLevel > 5
-            let baseRadius = 60 * scaleFactor;
+            let baseRadius = 60;
             if (currentLevel > 5) baseRadius *= 0.5;
             // Для равномерного расположения вычисляем радиус окружности так,
             // чтобы расстояние между центрами соседних боссов было равно 2 * baseRadius.
@@ -1544,9 +1833,8 @@
         fireCooldown -= deltaTime;
         if (fireCooldown <= 0) {
           fireCooldown = effectiveFireRate;
-          const bulletOffset = player.radius;
-          const bx = player.x + Math.cos(player.angle) * bulletOffset;
-          const by = player.y + Math.sin(player.angle) * bulletOffset;
+          const bx = player.x + Math.cos(player.angle) * 20;
+          const by = player.y + Math.sin(player.angle) * 20;
           // Вычисляем коэффициент урона: damageBoost увеличивает урон на +1 за каждый стэк
           let dmgFactor = 1;
           if (player.activePowerUps.damageBoost.duration > 0) {
@@ -1609,7 +1897,7 @@
                 b.lifeSteal = true;
               }
               if (player.activePowerUps.overcharge.duration > 0) {
-                  b.speed *= ((1 + 0.5 * player.activePowerUps.overcharge.stacks) * scaleFactor);
+                  b.speed *= (1 + 0.5 * player.activePowerUps.overcharge.stacks);
               }
               newBullets.push(b);
             }
@@ -1644,7 +1932,7 @@
               b.lifeSteal = true;
             }
             if (player.activePowerUps.overcharge.duration > 0) {
-                b.speed *= ((1 + 0.5 * player.activePowerUps.overcharge.stacks) * scaleFactor);
+                b.speed *= (1 + 0.5 * player.activePowerUps.overcharge.stacks);
             }
             newBullets.push(b);
           }
@@ -1739,7 +2027,7 @@
           if(circleCollision(enemies[i], b)) {
             // Если пуля с бомбой – наносим урон всем врагам в радиусе
             if(b.bomb) {
-              const bombRadius = 80 * scaleFactor;
+              const bombRadius = 80;
               for(let k = enemies.length - 1; k >= 0; k--){
                 const dx = enemies[k].x - b.x;
                 const dy = enemies[k].y - b.y;
@@ -1900,6 +2188,30 @@
           damageTexts.splice(i, 1);
         }
       }
+      // *** Обновление объектов Friend на основе эффекта "Friend" ***
+      if (player && player.activePowerUps && player.activePowerUps.friend) {
+        let friendStacks = player.activePowerUps.friend.stacks;
+        // Если стэков 1 – создаём 1 друга, если стэков 2 или больше – 2 друга
+        let desiredFriendCount = 0;
+        if (friendStacks >= 2) {
+          desiredFriendCount = 2;
+        } else if (friendStacks === 1) {
+          desiredFriendCount = 1;
+        }
+        while (friends.length < desiredFriendCount) {
+          if (desiredFriendCount === 1) {
+            friends.push(new Friend(Math.PI / 2));
+          } else if (desiredFriendCount === 2) {
+            if (friends.length === 0) friends.push(new Friend(Math.PI / 2));
+            else if (friends.length === 1) friends.push(new Friend(-Math.PI / 2));
+          }
+        }
+        while (friends.length > desiredFriendCount) {
+          friends.pop();
+        }
+        friends.forEach(friend => friend.update(deltaTime));
+      }
+
       enemies = enemies.filter(enemy => !enemy.dead);
       bullets = bullets.filter(bullet => !bullet.dead);
     }
@@ -2037,6 +2349,8 @@
     function draw() {
       getCurrentBiome().drawBackground();
       collectibles.forEach(c => c.draw());
+      // *** NEW: Отрисовка объектов Friend ***
+      friends.forEach(friend => friend.draw());
       if(player) player.draw();
       bullets.forEach(b => b.draw());
       enemies.forEach(e => e.draw());
@@ -2130,7 +2444,7 @@
       permanentUpgrades.damage = 1;
       permanentUpgrades.speed = 1;
       permanentUpgrades.fireRate = 1;
-      // permanentUpgrades.health оставляем как есть (может быть уже > 0)
+      permanentUpgrades.health = 0;
       enemySpawnTimer = 0;
       fireCooldown = 0;
       powerMeter = 0;
@@ -2140,6 +2454,8 @@
       collectibles.length = 0;
       particles.length = 0;
       damageTexts = []; // сброс отображаемых чисел урона
+      // *** NEW: Очистка объектов Friend при старте игры ***
+      friends.length = 0;
       player = new Player(width/2, height/2);
       player.maxHP = 100 + permanentUpgrades.health;  // *** NEW: учитываем перманентное здоровье
       player.currentHP = player.maxHP;
