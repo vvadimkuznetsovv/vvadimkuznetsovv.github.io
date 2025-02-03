@@ -289,15 +289,16 @@
       // ************************************
       /*
       if(e.key.toLowerCase() === "p") {
-        addFriendPowerUp();
         spawnTwoBosses();
-        givePlayerMagnetEffect();
       }
       if(e.key.toLowerCase() === "n") {
         nextLevel();
       }
       if(e.key.toLowerCase() === "m") {
         showPowerUpMenu();
+      }
+      if(e.key.toLowerCase() === "k") {
+        givePlayerMagnetEffect();
       }
       */
     });
@@ -1393,9 +1394,49 @@
         // Отрисовка полосы HP босса.
         // Если босс один – стандартное положение (y = 20).
         // Если боссов несколько – для босса с индексом i полоса смещается на i*30 пикселей вниз.
+
+        // Отрисовка полосы HP босса
+        // Получаем индекс босса в массиве bosses
+        let index = bosses.indexOf(this);
+        let barWidth, barHeight, barX, barY;
+        barHeight = 20;        // высота полосы (в пикселях)
+        const spacing = 47;    // вертикальное расстояние между полосами
+        const gap = 10;        // горизонтальный зазор между столбцами
+
+        // Если боссов 5 или больше – делим на два столбца
+        if (bosses.length >= 5) {
+          barWidth = 300 / 2; // ширина полосы уменьшается вдвое
+          if (index < 4) {
+            // Для босса с индексами 0–3 – левый столбец
+            barX = width / 2 - (barWidth + gap);
+            barY = 20 + index * spacing;
+          } else {
+            // Для босса с индексами 4–7 – правый столбец
+            barX = width / 2 + gap;
+            barY = 20 + (index - 4) * spacing;
+          }
+        } else {
+          // Если боссов 4 или меньше – рисуем по центру
+          barWidth = 300;
+          barX = width / 2 - barWidth / 2;
+          barY = 20 + index * spacing;
+        }
+        // Отрисовка фона полосы
+        ctx.fillStyle = "#222";
+        ctx.fillRect(barX, barY * uiScale, barWidth * uiScale, barHeight * uiScale);
+        // Отрисовка заполненной части (с учетом оставшегося здоровья)
+        ctx.fillStyle = bossColor;
+        const hpWidth = barWidth * (this.hp / this.maxHP);
+        ctx.fillRect(barX, barY * uiScale, hpWidth * uiScale, barHeight * uiScale);
+        // Рамка полосы
+        ctx.strokeStyle = "#fff";
+        ctx.strokeRect(barX, barY * uiScale, barWidth * uiScale, barHeight * uiScale);
+        
+        /*
         let index = bosses.indexOf(this);
         const barWidth = 300, barHeight = 20;
         let barY = 20 + index * 47;
+        
         ctx.fillStyle = "#222";
         ctx.fillRect(width / 2 - (barWidth * uiScale) / 2, barY * uiScale, barWidth * uiScale, barHeight * uiScale);
         ctx.fillStyle = bossColor;
@@ -1404,11 +1445,23 @@
         ctx.strokeStyle = "#fff";
         ctx.strokeRect(width / 2 - (barWidth * uiScale) / 2, barY * uiScale, barWidth * uiScale, barHeight * uiScale);
         
+        
         ctx.save();
         ctx.fillStyle = "#fff";
         ctx.font = (18 * uiScale) + "px Arial";
         ctx.textAlign = "center";
         ctx.fillText(this.tier + " Boss", width / 2, (barY - 5) * uiScale);
+        ctx.restore();
+        */
+        // Отрисовка имени босса над полосой здоровья.
+        // Вычисляем горизонтальный центр полосы:
+        const nameX = barX * uiScale + barWidth * uiScale / 2;
+        const nameY = barY * uiScale - 5; // имя немного выше полосы
+        ctx.save();
+        ctx.fillStyle = "#fff";
+        ctx.font = (18 * uiScale) + "px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(this.tier + " Boss", nameX, nameY);
         ctx.restore();
       }
     }
@@ -1533,36 +1586,52 @@
      **  BUTTON P: SPAWN 2 BOSSES (LEVEL 7)    **
      ******************************************/
     function spawnTwoBosses() {
-      if(gameState !== "playing") return;
-      let bossCount = 2;  // как для 7 уровня
-      let baseRadius = 60 * scaleFactor;
-      if(currentLevel > 5) baseRadius *= 0.5;
-      let spawnCircleRadius = baseRadius / Math.sin(Math.PI / bossCount);
-      let centerX = width / 2;
-      let centerY = 100;
-      for (let i = 0; i < bossCount; i++) {
-         let angle = (2 * Math.PI * i) / bossCount;
-         let bossX = centerX + spawnCircleRadius * Math.cos(angle);
-         let bossY = centerY + spawnCircleRadius * Math.sin(angle);
-         bosses.push(new Boss(bossX, bossY));
+      let bossCount = Math.pow(2, Math.floor((currentLevel - 1) / 5));
+      bossCount = Math.min(bossCount, 8);
+      if(bossCount>8)
+      {
+        bossCount=8;
+      }
+          
+      // Если один босс – стандартный спавн
+      if (bossCount === 1) {
+        bosses.push(new Boss());
+      } else {
+        // Вычисляем базовый радиус, который уже учитывает уменьшение при currentLevel > 5
+        let baseRadius = 60 * scaleFactor;
+        if (currentLevel > 5) baseRadius *= 0.5;
+        // Для равномерного расположения вычисляем радиус окружности так,
+        // чтобы расстояние между центрами соседних боссов было равно 2 * baseRadius.
+        let spawnCircleRadius = baseRadius / Math.sin(Math.PI / bossCount);
+        
+        // Центр спавна (можно изменить по желанию)
+        let centerX = width / 2;
+        let centerY = 100;
+        
+        for (let i = 0; i < bossCount; i++) {
+          let angle = (2 * Math.PI * i) / bossCount;
+          let bossX = centerX + spawnCircleRadius * Math.cos(angle);
+          let bossY = centerY + spawnCircleRadius * Math.sin(angle);
+          bosses.push(new Boss(bossX, bossY));
+        }
       }
     }
     function givePlayerMagnetEffect() {
-      if (player) {
-    
-        let bonusHealth = 50;
-          if (player.activePowerUps.healthBoost.duration <= 0) {
-              player.activePowerUps.healthBoost.duration = powerUpDurations["Health Boost"] || 25000;
-              player.activePowerUps.healthBoost.stacks = 1;
-              player.activePowerUps.healthBoost.bonus = bonusHealth;
-          } else {
-              player.activePowerUps.healthBoost.duration += powerUpDurations["Health Boost"] || 25000;
-              player.activePowerUps.healthBoost.stacks += 1;
-              player.activePowerUps.healthBoost.bonus += bonusHealth;
-          }
-          player.maxHP += bonusHealth;
-          player.currentHP += bonusHealth;
-      }
+      applyPowerUp("Damage Boost");
+      applyPowerUp("Friend");
+      applyPowerUp("Health Boost");
+      applyPowerUp("Critical Strike");
+      applyPowerUp("Freeze Blast");
+      applyPowerUp("Shield");
+      applyPowerUp("Bomb");
+      applyPowerUp("Rapid Fire");
+      /*
+      "Double Shot", "Triple Shot", "Rapid Fire", "Shield", "Speed Boost",
+      "Damage Boost", "Piercing", "Homing", "Bomb", "Freeze Blast",
+      "Reflective", "Life Steal", "EMP Blast", "Critical Strike", "Overcharge",
+      "Scatter Shot",
+      "Health Boost", "Restore Health", "Magnet", "Friend"
+      */
     }
     function addFriendPowerUp() {
       if (!player) return;
@@ -1635,6 +1704,7 @@
       gameState = "powerup";
       const overlay = document.getElementById("overlay");
       const case_to_much_bullets = (player.activePowerUps.tripleShot.stacks >= 2 || player.activePowerUps.doubleShot.stacks >= 3 || player.activePowerUps.scatterShot.stacks >= 3);
+      const case_to_much_bullets2 = (player.activePowerUps.tripleShot.stacks >= 1 && player.activePowerUps.doubleShot.stacks >= 1 || player.activePowerUps.scatterShot.stacks >= 1);
       const case_to_much_magnet = (player.activePowerUps.scoreMagnet.stacks >= 3)
       // Фильтруем pool: исключаем усиления, у которых игрок уже достиг максимума стаков
       const availablePool = powerUpPool.filter(choice => {
@@ -1643,6 +1713,7 @@
         if (choice === "Double Shot" && case_to_much_bullets) return false;
         if (choice === "Scatter Shot" && case_to_much_bullets) return false;
         if (choice === "Magnet" && case_to_much_magnet) return false;
+        if (choice === "Rapid Fire" && (case_to_much_bullets||case_to_much_bullets2)) return false;
         return true;
       });
 
@@ -1888,7 +1959,12 @@
           // Определяем количество боссов:
           // Если уровень <= 5 – один босс, а дальше удачи
           let bossCount = Math.pow(2, Math.floor((currentLevel - 1) / 5));
-          
+          bossCount = Math.min(bossCount, 8); // Ограничиваем максимум 8 боссов
+          if(bossCount>8)
+          {
+            bossCount=8;
+          }
+         
           // Если один босс – стандартный спавн
           if (bossCount === 1) {
             bosses.push(new Boss());
@@ -1987,7 +2063,12 @@
               if (player.activePowerUps.criticalStrike.duration > 0) {
                 b.critical = true;
                 if (Math.random() < 0.2 * player.activePowerUps.criticalStrike.stacks) {
-                  b.damage *= 3;
+                  if (player.activePowerUps.criticalStrike.stacks>3)
+                  {
+                    b.damage *= 3 + player.activePowerUps.criticalStrike.stacks-3;
+                  }else{
+                    b.damage *= 3;
+                  }
                 }
               }
               if (player.activePowerUps.lifeSteal.duration > 0) {
@@ -2129,7 +2210,7 @@
                 const dx = enemies[k].x - b.x;
                 const dy = enemies[k].y - b.y;
                 if(Math.hypot(dx,dy) < bombRadius) {
-                  enemies[k].hp -= b.damage;
+                  enemies[k].hp -= b.damage + player.activePowerUps.bomb.stacks;
                   const pushStrength = 8;
                   const impactAngle = Math.atan2(enemies[k].y - b.y, enemies[k].x - b.x);
                   enemies[k].x += Math.cos(impactAngle) * pushStrength;
