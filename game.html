@@ -13,6 +13,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Neon Nexus: Ultimate Gauntlet – Levels Edition (Expanded)</title>
   <style>
     :root {
@@ -162,7 +163,7 @@
       mobilePauseButton.style.display = "block";
       document.getElementById("startHint").innerHTML = "Tap anywhere to begin";
     }
-    let uiScale = isMobile ? 1.7 : 1; // Increase scale on mobile
+    let uiScale = isMobile ? 1 : 1; // Increase scale on mobile
 
     // =================== Update Scale Function ===================
     function updateScale() {
@@ -171,7 +172,7 @@
         if (window.innerWidth > window.innerHeight) {
           uiScale = 0.8;    // mobile landscape
         } else {
-          uiScale = 1.7;  // mobile portrait
+          uiScale = 0.8;  // mobile portrait
         }
       } else {
         // On desktop, always use scale 1.
