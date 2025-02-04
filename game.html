@@ -316,6 +316,9 @@
       if(gameState === "playing") pauseGame();
     });
     document.addEventListener("pointerdown", (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') {
+        return;
+      }
       if (gameState === "menu" || gameState === "gameover") {
         startGame();
       }
@@ -1941,11 +1944,35 @@
       const overlay = document.getElementById("overlay");
       overlay.innerHTML = `<h1 class="cyan_color" >Game Over</h1>
         <p>Your Score: ${Math.floor(score)}</p>
+        <p>Enter your name: <input type="text" id="playerName" placeholder="Your Name"></p>
+        <button class="button" id="submitScoreBtn">Submit Score</button>
+        <button class="button" id="scoreboardBtn">ScoreBoard</button>
         <p>${isMobile ? "Tap anywhere" : "Press SPACE"} to restart</p>
         <p class="cyan_color" >The game was made by the developers</br> of the game "Fearful Obscured Grounds"</p>`;
       overlay.classList.remove("hidden");
+
+      document.getElementById("submitScoreBtn").addEventListener("click", () => {
+        e.stopPropagation(); // предотвращает всплытие события вверх по дереву DOM
+        const name = document.getElementById("playerName").value || "Anonymous";
+        submitScore(name, Math.floor(score));
+      });
+      document.getElementById("scoreboardBtn").addEventListener("click", () => {
+        e.stopPropagation(); // предотвращает всплытие события вверх по дереву DOM
+        // Переход на страницу с таблицей результатов
+        window.location.href = "scoreboard.php";
+      });
     }
 
+    function submitScore(name, score) {
+      fetch("submit_score.php", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "name=" + encodeURIComponent(name) + "&score=" + encodeURIComponent(score)
+      })
+      .then(response => response.text())
+      .then(text => console.log("Submit result: " + text))
+      .catch(err => console.error(err));
+    }
     // =================== Main Game Loop ===================
     let lastTime = performance.now();
     function gameLoop(timestamp) {
