@@ -299,8 +299,8 @@
       }
       if(e.key.toLowerCase() === "k") {
         givePlayerMagnetEffect();
-      }
-      */
+      }*/
+      
     });
     window.addEventListener("keyup", (e) => {
       keys[e.key.toLowerCase()] = false;
@@ -1405,7 +1405,7 @@
 
         // Если боссов 5 или больше – делим на два столбца
         if (bosses.length >= 5) {
-          barWidth = 300 / 2; // ширина полосы уменьшается вдвое
+          barWidth = (300 / 2) *scaleFactor; // ширина полосы уменьшается вдвое
           if (index < 4) {
             // Для босса с индексами 0–3 – левый столбец
             barX = width / 2 - (barWidth + gap);
@@ -1418,7 +1418,7 @@
         } else {
           // Если боссов 4 или меньше – рисуем по центру
           barWidth = 300;
-          barX = width / 2 - barWidth / 2;
+          barX = width / 2 - barWidth * uiScale / 2;
           barY = 20 + index * spacing;
         }
         // Отрисовка фона полосы
@@ -1444,7 +1444,23 @@
         ctx.fillRect(width / 2 - (barWidth * uiScale) / 2, barY * uiScale, hpWidth * uiScale, barHeight * uiScale);
         ctx.strokeStyle = "#fff";
         ctx.strokeRect(width / 2 - (barWidth * uiScale) / 2, barY * uiScale, barWidth * uiScale, barHeight * uiScale);
-        
+
+
+
+
+        // Отрисовка имени босса над полосой здоровья.
+        // Вычисляем горизонтальный центр полосы:
+        let resultWidth = (bosses.length >= 5) ? barWidth : (width / 2)*uiScale;
+        const nameX = barX * uiScale + resultWidth;
+        //const nameX = barX * uiScale + resultWidth * uiScale / 2;
+        const nameY = (barY - 5) * uiScale; // имя немного выше полосы
+        ctx.save();
+        ctx.fillStyle = "#fff";
+        ctx.font = (18 * uiScale) + "px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(this.tier + " Boss", nameX, nameY);
+        ctx.restore();
+        */
         
         ctx.save();
         ctx.fillStyle = "#fff";
@@ -1452,17 +1468,8 @@
         ctx.textAlign = "center";
         ctx.fillText(this.tier + " Boss", width / 2, (barY - 5) * uiScale);
         ctx.restore();
-        */
-        // Отрисовка имени босса над полосой здоровья.
-        // Вычисляем горизонтальный центр полосы:
-        const nameX = barX * uiScale + barWidth * uiScale / 2;
-        const nameY = barY * uiScale - 5; // имя немного выше полосы
-        ctx.save();
-        ctx.fillStyle = "#fff";
-        ctx.font = (18 * uiScale) + "px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText(this.tier + " Boss", nameX, nameY);
-        ctx.restore();
+        
+        
       }
     }
 
@@ -1592,6 +1599,7 @@
       {
         bossCount=8;
       }
+      bossCount=8; // -----------------   Временно
           
       // Если один босс – стандартный спавн
       if (bossCount === 1) {
