@@ -2189,7 +2189,7 @@
               b.lifeSteal = true;
             }
             if (player.activePowerUps.overcharge.duration > 0) {
-                b.speed *= ((1 + 0.5 * player.activePowerUps.overcharge.stacks) * scaleFactor);
+                b.speed *= (1 + 0.5 * player.activePowerUps.overcharge.stacks);
             }
             newBullets.push(b);
           }
