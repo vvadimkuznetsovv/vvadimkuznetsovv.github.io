@@ -287,7 +287,7 @@
       // ************************************
       // **  BUTTON P: SPAWN 2 BOSSES (LEVEL 7)  **
       // ************************************
-      /*
+      /**/
       if(e.key.toLowerCase() === "p") {
         spawnTwoBosses();
       }
@@ -299,7 +299,7 @@
       }
       if(e.key.toLowerCase() === "k") {
         givePlayerMagnetEffect();
-      }*/
+      }
       
     });
     window.addEventListener("keyup", (e) => {
@@ -674,7 +674,7 @@
       constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.radius = 15  * scaleFactor;
+        this.radius = 15 * scaleFactor;
         this.maxHP = 100;
         this.currentHP = 100;
         this.baseSpeed = 3 * scaleFactor;
@@ -719,7 +719,8 @@
           // *** NEW: магнит очков (притягивает коллекционные объекты) ***
           scoreMagnet: { duration: 0, stacks: 0 },
           // *** NEW: Friend power‑up – при получении появляется друг рядом с игроком ***
-          friend: { duration: 0, stacks: 0 }
+          friend: { duration: 0, stacks: 0 },
+          neonOverdrive: { duration: 0, stacks: 0 }, // Добавлено
         };
         // Additional status effects (негативные эффекты)
         this.frozenTime = 0;
@@ -1565,6 +1566,33 @@
       const dy = a.y - b.y;
       return Math.hypot(dx, dy) < a.radius + b.radius;
     }
+    // Функция для вычисления расстояния от точки (px,py) до линии, задаваемой двумя точками (x1,y1) и (x2,y2)
+    function distancePointToLine(px, py, x1, y1, x2, y2) {
+      let A = px - x1;
+      let B = py - y1;
+      let C = x2 - x1;
+      let D = y2 - y1;
+
+      let dot = A * C + B * D;
+      let len_sq = C * C + D * D;
+      let param = (len_sq !== 0) ? (dot / len_sq) : -1;
+
+      let xx, yy;
+      if (param < 0) {
+        xx = x1;
+        yy = y1;
+      } else if (param > 1) {
+        xx = x2;
+        yy = y2;
+      } else {
+        xx = x1 + param * C;
+        yy = y1 + param * D;
+      }
+      let dx = px - xx;
+      let dy = py - yy;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
 
     // =================== Spawning Functions ===================
     function spawnEnemy() {
@@ -1686,7 +1714,8 @@
       "Health Boost": "healthBoost",          // *** NEW: временное увеличение здоровья (увеличивает maxHP на +20) ***
       "Restore Health": "healthRestore",       // *** NEW: мгновенное Restore Health
       "Magnet": "scoreMagnet",            // *** NEW: притягивает коллекционные объекты (25с)
-      "Friend": "friend" 
+      "Friend": "friend",
+      "Neon Overdrive": "neonOverdrive"   // ← новая запись
     };
 
     // =================== Temporary Power‑Up Pool & Durations ===================
@@ -1695,7 +1724,7 @@
       "Damage Boost", "Piercing", "Homing", "Bomb", "Freeze Blast",
       "Reflective", "Life Steal", "EMP Blast", "Critical Strike", "Overcharge",
       "Scatter Shot",
-      "Health Boost", "Restore Health", "Magnet", "Friend"  // *** NEW: добавленные варианты
+      "Health Boost", "Restore Health", "Magnet", "Friend", "Neon Overdrive"
     ];
     const powerUpDurations = {
       "Reflective": 10000, // 10 секунд для Reflective
@@ -1705,8 +1734,8 @@
       "EMP Blast": 40000,
       "Health Boost": 25000,         // *** NEW: 25 секунд
       "Magnet": 25000,          // *** NEW: 25 секунд
-      "Friend": 40000
-
+      "Friend": 40000,
+      "Neon Overdrive": 10000   
       // Для "Restore Health" временная длительность не нужна (эффект мгновенный)
     };
 
@@ -2051,7 +2080,7 @@
         player.empSlowed -= deltaTime;
       }
       // Изменённая логика автострельбы с учётом стэков усилений
-      if (player && player.shootingDisabled <= 0) {
+      if (player && player.shootingDisabled <= 0&& !(player.activePowerUps.neonOverdrive && player.activePowerUps.neonOverdrive.duration > 0)) {
         fireCooldown -= deltaTime;
         if (fireCooldown <= 0) {
           fireCooldown = effectiveFireRate;
@@ -2125,7 +2154,7 @@
                 b.lifeSteal = true;
               }
               if (player.activePowerUps.overcharge.duration > 0) {
-                  b.speed *= ((1 + 0.5 * player.activePowerUps.overcharge.stacks) * scaleFactor);
+                  b.speed *= (1 + 0.5 * player.activePowerUps.overcharge.stacks);
               }
               newBullets.push(b);
             }
@@ -2176,6 +2205,83 @@
           b.dead = true;
         }
       }
+      // Если активен Neon Overdrive – стреляем лазером вместо обычных пуль
+      if (player.activePowerUps.neonOverdrive.duration > 0) {
+        // Определяем начало луча с учётом scaleFactor:
+        let beamStartX = player.x + Math.cos(player.angle) * (player.radius * scaleFactor);
+        let beamStartY = player.y + Math.sin(player.angle) * (player.radius * scaleFactor);
+        
+        // Вычисляем конец луча
+        let beamLength = Math.sqrt(width * width + height * height) * scaleFactor;
+        let beamEndX = beamStartX + Math.cos(player.angle) * beamLength;
+        let beamEndY = beamStartY + Math.sin(player.angle) * beamLength;
+        
+        // Урон в секунду с учётом улучшений
+        let beamDamage = 10 * permanentUpgrades.damage * player.activePowerUps.neonOverdrive.stacks;
+        
+        // Проверка коллизий с врагами
+        enemies.forEach(enemy => {
+            let dist = distancePointToLine(enemy.x, enemy.y, beamStartX, beamStartY, beamEndX, beamEndY);
+            if (dist < enemy.radius) {
+                enemy.hp -= beamDamage;
+                // Эффект попадания
+                if(enemy.hp <= 0) {
+                  if(enemy.type === "exploder") {
+                    // When an exploder dies, it explodes—damaging nearby enemies.
+                    for(let k=0; k<enemies.length; k++){
+                      const dx = enemy.x - enemy.x;
+                      const dy = enemy.y - enemy.y;
+                      if(Math.hypot(dx,dy) < 50) {
+                        enemy.hp -= 5;
+                      }
+                    }
+                  }
+                  if(enemy.type === "splitter") {
+                    // Splitter splits into two basic enemies when killed.
+                    enemies.push(new Enemy(enemy.x, enemy.y, "basic"));
+                    enemies.push(new Enemy(enemy.x, enemy.y, "basic"));
+                  }
+                  for(let k=0; k<20; k++){
+                    particles.push(new Particle(enemy.x, enemy.y, enemy.color));
+                  }
+                  spawnCollectible(enemy.x, enemy.y);
+                  score += (enemy.type==="elite")?200:100;
+                  enemy.dead = true;
+                }
+                else{
+                  for (let blood = 0; blood < 8; blood++) {
+                    particles.push(new Particle(enemy.x, enemy.y, enemy.color));
+                  }
+                }
+            }
+        });
+        
+        // Проверка коллизий с боссами
+        bosses.forEach(boss => {
+            let dist = distancePointToLine(boss.x, boss.y, beamStartX, beamStartY, beamEndX, beamEndY);
+            if (dist < boss.radius) {
+                boss.hp -= beamDamage;
+                for (let blood = 0; blood < 8; blood++) {
+                  particles.push(new Particle(boss.x, boss.y, "#f00"));
+                }
+            }
+        });
+
+        // *** Новый блок: уничтожение пуль врагов при столкновении с лучом ***
+        bullets.forEach(b => {
+            // Рассматриваем только пули, выпущенные врагами или боссами
+            if (b.fromEnemy || b.fromBoss) {
+                let dist = distancePointToLine(b.x, b.y, beamStartX, beamStartY, beamEndX, beamEndY);
+                // Если использовать для отрисовки луча lineWidth = 8*scaleFactor, то его "половина" равна 4*scaleFactor.
+                // Добавляем также радиус пули для более корректного расчёта.
+                if (dist < (b.radius + 4 * scaleFactor)) {
+                    b.dead = true;
+                    // Можно добавить эффекты уничтожения пули (например, вспышку или частицы)
+                }
+            }
+        });
+      }
+
       // Спавн врагов (если не идёт бой с боссом)
       if(bosses.length === 0) {
         enemySpawnTimer += deltaTime;
@@ -2610,6 +2716,25 @@
         ctx.fillRect(10 * uiScale,80 * uiScale,(120*(player.currentHP/player.maxHP)) * uiScale,15 * uiScale);
         ctx.strokeStyle = "#fff";
         ctx.strokeRect(10 * uiScale,80 * uiScale,120 * uiScale,15 * uiScale);
+      }
+      if (player && player.activePowerUps.neonOverdrive && player.activePowerUps.neonOverdrive.duration > 0) {
+        let beamStartX = player.x + Math.cos(player.angle) * (player.radius * scaleFactor);
+        let beamStartY = player.y + Math.sin(player.angle) * (player.radius * scaleFactor);
+        let beamLength = Math.sqrt(width * width + height * height) * scaleFactor;
+        let beamEndX = beamStartX + Math.cos(player.angle) * beamLength;
+        let beamEndY = beamStartY + Math.sin(player.angle) * beamLength;
+        
+        ctx.save();
+        // Настройка стиля для неонового эффекта
+        ctx.lineWidth = 8 * scaleFactor;
+        ctx.strokeStyle = "rgba(0,255,255,0.7)";  // неоновый цвет (циановый)
+        ctx.shadowColor = "rgba(0,255,255,0.9)";
+        ctx.shadowBlur = 20 * scaleFactor;;
+        ctx.beginPath();
+        ctx.moveTo(beamStartX, beamStartY);
+        ctx.lineTo(beamEndX, beamEndY);
+        ctx.stroke();
+        ctx.restore();
       }
       // Отрисовка перманентных бонусов в правом верхнем углу
       ctx.textAlign = "right";  // Выравнивание текста по правому краю
