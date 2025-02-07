@@ -287,7 +287,7 @@
       // ************************************
       // **  BUTTON P: SPAWN 2 BOSSES (LEVEL 7)  **
       // ************************************
-      /**/
+      /*
       if(e.key.toLowerCase() === "p") {
         spawnTwoBosses();
       }
@@ -300,7 +300,7 @@
       if(e.key.toLowerCase() === "k") {
         givePlayerMagnetEffect();
       }
-      
+      */
     });
     window.addEventListener("keyup", (e) => {
       keys[e.key.toLowerCase()] = false;
@@ -2154,7 +2154,7 @@
                 b.lifeSteal = true;
               }
               if (player.activePowerUps.overcharge.duration > 0) {
-                  b.speed *= (1 + 0.5 * player.activePowerUps.overcharge.stacks);
+                  b.speed *= (1 + player.activePowerUps.overcharge.stacks);
               }
               newBullets.push(b);
             }
@@ -2189,7 +2189,7 @@
               b.lifeSteal = true;
             }
             if (player.activePowerUps.overcharge.duration > 0) {
-                b.speed *= (1 + 0.5 * player.activePowerUps.overcharge.stacks);
+                b.speed *= (1 + player.activePowerUps.overcharge.stacks);
             }
             newBullets.push(b);
           }
