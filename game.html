@@ -2906,9 +2906,8 @@
     // progress bar
     function drawLevelProgressBar() {
       ctx.save();
-      if (isMobile) ctx.globalAlpha = 0.7;
-
       if (isMobile) {
+        ctx.globalAlpha = 0.7;
         if (window.innerWidth > window.innerHeight) {
           // Mobile Landscape → horizontal progress bar at the bottom
           const barWidth = 300 * uiScale;
@@ -3073,7 +3072,7 @@
 
       // HUD 
       ctx.save();              // сохраняем текущее состояние контекста
-      if (isMobile) ctx.globalAlpha = 0.5;
+      if (isMobile) ctx.globalAlpha = 0.7;
 
       ctx.fillStyle = "#fff";
       ctx.font = (20 * uiScale) + "px Arial";
