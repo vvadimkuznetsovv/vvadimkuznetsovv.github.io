@@ -199,7 +199,7 @@
     // Глобальная переменная для таймера спавна специальных collectible
     let specialCollectibleSpawnTimer = 0;
     function spawnSpecialCollectibleRandom() {
-      // Проверяем условия: уровень >= 10 и наличие босса
+      // Проверяем условия: уровень >= 5 и наличие босса
       if (currentLevel < 4 || bosses.length === 0) return;
       
       const maxStage = ((currentLevel - 1) % 5) + 1;
@@ -2683,7 +2683,7 @@
         }
       }
       // Спавним специальный collectible в случайном месте, если условия выполнены
-      if (currentLevel >= 10 && bosses.length > 0) {
+      if (currentLevel >= 5 && bosses.length > 0) {
         specialCollectibleSpawnTimer += deltaTime;
         // Каждые 5000 мс (5 секунд) пробуем заспавнить специальный объект
         if (specialCollectibleSpawnTimer >= 1000) {
