@@ -786,6 +786,7 @@
             }
           } else {
             // Mobile: only update glitch e.g. once every 10 frames
+            const fontSize = 44 * scaleFactor;
             glitchFrameCounter++;
             if (glitchFrameCounter % 10 === 0) {
               for (let i = 0; i < 100; i++) {
