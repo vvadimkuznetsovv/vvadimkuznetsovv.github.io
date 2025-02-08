@@ -2906,6 +2906,7 @@
     // progress bar
     function drawLevelProgressBar() {
       ctx.save();
+      if (isMobile) ctx.globalAlpha = 0.7;
 
       if (isMobile) {
         if (window.innerWidth > window.innerHeight) {
@@ -3141,7 +3142,7 @@
       ctx.restore(); 
       // === Отрисовка комбо-счетчика
       ctx.save();
-      if (isMobile) ctx.globalAlpha = 0.5;
+      if (isMobile) ctx.globalAlpha = 0.7;
       
       ctx.textBaseline = "middle"; // выравниваем по вертикальному центру
       let comboColor = "#fff";
