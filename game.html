@@ -210,7 +210,13 @@
     const BIOME_UPDATE_INTERVAL = 1000; 
     let lastBiomeUpdateTime = 0;
     let cachedBiomeImage = null;  
-    
+
+    // Создаём offscreen canvas для кеширования фона
+    let bgCanvas = document.createElement('canvas');
+    bgCanvas.width = width;
+    bgCanvas.height = height;
+    let bgCtx = bgCanvas.getContext('2d');
+
     // Глобальная переменная для таймера спавна специальных collectible
     let specialCollectibleSpawnTimer = 0;
     function spawnSpecialCollectibleRandom() {
@@ -529,363 +535,526 @@
       setupJoystick(leftJoystickElem, leftJoystick);
       setupJoystick(rightJoystickElem, rightJoystick);
     }
+    // =================== Drawing Enemies ===================
+    // Спайковый круг – для базовых врагов
+    function drawSpikyCircle(ctx, radius, spikes, spikeFactor) {
+      const step = (Math.PI * 2) / (spikes * 2);
+      ctx.beginPath();
+      for (let i = 0; i < spikes * 2; i++) {
+        // Чередуем радиус: обычный и увеличенный на spikeFactor
+        const r = i % 2 === 0 ? radius : radius * (1 + spikeFactor);
+        const angle = i * step;
+        const x = r * Math.cos(angle);
+        const y = r * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+    
+    // Функция отрисовки многоугольника (например, для элитных врагов)
+    function drawPolygon(ctx, sides, radius) {
+      const step = (Math.PI * 2) / sides;
+      ctx.beginPath();
+      for (let i = 0; i < sides; i++) {
+        const angle = i * step;
+        const x = radius * Math.cos(angle);
+        const y = radius * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+    
+    // Функция отрисовки снежинки – для врагов типа "freeze"
+    function drawSnowflake(ctx, radius) {
+      ctx.save();
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 6; i++) {
+        const angle = (i * Math.PI) / 3;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(radius * Math.cos(angle), radius * Math.sin(angle));
+        // Добавляем небольшие "ветви"
+        let branchAngle = angle + Math.PI / 12;
+        ctx.moveTo(radius * 0.7 * Math.cos(angle), radius * 0.7 * Math.sin(angle));
+        ctx.lineTo(
+          radius * 0.9 * Math.cos(branchAngle),
+          radius * 0.9 * Math.sin(branchAngle)
+        );
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    
+    // Функция отрисовки турели – для врагов типа "shooter"
+    function drawTurret(ctx, radius) {
+      // Основа – круг
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.fill();
+      // "Ствол" – прямоугольник, направленный вправо
+      ctx.fillStyle = "#000";
+      ctx.beginPath();
+      ctx.rect(0, -radius * 0.2, radius, radius * 0.4);
+      ctx.fill();
+    }
+    
+    // Функция отрисовки эллипса – для врагов типа "parasite"
+    function drawEllipse(ctx, rx, ry) {
+      ctx.beginPath();
+      ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    // Функция отрисовки зазубренной фигуры – для врагов типа "emp"
+    function drawJaggedShape(ctx, radius) {
+      const points = 8;
+      ctx.beginPath();
+      for (let i = 0; i < points; i++) {
+        const angle = (i * Math.PI * 2) / points;
+        // Немного случайного колебания радиуса для зазубренности
+        const r = radius * (0.7 + Math.random() * 0.6);
+        const x = r * Math.cos(angle);
+        const y = r * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+    
+    // Функция отрисовки треугольника – для врагов типа "sharpshooter"
+    function drawTriangle(ctx, radius) {
+      ctx.beginPath();
+      ctx.moveTo(0, -radius);
+      ctx.lineTo(radius, radius);
+      ctx.lineTo(-radius, radius);
+      ctx.closePath();
+      ctx.fill();
+    }
+    
+    // Функция отрисовки "бомбы" – для врагов типа "exploder"
+    function drawBomb(ctx, radius) {
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.fill();
+      // Фьюз
+      ctx.beginPath();
+      ctx.moveTo(radius * 0.5, -radius * 0.5);
+      ctx.lineTo(radius * 0.8, -radius * 0.8);
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    
+    // Функция отрисовки сегментированной фигуры – для врагов типа "splitter"
+    function drawSegmentedShape(ctx, radius) {
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      // Разделительные линии
+      for (let i = 0; i < 4; i++) {
+        const angle = (i * Math.PI) / 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(radius * Math.cos(angle), radius * Math.sin(angle));
+        ctx.stroke();
+      }
+    }
+    
+    // Для боссов можно добавить функцию звёздной фигуры – например, для титула "Emperor"
+    function drawStar(ctx, outerRadius, points, insetFactor) {
+      const step = Math.PI / points;
+      ctx.beginPath();
+      for (let i = 0; i < 2 * points; i++) {
+        const r = i % 2 === 0 ? outerRadius : outerRadius * insetFactor;
+        const angle = i * step;
+        const x = r * Math.cos(angle);
+        const y = r * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
 
     // =================== Biomes / Backgrounds ===================
    
     const biomes = [
       {
         name: "Neon Arena",
-        drawBackground: function() {
-          ctx.fillStyle = "#111";
-          ctx.fillRect(0,0,width,height);
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          context.fillStyle = "#111";
+          context.fillRect(0,0,width,height);
           const gridSize = 50;
-          ctx.strokeStyle = "#222";
-          ctx.lineWidth = 1 * scaleFactor;
+          context.strokeStyle = "#222";
+          context.lineWidth = 1 * scaleFactor;
           for(let x = 0; x < width; x += actualGridSize){
-            ctx.beginPath();
-            ctx.moveTo(x,0);
-            ctx.lineTo(x,height);
-            ctx.stroke();
+            context.beginPath();
+            context.moveTo(x,0);
+            context.lineTo(x,height);
+            context.stroke();
           }
           for(let y = 0; y < height; y += actualGridSize){
-            ctx.beginPath();
-            ctx.moveTo(0,y);
-            ctx.lineTo(width,y);
-            ctx.stroke();
+            context.beginPath();
+            context.moveTo(0,y);
+            context.lineTo(width,y);
+            context.stroke();
           }
         }
       },
       {
         name: "Galactic Nebula",
-        drawBackground: function() {
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
           // Создаём эффект туманной галактики с помощью радиального градиента
-          let grad = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.max(width, height) / 2);
+          let grad = context.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.max(width, height) / 2);
           grad.addColorStop(0, "#2a2a72");   // тёмно-синий/фиолетовый
           grad.addColorStop(0.5, "#9c27b0");   // яркий пурпурный
           grad.addColorStop(1, "#0d0d0d");     // почти чёрный
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, width, height);
+          context.fillStyle = grad;
+          context.fillRect(0, 0, width, height);
           
           // Добавляем "туманные облака" – полупрозрачные круги
           for (let i = 0; i < 50; i++) {
             let x = Math.random() * width;
             let y = Math.random() * height;
             let radius = Math.random() * 50 + 20;
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, Math.PI * 2);
-            ctx.fillStyle = "rgba(156,39,176,0.1)";
-            ctx.fill();
+            context.beginPath();
+            context.arc(x, y, radius, 0, Math.PI * 2);
+            context.fillStyle = "rgba(156,39,176,0.1)";
+            context.fill();
           }
           
           // Рассыпка случайных звёзд
           for (let i = 0; i < 200; i++) {
             let x = Math.random() * width;
             let y = Math.random() * height;
-            ctx.fillStyle = "rgba(255,255,255," + (Math.random() * 0.8) + ")";
-            ctx.fillRect(x, y, 2, 2);
+            context.fillStyle = "rgba(255,255,255," + (Math.random() * 0.8) + ")";
+            context.fillRect(x, y, 2, 2);
           }
         }
       },
       {
         name: "Neon Abyss",
-        drawBackground: function() {
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
           // Радиационный градиент от темно-синего к чёрному
-          let grad = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height)/2);
+          let grad = context.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height)/2);
           grad.addColorStop(0, "#000033");
           grad.addColorStop(1, "#000");
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, width, height);
+          context.fillStyle = grad;
+          context.fillRect(0, 0, width, height);
           // Рисуем «неоновые пузыри»
           for (let i = 0; i < 50; i++) {
             let x = Math.random() * width;
             let y = Math.random() * height;
             let r = Math.random() * 30 + 10;
-            ctx.beginPath();
-            ctx.arc(x, y, r, 0, Math.PI * 2);
-            ctx.strokeStyle = "rgba(0,255,255,0.3)";
-            ctx.lineWidth = 4 * scaleFactor;
-            ctx.shadowColor = "rgba(0,255,255,0.8)";
-            ctx.shadowBlur = 15 * scaleFactor;
-            ctx.stroke();
-            ctx.shadowBlur = 0;
+            context.beginPath();
+            context.arc(x, y, r, 0, Math.PI * 2);
+            context.strokeStyle = "rgba(0,255,255,0.3)";
+            context.lineWidth = 4 * scaleFactor;
+            context.shadowColor = "rgba(0,255,255,0.8)";
+            context.shadowBlur = 15 * scaleFactor;
+            context.stroke();
+            context.shadowBlur = 0;
           }
         }
       },
       {
         name: "Pixelated Matrix",
-        drawBackground: function() {
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
           // Чёрный фон
-          ctx.fillStyle = "#000";
-          ctx.fillRect(0, 0, width, height);
+          context.fillStyle = "#000";
+          context.fillRect(0, 0, width, height);
           // Рисуем случайные «биты» в стиле матрицы
-          ctx.fillStyle = "rgba(0,255,0,0.2)";
+          context.fillStyle = "rgba(0,255,0,0.2)";
           const fontSize = 16 * scaleFactor;
-          ctx.font = fontSize + "px monospace";
+          context.font = fontSize + "px monospace";
           for (let i = 0; i < 100; i++) {
             let x = Math.random() * width;
             let y = Math.random() * height;
-            ctx.fillText(Math.random() > 0.5 ? "0" : "1", x, y);
+            context.fillText(Math.random() > 0.5 ? "0" : "1", x, y);
           }
         }
       },
       {
         name: "Retro Wave",
-        drawBackground: function() {
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
           // Градиент от пурпурного к оранжевому
-          let grad = ctx.createLinearGradient(0, 0, 0, height);
+          let grad = context.createLinearGradient(0, 0, 0, height);
           grad.addColorStop(0, "rgba(128,0,128,0.5)");
           grad.addColorStop(1, "rgba(255,140,0,0.5)");
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, width, height);
+          context.fillStyle = grad;
+          context.fillRect(0, 0, width, height);
           // Лёгкая сетка
-          ctx.strokeStyle = "rgba(255,255,255,0.1)";
-          ctx.lineWidth = 1 * scaleFactor;
+          context.strokeStyle = "rgba(255,255,255,0.1)";
+          context.lineWidth = 1 * scaleFactor;
           for (let x = 0; x < width; x += 50 * scaleFactor) {
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, height);
-            ctx.stroke();
+            context.beginPath();
+            context.moveTo(x, 0);
+            context.lineTo(x, height);
+            context.stroke();
           }
           for (let y = 0; y < height; y += 50 * scaleFactor) {
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(width, y);
-            ctx.stroke();
+            context.beginPath();
+            context.moveTo(0, y);
+            context.lineTo(width, y);
+            context.stroke();
           }
         }
       },
       {
         name: "Cyber Circuit",
-        drawBackground: function() {
-          ctx.fillStyle = "#000";
-          ctx.fillRect(0, 0, width, height);
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          context.fillStyle = "#000";
+          context.fillRect(0, 0, width, height);
           // Рисуем «схемные» линии и узлы
-          ctx.strokeStyle = "#00f";
-          ctx.lineWidth = 2 * scaleFactor;
+          context.strokeStyle = "#00f";
+          context.lineWidth = 2 * scaleFactor;
           for (let i = 0; i < 20; i++) {
             let x = Math.random() * width;
             let y = Math.random() * height;
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.lineTo(x + (Math.random() - 0.5) * 100, y + (Math.random() - 0.5) * 100);
-            ctx.stroke();
+            context.beginPath();
+            context.moveTo(x, y);
+            context.lineTo(x + (Math.random() - 0.5) * 100, y + (Math.random() - 0.5) * 100);
+            context.stroke();
           }
           for (let i = 0; i < 10; i++) {
             let x = Math.random() * width;
             let y = Math.random() * height;
-            ctx.beginPath();
-            ctx.arc(x, y, Math.random() * 20, 0, Math.PI * 2);
-            ctx.stroke();
+            context.beginPath();
+            context.arc(x, y, Math.random() * 20, 0, Math.PI * 2);
+            context.stroke();
           }
         }
       },
       {
         name: "Digital Dystopia",
-        drawBackground: function() {
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
           // Градиент тёмно-красного к чёрному
-          let grad = ctx.createLinearGradient(0, 0, width, height);
+          let grad = context.createLinearGradient(0, 0, width, height);
           grad.addColorStop(0, "#330000");
           grad.addColorStop(1, "#000");
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, width, height);
+          context.fillStyle = grad;
+          context.fillRect(0, 0, width, height);
           // Добавляем «глитч-артефакты»
           for (let i = 0; i < 40; i++) {
-            ctx.fillStyle = "rgba(0,255,0,0.1)";
+            context.fillStyle = "rgba(0,255,0,0.1)";
             let x = Math.random() * width;
             let y = Math.random() * height;
             let w = Math.random() * 80;
             let h = Math.random() * 20;
-            ctx.fillRect(x, y, w, h);
+            context.fillRect(x, y, w, h);
           }
         }
       },
       {
         name: "Holographic Grid",
-        drawBackground: function() {
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
           // Фон с затемнённым градиентом
-          let grad = ctx.createLinearGradient(0, 0, 0, height);
+          let grad = context.createLinearGradient(0, 0, 0, height);
           grad.addColorStop(0, "#111");
           grad.addColorStop(1, "#000");
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, width, height);
+          context.fillStyle = grad;
+          context.fillRect(0, 0, width, height);
           // Наложение полупрозрачной сетки
-          ctx.strokeStyle = "rgba(0,255,255,0.15)";
-          ctx.lineWidth = 1 * scaleFactor;
+          context.strokeStyle = "rgba(0,255,255,0.15)";
+          context.lineWidth = 1 * scaleFactor;
           let gridSize = 40 * scaleFactor;
           for (let x = 0; x < width; x += gridSize) {
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, height);
-            ctx.stroke();
+            context.beginPath();
+            context.moveTo(x, 0);
+            context.lineTo(x, height);
+            context.stroke();
           }
           for (let y = 0; y < height; y += gridSize) {
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(width, y);
-            ctx.stroke();
+            context.beginPath();
+            context.moveTo(0, y);
+            context.lineTo(width, y);
+            context.stroke();
           }
         }
       },
       {
         name: "Laser Lair",
-        drawBackground: function() {
-          ctx.fillStyle = "#000";
-          ctx.fillRect(0, 0, width, height);
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          context.fillStyle = "#000";
+          context.fillRect(0, 0, width, height);
           // Рисуем случайные лазерные лучи
           for (let i = 0; i < 15; i++) {
-            ctx.beginPath();
+            context.beginPath();
             let startX = Math.random() * width;
             let startY = Math.random() * height;
             let angle = Math.random() * Math.PI * 2;
             let length = Math.random() * 200 + 100;
-            ctx.moveTo(startX, startY);
-            ctx.lineTo(startX + Math.cos(angle) * length, startY + Math.sin(angle) * length);
-            ctx.strokeStyle = "rgba(255,0,0,0.5)";
-            ctx.lineWidth = 4 * scaleFactor;
-            ctx.shadowColor = "rgba(255,0,0,1)";
-            ctx.shadowBlur = 10 * scaleFactor;
-            ctx.stroke();
-            ctx.shadowBlur = 0;
+            context.moveTo(startX, startY);
+            context.lineTo(startX + Math.cos(angle) * length, startY + Math.sin(angle) * length);
+            context.strokeStyle = "rgba(255,0,0,0.5)";
+            context.lineWidth = 4 * scaleFactor;
+            context.shadowColor = "rgba(255,0,0,1)";
+            context.shadowBlur = 10 * scaleFactor;
+            context.stroke();
+            context.shadowBlur = 0;
           }
         }
       },
       {
         name: "Virtual Vortex",
-        drawBackground: function() {
-          ctx.fillStyle = "#000";
-          ctx.fillRect(0, 0, width, height);
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          context.fillStyle = "#000";
+          context.fillRect(0, 0, width, height);
           // Рисуем вихревые линии, создающие эффект воронки
           let centerX = width / 2;
           let centerY = height / 2;
           for (let i = 0; i < 30; i++) {
-            ctx.beginPath();
+            context.beginPath();
             let radius = (i / 30) * Math.max(width, height) / 2;
-            ctx.arc(centerX, centerY, radius, Math.PI * 0.5 + i * 0.2, Math.PI * 1.5 + i * 0.2);
-            ctx.strokeStyle = "rgba(0,255,255," + (0.1 + i / 300) + ")";
-            ctx.lineWidth = 3 * scaleFactor;
-            ctx.stroke();
+            context.arc(centerX, centerY, radius, Math.PI * 0.5 + i * 0.2, Math.PI * 1.5 + i * 0.2);
+            context.strokeStyle = "rgba(0,255,255," + (0.1 + i / 300) + ")";
+            context.lineWidth = 3 * scaleFactor;
+            context.stroke();
           }
         }
       },
       {
         name: "Cyber Grid",
-        drawBackground: function() {
-          const grad = ctx.createLinearGradient(0,0,width,height);
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          const grad = context.createLinearGradient(0,0,width,height);
           grad.addColorStop(0, "#001a00");
           grad.addColorStop(1, "#000");
-          ctx.fillStyle = grad;
-          ctx.fillRect(0,0,width,height);
+          context.fillStyle = grad;
+          context.fillRect(0,0,width,height);
           const gridSize = 60;
-          ctx.strokeStyle = "rgba(0,255,100,0.2)";
-          ctx.lineWidth = 1 * scaleFactor;
+          context.strokeStyle = "rgba(0,255,100,0.2)";
+          context.lineWidth = 1 * scaleFactor;
           for(let x = 0; x < width; x += actualGridSize2){
-            ctx.beginPath();
-            ctx.moveTo(x,0);
-            ctx.lineTo(x,height);
-            ctx.stroke();
+            context.beginPath();
+            context.moveTo(x,0);
+            context.lineTo(x,height);
+            context.stroke();
           }
           for(let y = 0; y < height; y += actualGridSize2){
-            ctx.beginPath();
-            ctx.moveTo(0,y);
-            ctx.lineTo(width,y);
-            ctx.stroke();
+            context.beginPath();
+            context.moveTo(0,y);
+            context.lineTo(width,y);
+            context.stroke();
           }
         }
       },
       {
         name: "Digital Void",
-        drawBackground: function() {
-          ctx.fillStyle = "#000";
-          ctx.fillRect(0,0,width,height);
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          context.fillStyle = "#000";
+          context.fillRect(0,0,width,height);
           for(let i=0;i<150;i++){
             const x = Math.random()*width;
             const y = Math.random()*height;
-            ctx.fillStyle = "#fff";
-            ctx.fillRect(x,y,2,2);
+            context.fillStyle = "#fff";
+            context.fillRect(x,y,2,2);
           }
         }
       },
       // Добавляем новые биомы:
       {
         name: "Cyber Grid Cyan",
-        drawBackground: function() {
-          const grad = ctx.createLinearGradient(0,0,width,height);
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          const grad = context.createLinearGradient(0,0,width,height);
           grad.addColorStop(0, "#001a00");
           grad.addColorStop(1, "#000");
-          ctx.fillStyle = grad;
-          ctx.fillRect(0,0,width,height);
+          context.fillStyle = grad;
+          context.fillRect(0,0,width,height);
           const gridSize = 60;
-          ctx.strokeStyle = "rgba(0,255,255,0.2)";
-          ctx.lineWidth = 1 * scaleFactor;
+          context.strokeStyle = "rgba(0,255,255,0.2)";
+          context.lineWidth = 1 * scaleFactor;
           for(let x = 0; x < width; x += actualGridSize2){
-            ctx.beginPath();
-            ctx.moveTo(x,0);
-            ctx.lineTo(x,height);
-            ctx.stroke();
+            context.beginPath();
+            context.moveTo(x,0);
+            context.lineTo(x,height);
+            context.stroke();
           }
           for(let y = 0; y < height; y += actualGridSize2){
-            ctx.beginPath();
-            ctx.moveTo(0,y);
-            ctx.lineTo(width,y);
-            ctx.stroke();
+            context.beginPath();
+            context.moveTo(0,y);
+            context.lineTo(width,y);
+            context.stroke();
           }
         }
       },
       {
         name: "Aurora Borealis",
-        drawBackground: function() {
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
           // Используем линейный градиент для имитации северного сияния
-          let grad = ctx.createLinearGradient(0, 0, 0, height);
+          let grad = context.createLinearGradient(0, 0, 0, height);
           grad.addColorStop(0, "#1a237e");
           grad.addColorStop(0.5, "#43a047");
           grad.addColorStop(1, "#fdd835");
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, width, height);
+          context.fillStyle = grad;
+          context.fillRect(0, 0, width, height);
           // Добавляем плавные линии, имитирующие сияние
           for (let i = 0; i < 10; i++) {
-            ctx.beginPath();
-            ctx.moveTo(0, Math.random() * height);
-            ctx.bezierCurveTo(
+            context.beginPath();
+            context.moveTo(0, Math.random() * height);
+            context.bezierCurveTo(
               width * 0.3, Math.random() * height,
               width * 0.7, Math.random() * height,
               width, Math.random() * height
             );
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
-            ctx.lineWidth = 2 * scaleFactor;
-            ctx.stroke();
+            context.strokeStyle = "rgba(255, 255, 255, 0.1)";
+            context.lineWidth = 2 * scaleFactor;
+            context.stroke();
           }
         }
       },
       {
         name: "Cyber Grid Violet",
-        drawBackground: function() {
-          const grad = ctx.createLinearGradient(0,0,width,height);
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          const grad = context.createLinearGradient(0,0,width,height);
           grad.addColorStop(0, "#001a00");
           grad.addColorStop(1, "#000");
-          ctx.fillStyle = grad;
-          ctx.fillRect(0,0,width,height);
+          context.fillStyle = grad;
+          context.fillRect(0,0,width,height);
           const gridSize = 60;
-          ctx.strokeStyle = "rgba(255,0,255,0.2)";
-          ctx.lineWidth = 1 * scaleFactor;
+          context.strokeStyle = "rgba(255,0,255,0.2)";
+          context.lineWidth = 1 * scaleFactor;
           for(let x = 0; x < width; x += actualGridSize2){
-            ctx.beginPath();
-            ctx.moveTo(x,0);
-            ctx.lineTo(x,height);
-            ctx.stroke();
+            context.beginPath();
+            context.moveTo(x,0);
+            context.lineTo(x,height);
+            context.stroke();
           }
           for(let y = 0; y < height; y += actualGridSize2){
-            ctx.beginPath();
-            ctx.moveTo(0,y);
-            ctx.lineTo(width,y);
-            ctx.stroke();
+            context.beginPath();
+            context.moveTo(0,y);
+            context.lineTo(width,y);
+            context.stroke();
           }
         }
       },
       {
         name: "Glitch Zone",
-        drawBackground: function() {
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
           // Always draw the (current) glitchCanvas first.
-          ctx.drawImage(glitchCanvas, 0, 0);
+          context.drawImage(glitchCanvas, 0, 0);
           
           if (!isMobile) {
             // Desktop: re-generate glitch EVERY frame
@@ -901,83 +1070,86 @@
       },
       {
         name: "Cosmic Rift",
-        drawBackground: function() {
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
           // Радиационный градиент, создающий космическое настроение
-          let grad = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2,    height / 2, Math.max(width, height) / 2);
+          let grad = context.createRadialGradient(width / 2, height / 2, 0, width / 2,    height / 2, Math.max(width, height) / 2);
           grad.addColorStop(0, "#0d0d0d");
           grad.addColorStop(0.5, "#1a1a1a");
           grad.addColorStop(1, "#000");
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, width, height);
+          context.fillStyle = grad;
+          context.fillRect(0, 0, width, height);
           // Рисуем звёзды
           for (let i = 0; i < 100; i++) {
-            ctx.fillStyle = "#fff";
+            context.fillStyle = "#fff";
             let x = Math.random() * width;
             let y = Math.random() * height;
-            ctx.fillRect(x, y, 1.5 * scaleFactor, 1.5 * scaleFactor);
+            context.fillRect(x, y, 1.5 * scaleFactor, 1.5 * scaleFactor);
           }
           // Лёгкие круговые вспышки для эффекта космических рифтов
           for (let i = 0; i < 5; i++) {
-            ctx.beginPath();
-            ctx.arc(Math.random() * width, Math.random() * height, Math.random() * (100 * scaleFactor),     0, Math.PI * 2);
-            ctx.strokeStyle = "rgba(255, 0, 255, 0.1)";
-            ctx.lineWidth = 5 * scaleFactor;
-            ctx.stroke();
+            context.beginPath();
+            context.arc(Math.random() * width, Math.random() * height, Math.random() * (100 * scaleFactor),     0, Math.PI * 2);
+            context.strokeStyle = "rgba(255, 0, 255, 0.1)";
+            context.lineWidth = 5 * scaleFactor;
+            context.stroke();
           }
         }
       },
       {
         name: "Retro Circuit",
-        drawBackground: function() {
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
           // Фон в стиле печатной платы
-          ctx.fillStyle = "#001";
-          ctx.fillRect(0, 0, width, height);
-          ctx.strokeStyle = "#0f0";
-          ctx.lineWidth = 2 * scaleFactor;
+          context.fillStyle = "#001";
+          context.fillRect(0, 0, width, height);
+          context.strokeStyle = "#0f0";
+          context.lineWidth = 2 * scaleFactor;
           // Вертикальные линии
           for (let x = 0; x < width; x += actualGridSize40) {
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, height);
-            ctx.stroke();
+            context.beginPath();
+            context.moveTo(x, 0);
+            context.lineTo(x, height);
+            context.stroke();
           }
           // Горизонтальные линии
           for (let y = 0; y < height; y += actualGridSize40) {
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(width, y);
-            ctx.stroke();
+            context.beginPath();
+            context.moveTo(0, y);
+            context.lineTo(width, y);
+            context.stroke();
           }
           // Рисуем случайные "узлы" для имитации контактов
           for (let i = 0; i < 20; i++) {
             let x = Math.random() * width;
             let y = Math.random() * height;
-            ctx.beginPath();
-            ctx.arc(x, y, 3 * scaleFactor, 0, Math.PI * 2);
-            ctx.fillStyle = "#0f0";
-            ctx.fill();
+            context.beginPath();
+            context.arc(x, y, 3 * scaleFactor, 0, Math.PI * 2);
+            context.fillStyle = "#0f0";
+            context.fill();
           }
         }
       },
       {
         name: "Neon Forest",
-        drawBackground: function() {
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
           // Тёмный фон с неоновыми "деревьями"
-          ctx.fillStyle = "#000";
-          ctx.fillRect(0, 0, width, height);
+          context.fillStyle = "#000";
+          context.fillRect(0, 0, width, height);
           // Рисуем неоновые столбы (как абстрактные деревья)
           for (let i = 0; i < 10; i++) {
             let x = Math.random() * width;
             let treeHeight = Math.random() * (height / 2) + height / 4;
-            ctx.beginPath();
-            ctx.moveTo(x, height);
-            ctx.lineTo(x, height - treeHeight);
-            ctx.strokeStyle = "rgba(0,255,150,0.7)";
-            ctx.lineWidth = 4 * scaleFactor;
-            ctx.shadowColor = "rgba(0,255,150,0.7)";
-            ctx.shadowBlur = 10;
-            ctx.stroke();
-            ctx.shadowBlur = 0;
+            context.beginPath();
+            context.moveTo(x, height);
+            context.lineTo(x, height - treeHeight);
+            context.strokeStyle = "rgba(0,255,150,0.7)";
+            context.lineWidth = 4 * scaleFactor;
+            context.shadowColor = "rgba(0,255,150,0.7)";
+            context.shadowBlur = 10;
+            context.stroke();
+            context.shadowBlur = 0;
           }
         }
       }
@@ -1626,22 +1798,80 @@
       }
       draw() {
         ctx.save();
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+        ctx.translate(this.x, this.y);
+        ctx.shadowColor = this.color;
+        
+        ctx.shadowBlur = 20 * scaleFactor;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+
         ctx.fillStyle = this.color;
-        ctx.fill();
-        // If frozen, overlay with a semi‑transparent blue tint
-        if(this.frozenTime > 0) {
-          ctx.fillStyle = "rgba(0,200,255,0.5)";
-          ctx.fill();
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+          
+        switch (this.type) {
+          case "basic":
+            // Простой спайковый круг (6 спайков, spikeFactor = 0.2)
+            drawSpikyCircle(ctx, this.radius, 6, 0.2);
+            break;
+          case "elite":
+            // Рисуем шестиугольник
+            drawPolygon(ctx, 6, this.radius);
+            break;
+          case "freeze":
+            // Снежинка – для врагов, замораживающих игрока
+            drawSnowflake(ctx, this.radius);
+            break;
+          case "shooter":
+            // Турель – для врагов, которые стреляют
+            drawTurret(ctx, this.radius);
+            break;
+          case "parasite":
+            // Эллипс – для тонких, быстрых врагов
+            drawEllipse(ctx, 1.2 * this.radius, 0.6 * this.radius);
+            break;
+          case "emp":
+            // Зазубренная фигура – для врагов, применяющих EMP
+            drawJaggedShape(ctx, this.radius);
+            break;
+          case "shielded":
+            // Отрисовываем круг и затем добавляем защитный контур
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.save();
+            ctx.strokeStyle = "#fff";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius + 5, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+            break;
+          case "sharpshooter":
+            // Треугольник – символизирует меткость
+            drawTriangle(ctx, this.radius);
+            break;
+          case "exploder":
+            // Форма "бомбы"
+            drawBomb(ctx, this.radius);
+            break;
+          case "splitter":
+            // Сегментированная фигура
+            drawSegmentedShape(ctx, this.radius);
+            break;
+          default:
+            // Если тип не распознан – стандартный круг
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+            ctx.fill();
         }
-        if(this.type === "shielded" && this.shield) {
-           // Draw a white outline to indicate the protective shield.
-           ctx.strokeStyle = "#fff";
-           ctx.lineWidth = 3;
-           ctx.beginPath();
-           ctx.arc(this.x, this.y, this.radius + 5, 0, Math.PI*2);
-           ctx.stroke();
+        
+        // Если враг заморожен, накладываем прозрачный синий слой
+        if (this.frozenTime > 0) {
+          ctx.fillStyle = "rgba(0,200,255,0.5)";
+          ctx.beginPath();
+          ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+          ctx.fill();
         }
         ctx.restore();
       }
@@ -1782,18 +2012,39 @@
       }
       
       draw() {
+        // --- Определяем цвет босса в зависимости от оставшегося HP ---
+        let bossColor = "#ff0"; // по умолчанию – желтый
+        if (this.hp < this.maxHP * 0.7) bossColor = "#ff6600"; // оранжевый при потере 30% HP
+        if (this.hp < this.maxHP * 0.4) bossColor = "#f00";    // красный при критически малом HP
+
+        // --- Отрисовка босса с выбранной формой ---
         ctx.save();
-        // Цвет босса в зависимости от оставшегося HP
-        let bossColor = "#ff0";
-        if (this.hp < this.maxHP * 0.7) bossColor = "#ff6600";
-        if (this.hp < this.maxHP * 0.4) bossColor = "#f00";
-        
+        ctx.translate(this.x, this.y);
         ctx.fillStyle = bossColor;
-        ctx.shadowColor = bossColor;
-        ctx.shadowBlur = 30;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.strokeStyle = bossColor;
+        ctx.lineWidth = 2;
+
+        // Выбираем форму отрисовки в зависимости от титула (tier)
+        switch (this.tier) {
+          case "Emperor":
+            // Звёздная фигура – символ величия
+            drawStar(ctx, this.radius, 8, 0.5);
+            break;
+          case "Champion":
+            // Многоугольник (например, с 8 сторонами)
+            drawPolygon(ctx, 8, this.radius);
+            break;
+          case "Elite":
+            // Спайковый круг с большим числом "шипов"
+            drawSpikyCircle(ctx, this.radius, 12, 0.3);
+            break;
+          case "Easy":
+          default:
+            // Стандартный круг
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
         ctx.restore();
         
         // Отрисовка полосы HP босса.
@@ -1850,9 +2101,6 @@
         ctx.strokeStyle = "#fff";
         ctx.strokeRect(width / 2 - (barWidth * uiScale) / 2, barY * uiScale, barWidth * uiScale, barHeight * uiScale);
 
-
-
-
         // Отрисовка имени босса над полосой здоровья.
         // Вычисляем горизонтальный центр полосы:
         let resultWidth = (bosses.length >= 5) ? barWidth : (width / 2)*uiScale;
@@ -1887,7 +2135,6 @@
         this.angle = Math.random()*Math.PI*2;
       }
       update(deltaTime) {
-        this.angle += 0.005 * deltaTime;
         // *** Измененный механизм притягивания коллекционных предметов ***
         if (
           player &&
@@ -1920,11 +2167,18 @@
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
-        ctx.fillStyle = "#0f0";
+        let r = this.radius;
+        ctx.beginPath();
+        // Начинаем с верхней центральной точки сердца
+        ctx.moveTo(0, -r / 2);
+        // Правая половина сердца
+        ctx.bezierCurveTo(r, -r * 1.3, r * 1.3, r / 3, 0, r * 1.5);
+        // Левая половина сердца
+        ctx.bezierCurveTo(-r * 1.3, r / 3, -r, -r * 1.3, 0, -r / 2);
+        ctx.closePath();
+        ctx.fillStyle = "#0f0"; // зеленый цвет для обычного collectible
         ctx.shadowColor = "#0f0";
         ctx.shadowBlur = 15;
-        ctx.beginPath();
-        ctx.arc(0,0,this.radius,0,Math.PI*2);
         ctx.fill();
         ctx.restore();
       }
@@ -1934,11 +2188,10 @@
       constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.radius = 6 * scaleFactor; // тот же размер, что и у обычного
+        this.radius = 8 * scaleFactor; // тот же размер, что и у обычного
         this.angle = Math.random() * Math.PI * 2;
       }
       update(deltaTime) {
-        this.angle += 0.005 * deltaTime;
         // *** Измененный механизм притягивания коллекционных предметов ***
         if (
           player &&
@@ -1971,15 +2224,17 @@
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
-        // Заливка красным
-        ctx.fillStyle = "#f00";
+        let r = this.radius;
+        ctx.beginPath();
+        ctx.moveTo(0, -r / 2);
+        ctx.bezierCurveTo(r, -r * 1.3, r * 1.3, r / 3, 0, r * 1.5);
+        ctx.bezierCurveTo(-r * 1.3, r / 3, -r, -r * 1.3, 0, -r / 2);
+        ctx.closePath();
+        ctx.fillStyle = "#f00"; // красный цвет для специального collectible
         ctx.shadowColor = "#0f0";
         ctx.shadowBlur = 15;
-        ctx.beginPath();
-        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
         ctx.fill();
-        // Зеленый контур
-        ctx.lineWidth = 4 * scaleFactor;
+        ctx.lineWidth = 3 * scaleFactor;
         ctx.strokeStyle = "#0f0";
         ctx.stroke();
         ctx.restore();
@@ -3245,22 +3500,28 @@
       ctx.rect(0, 0, width, height - cropHeight);
       ctx.clip();
 
+      // ===== Модифицированная отрисовка фона (биома) =====
       let currentTime = performance.now();
       if (isMobile) {
-        // Если кеш отсутствует или с прошлого обновления прошло больше BIOME_UPDATE_INTERVAL
-        if (!cachedBiomeImage || (currentTime - lastBiomeUpdateTime > BIOME_UPDATE_INTERVAL)) {
-          // Перерисовываем фон и сохраняем его в кеш
-          getCurrentBiome().drawBackground();
-          cachedBiomeImage = ctx.getImageData(0, 0, width, height);
+        // Если прошло больше BIOME_UPDATE_INTERVAL, обновляем offscreen‑canvas
+        if (currentTime - lastBiomeUpdateTime > BIOME_UPDATE_INTERVAL) {
+          // Обновляем размеры offscreen‑canvas (на случай, если холст изменился)
+          bgCanvas.width = width;
+          bgCanvas.height = height;
+          // Рисуем фон на offscreen‑canvas через его контекст bgCtx
+          // Важно: измените (при необходимости) функцию drawBackground так, чтобы она принимала контекст:
+          // Например, внутри biomes: drawBackground: function(ctxToUse) { ctxToUse.fillStyle = "#111"; ... }
+          getCurrentBiome().drawBackground(bgCtx);
           lastBiomeUpdateTime = currentTime;
-        } else {
-          // Используем ранее сохранённый фон
-          ctx.putImageData(cachedBiomeImage, 0, 0);
         }
+        // Рисуем кешированный фон с offscreen‑canvas на основном холсте
+        ctx.drawImage(bgCanvas, 0, 0);
       } else {
-        // На десктопе отрисовываем фон каждый кадр
-        getCurrentBiome().drawBackground();
+        // На десктопе можно отрисовывать фон каждый кадр
+        getCurrentBiome().drawBackground(ctx);
       }
+      // ====================================================
+
       collectibles.forEach(c => c.draw());
       // *** NEW: Отрисовка объектов Friend ***
       friends.forEach(friend => friend.draw());
