@@ -200,7 +200,7 @@
     let specialCollectibleSpawnTimer = 0;
     function spawnSpecialCollectibleRandom() {
       // Проверяем условия: уровень >= 10 и наличие босса
-      if (currentLevel < 10 || bosses.length === 0) return;
+      if (currentLevel < 4 || bosses.length === 0) return;
       
       const maxStage = ((currentLevel - 1) % 5) + 1;
       // Например, шанс спавна можно задать как: maxStage * 0.1 (от 0.1 до 0.5)
