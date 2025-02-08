@@ -155,6 +155,36 @@
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
+    // ************************************
+      // **  BUTTONS for Cheats  **
+      // ************************************
+      /*
+      if(e.key.toLowerCase() === "p") {
+        spawnTwoBosses();
+      }
+      if(e.key.toLowerCase() === "n") {
+        nextLevel();
+      }
+      if(e.key.toLowerCase() === "m") {
+        showPowerUpMenu();
+      }
+      if(e.key.toLowerCase() === "k") {
+        givePlayerMagnetEffect();
+      }
+      */
+      // Обработчик нажатия клавиш
+      document.addEventListener("keydown", function(e) {
+        // Если нажата клавиша "c" (без учета регистра)
+        if (e.key.toLowerCase() === "x") {
+          // Переключаем состояние видимости курсора
+          cursorVisible = !cursorVisible;
+          canvas.style.cursor = cursorVisible ? "default" : "none";
+          console.log("Cursor visible:", cursorVisible);
+        }
+      });
+
+    let cursorVisible = true; // изначально курсор видим
+
     // We will store width/height in these, but NOT assign them to canvas yet.
     let width, height;
     let dpr = window.devicePixelRatio || 1;
@@ -166,6 +196,76 @@
     let actualGridSize2 = cssGridSize2;
     let actualGridSize40 = cssGridSize40; 
 
+    // Глобальная переменная для таймера спавна специальных collectible
+    let specialCollectibleSpawnTimer = 0;
+    function spawnSpecialCollectibleRandom() {
+      // Проверяем условия: уровень >= 10 и наличие босса
+      if (currentLevel < 10 || bosses.length === 0) return;
+      
+      const maxStage = ((currentLevel - 1) % 5) + 1;
+      // Например, шанс спавна можно задать как: maxStage * 0.1 (от 0.1 до 0.5)
+      const specialProbability = maxStage * 0.1;
+      
+      if (Math.random() < specialProbability) {
+        // Выбираем случайные координаты внутри экрана
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        // Добавляем специальный collectible в массив collectibles
+        collectibles.push(new SpecialCollectible(x, y));
+      }
+    }
+    
+    //========== Combo переменные и func для комбо-системы
+
+    let comboCounter = 0;
+    let comboTimer = 0;
+    const COMBO_RESET_TIME = 6666; // 7 секунд
+    // Функция увеличения комбо при убийстве врага
+    function increaseCombo() {
+      comboCounter++;
+      comboTimer = COMBO_RESET_TIME;
+      // Пример: активация бонусов
+      if (comboCounter === 5) {
+        applyPowerUp("Damage Boost");
+      } else if (comboCounter === 30) {
+        applyPowerUp("Bullet Time");
+      } else if (comboCounter === 70) {
+        applyPowerUp("Power Meter Boost");
+      } else if (comboCounter === 100) {
+        applyPowerUp("Friend");
+      }else if (comboCounter === 150) {
+        applyPowerUp("Restore Health");
+      }else if (comboCounter === 200) {
+        applyPowerUp("Neon Overdrive");
+        applyPowerUp("Shield");
+      }else if (comboCounter === 400) {
+        showPermanentUpgradeMenu();
+        resetCombo();
+      }
+    }
+    // Функция сброса комбо (например, при получении урона)
+    function resetCombo() {
+      comboCounter = 0;
+      comboTimer = 0;
+    }
+    // Функция, вызываемая в update(deltaTime)
+    function updateCombo(deltaTime) {
+      if (comboTimer > 0) {
+        comboTimer -= deltaTime;
+        if (comboTimer <= 0) {
+          comboCounter = 0;
+        }
+      }
+    }
+    // В функции, где обрабатывается убийство врага:
+    function onEnemyKilled(enemy) {
+      // Добавляем эффекты уничтожения, начисление очков и т.д.
+      increaseCombo();
+      // Другие действия: spawnCollectible, particles, score += и т.п.
+    }
+
+    //================== конец Combo functions
+
     function onResize() {
       // 1) Use CSS pixel dimensions for your game logic:
       width = window.innerWidth;
@@ -174,7 +274,6 @@
       // 2) Device pixel ratio (high‑DPI “retina” scaling factor)
       dpr = window.devicePixelRatio || 1;
 
-      
       // 3) Visually, the canvas should fill the screen in CSS pixels:
       canvas.style.width = width + "px";
       canvas.style.height = height + "px";
@@ -186,14 +285,12 @@
       // 5) Make 1 “unit” in your drawing code == 1 CSS pixel:
       // If browser supports resetTransform():
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      
     }
 
     // Attach it:
     window.addEventListener("resize", onResize);
     // Call once on load:
     onResize();
-
 
     // =================== Device Detection & UI Setup ===================
     const leftJoystickElem = document.getElementById("leftJoystick");
@@ -242,7 +339,7 @@
     let currentLevel = 1;
     let levelDuration = 30000; // 30 sec per wave
     let levelTimer = levelDuration;
-    let maxLevelDuration = 180000;
+    let maxLevelDuration = 60000;
     // Permanent upgrades (affect damage, speed, fire rate)
     const permanentUpgrades = {
       damage: 1,
@@ -252,7 +349,10 @@
     };
     // Power meter for temporary power‑ups
     let powerMeter = 0;
-    const POWER_METER_MAX = 100;
+    //const POWER_METER_MAX = 100;
+    function getPowerMeterMax() {
+      return 100 + Math.floor((currentLevel - 1) / 2) * 30;
+    }
     // Spawn & firing timers
     let enemySpawnTimer = 0;
     let enemySpawnInterval = 1500;
@@ -284,23 +384,6 @@
         if(gameState === "playing") pauseGame();
         else if(gameState === "pause") resumeGame();
       }
-      // ************************************
-      // **  BUTTON P: SPAWN 2 BOSSES (LEVEL 7)  **
-      // ************************************
-      /*
-      if(e.key.toLowerCase() === "p") {
-        spawnTwoBosses();
-      }
-      if(e.key.toLowerCase() === "n") {
-        nextLevel();
-      }
-      if(e.key.toLowerCase() === "m") {
-        showPowerUpMenu();
-      }
-      if(e.key.toLowerCase() === "k") {
-        givePlayerMagnetEffect();
-      }
-      */
     });
     window.addEventListener("keyup", (e) => {
       keys[e.key.toLowerCase()] = false;
@@ -494,7 +577,78 @@
           }
         }
       },
-      // Новые биомы:
+      // Добавляем новые биомы:
+      {
+        name: "Solar Flare",
+        drawBackground: function() {
+          // Фоновый градиент от тёмно-красного к золотому
+          let grad = ctx.createLinearGradient(0, 0, width, height);
+          grad.addColorStop(0, "#8B0000"); // тёмно-красный
+          grad.addColorStop(0.5, "#FF4500"); // оранжево-красный
+          grad.addColorStop(1, "#FFD700"); // золотой
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, width, height);
+          // Добавляем "вспышки" солнечных лучей
+          for (let i = 0; i < 15; i++) {
+            ctx.beginPath();
+            let x = Math.random() * width;
+            let y = Math.random() * height;
+            let flareSize = Math.random() * 30 + 10;
+            ctx.arc(x, y, flareSize, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(255, 69, 0, 0.3)";
+            ctx.lineWidth = 2 * scaleFactor;
+            ctx.stroke();
+          }
+        }
+      },
+      {
+        name: "Cyber Grid Cyan",
+        drawBackground: function() {
+          const grad = ctx.createLinearGradient(0,0,width,height);
+          grad.addColorStop(0, "#001a00");
+          grad.addColorStop(1, "#000");
+          ctx.fillStyle = grad;
+          ctx.fillRect(0,0,width,height);
+          const gridSize = 60;
+          ctx.strokeStyle = "rgba(0,255,255,0.2)";
+          ctx.lineWidth = 1 * scaleFactor;
+          for(let x = 0; x < width; x += actualGridSize2){
+            ctx.beginPath();
+            ctx.moveTo(x,0);
+            ctx.lineTo(x,height);
+            ctx.stroke();
+          }
+          for(let y = 0; y < height; y += actualGridSize2){
+            ctx.beginPath();
+            ctx.moveTo(0,y);
+            ctx.lineTo(width,y);
+            ctx.stroke();
+          }
+        }
+      },
+      {
+        name: "Cyber Jungle",
+        drawBackground: function() {
+          // Градиент с переходом от тёмно-зелёного к ярко-зелёному и затем к насыщенному       пурпурному
+          let grad = ctx.createLinearGradient(0, 0, width, height);
+          grad.addColorStop(0, "#0B3D0B"); // тёмно-зелёный
+          grad.addColorStop(0.5, "#2ECC40"); // ярко-зелёный
+          grad.addColorStop(1, "#B10DC9"); // насыщенный пурпурный
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, width, height);
+          // Добавляем абстрактные "листья" или формы, напоминающие джунгли
+          for (let i = 0; i < 20; i++) {
+            ctx.beginPath();
+            let x = Math.random() * width;
+            let y = Math.random() * height;
+            let size = Math.random() * 40 + 10;
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(46, 204, 64, 0.2)";
+            ctx.lineWidth = 4 * scaleFactor;
+            ctx.stroke();
+          }
+        }
+      },
       {
         name: "Aurora Borealis",
         drawBackground: function() {
@@ -516,6 +670,31 @@
             );
             ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
             ctx.lineWidth = 2 * scaleFactor;
+            ctx.stroke();
+          }
+        }
+      },
+      {
+        name: "Cyber Grid Violet",
+        drawBackground: function() {
+          const grad = ctx.createLinearGradient(0,0,width,height);
+          grad.addColorStop(0, "#001a00");
+          grad.addColorStop(1, "#000");
+          ctx.fillStyle = grad;
+          ctx.fillRect(0,0,width,height);
+          const gridSize = 60;
+          ctx.strokeStyle = "rgba(255,0,255,0.2)";
+          ctx.lineWidth = 1 * scaleFactor;
+          for(let x = 0; x < width; x += actualGridSize2){
+            ctx.beginPath();
+            ctx.moveTo(x,0);
+            ctx.lineTo(x,height);
+            ctx.stroke();
+          }
+          for(let y = 0; y < height; y += actualGridSize2){
+            ctx.beginPath();
+            ctx.moveTo(0,y);
+            ctx.lineTo(width,y);
             ctx.stroke();
           }
         }
@@ -721,6 +900,10 @@
           // *** NEW: Friend power‑up – при получении появляется друг рядом с игроком ***
           friend: { duration: 0, stacks: 0 },
           neonOverdrive: { duration: 0, stacks: 0 }, // Добавлено
+          // удвоение прироста powerMeter
+          powerMeterBoost: { duration: 0, stacks: 0 },
+          // Пуль всем хватит:
+          bulletTime: { duration: 0, stacks: 0 }
         };
         // Additional status effects (негативные эффекты)
         this.frozenTime = 0;
@@ -730,15 +913,33 @@
       }
       update(deltaTime) {
         // Обновление таймеров усилений: уменьшаем время и сбрасываем стеки, когда время истекает
+        const nonDecayingEffects = ["friend", "scoreMagnet", "neonOverdrive", "powerMeterBoost", "damageBoost", "shield", "shielspeedBoostd"];
+        const nonDecayingEffects2 = ["doubleShot", "tripleShot", "scatterShot"];
         for (let key in this.activePowerUps) {
           let pu = this.activePowerUps[key];
           if (pu.duration > 0) {
+            if (
+              this.activePowerUps.neonOverdrive &&
+              this.activePowerUps.neonOverdrive.duration > 0 &&
+              !nonDecayingEffects.includes(key)
+            ){
+
+            } else if (
+              this.activePowerUps.bulletTime &&
+              this.activePowerUps.bulletTime.duration > 0 &&
+              nonDecayingEffects2.includes(key)
+            ){
+
+            } else {
+              // Обновляем время действия эффекта
+              pu.duration -= deltaTime;
+              if (pu.duration < 0) pu.duration = 0;
+
+            }
+
+
             // Сохраняем предыдущее количество стэков, чтобы понять, сколько стэков "упало" за этот кадр
             let previousStacks = pu.stacks || 0;
-            
-            // Обновляем время действия эффекта
-            pu.duration -= deltaTime;
-            if (pu.duration < 0) pu.duration = 0;
             
             // Получаем отображаемое имя для определения времени одного стэка
             let displayName = getPowerUpDisplayName(key);
@@ -1262,7 +1463,7 @@
         // Базовые HP и скорость
         this.bossBaseHP = 50;
         let bossDifficulty = currentLevel < 4 ? 0.6 : 1;
-        this.maxHP = Math.floor((this.bossBaseHP + currentLevel * 25) * bossDifficulty);
+        this.maxHP = Math.floor((this.bossBaseHP + currentLevel * 25 * 1.5) * bossDifficulty);  //Hard-level
         this.hp = this.maxHP;
         const MAX_BOSS_SPEED = 5 * scaleFactor;
         this.speed = Math.min(((1 + currentLevel * 0.1) * bossDifficulty) * scaleFactor, MAX_BOSS_SPEED);
@@ -1528,6 +1729,63 @@
         ctx.restore();
       }
     }
+    // --- SpecialCollectible: красный круг с зелёным контуром, дающий двойное вознаграждение ---
+    class SpecialCollectible {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.radius = 6 * scaleFactor; // тот же размер, что и у обычного
+        this.angle = Math.random() * Math.PI * 2;
+      }
+      update(deltaTime) {
+        this.angle += 0.005 * deltaTime;
+        // *** Измененный механизм притягивания коллекционных предметов ***
+        if (
+          player &&
+          player.activePowerUps.scoreMagnet &&
+          player.activePowerUps.scoreMagnet.duration > 0
+        ) {
+          let dx = player.x - this.x;
+          let dy = player.y - this.y;
+          let dist = Math.hypot(dx, dy);
+    
+          // Параметры притяжения: базовая дистанция и прирост дистанции с каждым стэком
+          let baseAttractionRange = 200 * scaleFactor; // базовая дистанция притяжения (в пикселях)
+          let additionalRangePerStack = 100 * scaleFactor; // прибавка к дистанции за каждый дополнительный стэк
+          // Вычисляем общую дистанцию притяжения в зависимости от количества стэков
+          let attractionRange =
+            baseAttractionRange +
+            additionalRangePerStack * (player.activePowerUps.scoreMagnet.stacks - 1);
+    
+          // Если объект находится в пределах дистанции притяжения, притягиваем его
+          if (dist < attractionRange) {
+            let baseAttractSpeed = 1 * scaleFactor; // базовая скорость притяжения
+            // Увеличиваем скорость притяжения пропорционально количеству стэков
+            let attractSpeed = baseAttractSpeed * player.activePowerUps.scoreMagnet.stacks * deltaTime;
+            this.x += (dx / dist) * attractSpeed;
+            this.y += (dy / dist) * attractSpeed;
+          }
+        }
+      }
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        // Заливка красным
+        ctx.fillStyle = "#f00";
+        ctx.shadowColor = "#0f0";
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        // Зеленый контур
+        ctx.lineWidth = 4 * scaleFactor;
+        ctx.strokeStyle = "#0f0";
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
 
     // --- Particle ---
     class Particle {
@@ -1616,8 +1874,9 @@
       enemies.push(new Enemy(x, y, type));
     }
     function spawnCollectible(x,y) {
-      if(Math.random()<0.5) {
-        collectibles.push(new Collectible(x,y));
+      // Спавнить collectible только с вероятностью 50%
+      if (Math.random() < 0.5) {
+        collectibles.push(new Collectible(x, y));
       }
     }
     /******************************************
@@ -1715,16 +1974,17 @@
       "Restore Health": "healthRestore",       // *** NEW: мгновенное Restore Health
       "Magnet": "scoreMagnet",            // *** NEW: притягивает коллекционные объекты (25с)
       "Friend": "friend",
-      "Neon Overdrive": "neonOverdrive"   // ← новая запись
+      "Neon Overdrive": "neonOverdrive",   // ← новая запись
+      "Power Meter Boost": "powerMeterBoost",
+      "Bullet Time": "bulletTime"
     };
-
+    
     // =================== Temporary Power‑Up Pool & Durations ===================
     const powerUpPool = [
       "Double Shot", "Triple Shot", "Rapid Fire", "Shield", "Speed Boost",
       "Damage Boost", "Piercing", "Homing", "Bomb", "Freeze Blast",
       "Reflective", "Life Steal", "EMP Blast", "Critical Strike", "Overcharge",
-      "Scatter Shot",
-      "Health Boost", "Restore Health", "Magnet", "Friend", "Neon Overdrive"
+      "Scatter Shot", "Health Boost", "Restore Health", "Magnet", "Friend", "Neon Overdrive", "Power Meter Boost", "Bullet Time"
     ];
     const powerUpDurations = {
       "Reflective": 10000, // 10 секунд для Reflective
@@ -1735,8 +1995,9 @@
       "Health Boost": 25000,         // *** NEW: 25 секунд
       "Magnet": 25000,          // *** NEW: 25 секунд
       "Friend": 40000,
-      "Neon Overdrive": 10000   
-      // Для "Restore Health" временная длительность не нужна (эффект мгновенный)
+      "Neon Overdrive": 10000,
+      "Power Meter Boost": 15000, // 15 секунд
+      "Bullet Time": 15000  // 15 секунд   
     };
 
     // =================== Temporary Power‑Up Selection ===================
@@ -1746,6 +2007,10 @@
       const case_to_much_bullets = (player.activePowerUps.tripleShot.stacks >= 2 || player.activePowerUps.doubleShot.stacks >= 3 || player.activePowerUps.scatterShot.stacks >= 3);
       const case_to_much_bullets2 = (player.activePowerUps.tripleShot.stacks >= 1 && player.activePowerUps.doubleShot.stacks >= 1 || player.activePowerUps.scatterShot.stacks >= 1);
       const case_to_much_magnet = (player.activePowerUps.scoreMagnet.stacks >= 3)
+      const case_to_much_bullet_time2 = (player.activePowerUps.bulletTime.stacks >= 2)
+      const case_to_much_bullet_time = (player.activePowerUps.bulletTime.stacks >= 2)
+      const case_to_much_powerMeterBoost = (player.activePowerUps.powerMeterBoost.stacks >= 4) && currentLevel<30
+      const case_to_much_neonOverDrive = (player.activePowerUps.neonOverdrive.stacks >= 2)
       // Фильтруем pool: исключаем усиления, у которых игрок уже достиг максимума стаков
       const availablePool = powerUpPool.filter(choice => {
         if (!player) return true; // на всякий случай
@@ -1753,7 +2018,11 @@
         if (choice === "Double Shot" && case_to_much_bullets) return false;
         if (choice === "Scatter Shot" && case_to_much_bullets) return false;
         if (choice === "Magnet" && case_to_much_magnet) return false;
+        if (choice === "Reflective" && case_to_much_bullet_time) return false;
+        if (choice === "Bullet Time" && case_to_much_bullet_time2) return false;
         if (choice === "Rapid Fire" && (case_to_much_bullets||case_to_much_bullets2)) return false;
+        if (choice === "Power Meter Boost" && case_to_much_powerMeterBoost) return false;
+        if (choice === "Neon Overdrive" && case_to_much_neonOverDrive) return false;
         return true;
       });
 
@@ -1790,7 +2059,7 @@
       if (choice === "Restore Health") {
           // Пример мгновенного эффекта
           player.currentHP = Math.min(player.maxHP, player.currentHP + 30);
-          powerMeter = 0;
+          powerMeter = Math.max(0, powerMeter - getPowerMeterMax());
           resumeGame();
           return;
       } else if (choice === "Health Boost") {
@@ -1830,11 +2099,10 @@
       resumeGame();
     }
 
-    // =================== Permanent Upgrade (Level Transition) ===================
-    function showTransitionMenu() {
-      gameState = "transition";
+    // =================== Permanent Upgrade (Show menu) ===================
+
+    function showHTMLMenu(version){
       const overlay = document.getElementById("overlay");
-    
       // Определяем список возможных перманентных улучшений с их весами (относительные вероятности)
       const upgrades = [
         { id: "upgDamage", name: "Damage Up", weight: 40 },
@@ -1842,7 +2110,6 @@
         { id: "upgFireRate", name: "Fire Rate Up", weight: 20 },
         { id: "upgHealth", name: "Health Up", weight: 10 }
       ];
-    
       // Выбираем 3 уникальных улучшения с учётом их весов
       const chosenUpgrades = [];
       const availableUpgrades = [...upgrades]; // создаём копию массива, чтобы не менять исходный список
@@ -1862,16 +2129,21 @@
         chosenUpgrades.push(availableUpgrades[selectedIndex]);
         availableUpgrades.splice(selectedIndex, 1); // удаляем выбранное, чтобы избежать повторения
       }
-    
       // Формируем HTML с кнопками для выбранных улучшений
       const buttonsHTML = chosenUpgrades
         .map(upg => `<button class="button" id="${upg.id}">${upg.name}</button>`)
         .join("");
-      overlay.innerHTML = `<h1>Level ${currentLevel} Complete!</h1>
-        <p>Choose your permanent upgrade:</p>
-        <div>${buttonsHTML}</div>`;
+        if(version===1){ //resumeGame()
+          overlay.innerHTML = `<h1>YOU ARE MONSTER!!!</h1>
+          <p>Choose your permanent upgrade:</p>
+          <div>${buttonsHTML}</div>`
+        } else { // nextLevel()
+          overlay.innerHTML = `<h1>Level ${currentLevel} Complete!</h1>
+          <p>Choose your permanent upgrade:</p>
+          <div>${buttonsHTML}</div>`
+        } 
+      ;
       overlay.classList.remove("hidden");
-    
       // Назначаем обработчики событий для каждой кнопки
       chosenUpgrades.forEach(upg => {
         document.getElementById(upg.id).addEventListener("click", () => {
@@ -1893,14 +2165,29 @@
               }
               break;
           }
-          nextLevel();
+          version===1? resumeGame(): nextLevel();
         });
       });
     }
+
+    // =================== Permanent Upgrade ===================
+
+    function showPermanentUpgradeMenu() {
+      gameState = "transition";
+      showHTMLMenu(1);
+    }
+
+    // =================== Permanent Upgrade (Level Transition) ===================
+
+    function showTransitionMenu() {
+      gameState = "transition";
+      showHTMLMenu(2);
+    }
+
     function nextLevel() {
       currentLevel++;
       if (currentLevel > 5) {
-        levelDuration = Math.min(levelDuration + 10000, maxLevelDuration);
+        levelDuration = Math.min(levelDuration + 2000, maxLevelDuration);
       }
       levelTimer = levelDuration;
       enemySpawnTimer = 0;
@@ -1940,6 +2227,7 @@
       score = 0;
       currentLevel = 1;
       levelDuration = 30000;
+      comboCounter = 0;
       levelTimer = levelDuration;
       permanentUpgrades.damage = 1;
       permanentUpgrades.speed = 1;
@@ -2027,7 +2315,7 @@
       requestAnimationFrame(gameLoop);
     }
 
-    // =================== Update Function ===================
+    // =================== Main Update Function ===================
     function update(deltaTime) {
       if(gameState !== "playing") return;
       score += deltaTime * 0.05;
@@ -2111,6 +2399,12 @@
             bulletCount += 4 * player.activePowerUps.scatterShot.stacks;
             totalSpread += 0.3 * player.activePowerUps.scatterShot.stacks;
           }
+          if (player.activePowerUps.bulletTime.duration > 0) {
+            // Если исходное число пуль ≤ 8, прибавляем 8; иначе ставим 16 (максимум)
+            bulletCount = (bulletCount <= 10) ? (bulletCount + 10) : 10 * player.activePowerUps.bulletTime.stacks;
+            // При этом задаём разброс на 360 градусов (2π радиан)
+            totalSpread = Math.PI * 2;
+          }
           // Overcharge теперь не влияет на число пуль, а ускоряет их – поэтому здесь не модифицируем bulletCount
           let newBullets = [];
           if (bulletCount > 1) {
@@ -2154,7 +2448,7 @@
                 b.lifeSteal = true;
               }
               if (player.activePowerUps.overcharge.duration > 0) {
-                  b.speed *= (1 + player.activePowerUps.overcharge.stacks);
+                  b.speed *= (1 + 0.5 * player.activePowerUps.overcharge.stacks);
               }
               newBullets.push(b);
             }
@@ -2189,7 +2483,7 @@
               b.lifeSteal = true;
             }
             if (player.activePowerUps.overcharge.duration > 0) {
-                b.speed *= (1 + player.activePowerUps.overcharge.stacks);
+                b.speed *= (1 + 0.5 * player.activePowerUps.overcharge.stacks);
             }
             newBullets.push(b);
           }
@@ -2212,7 +2506,7 @@
         let beamStartY = player.y + Math.sin(player.angle) * (player.radius * scaleFactor);
         
         // Вычисляем конец луча
-        let beamLength = Math.sqrt(width * width + height * height) * scaleFactor;
+        let beamLength = Math.sqrt(width * width + height * height);
         let beamEndX = beamStartX + Math.cos(player.angle) * beamLength;
         let beamEndY = beamStartY + Math.sin(player.angle) * beamLength;
         
@@ -2247,6 +2541,7 @@
                   spawnCollectible(enemy.x, enemy.y);
                   score += (enemy.type==="elite")?200:100;
                   enemy.dead = true;
+                  onEnemyKilled(enemy);
                 }
                 else{
                   for (let blood = 0; blood < 8; blood++) {
@@ -2284,12 +2579,27 @@
 
       // Спавн врагов (если не идёт бой с боссом)
       if(bosses.length === 0) {
+          // Уменьшаем таймер уровня (до спавна босса)
+          levelTimer -= deltaTime;
+
+          // Вычисляем отношение прошедшего времени (0 в начале, 1 в конце)
+          let elapsedRatio = 1 - (levelTimer / levelDuration);
+          // Здесь задаём динамический интервал спавна:
+          // В начале (elapsedRatio ~ 0) интервал будет около 1500 мс,
+          // а к концу (elapsedRatio ~ 1) – около 500 мс.
+          let dynamicSpawnInterval = Math.max(500, 1500 - elapsedRatio * 1000);
+
+
         enemySpawnTimer += deltaTime;
-        if(enemySpawnTimer > enemySpawnInterval) {
+        if(enemySpawnTimer > dynamicSpawnInterval) {
           enemySpawnTimer = 0;
-          spawnEnemy();
+          // Определяем число врагов для спавна, например, от 1 до 5 в зависимости от уровня:
+          let spawnCount = Math.min(5, Math.floor(currentLevel / 2) + 1);
+          for (let i = 0; i < spawnCount; i++) {
+            spawnEnemy();
+          }
         }
-        enemySpawnInterval = Math.max(500,1500 - score/10);
+        enemySpawnInterval = Math.max(500, 1500 - score/10);
       }
       // Обновляем врагов
       for(let i = enemies.length-1; i>=0; i--) {
@@ -2298,6 +2608,7 @@
           // --- Изменено: если щит активен, урон от обычных врагов блокируется полностью ---
           if(player.activePowerUps.shield.duration > 0) {
             enemies[i].dead = true;
+            onEnemyKilled(enemies[i]);
           } else {
             let damage = 20;
             if(enemies[i].type === "freeze") { player.frozenTime = 2000; damage = 10; }
@@ -2308,6 +2619,7 @@
             damageTexts.push({ x: player.x, y: player.y, damage: damage, alpha: 1, lifetime: 1000 });
             if(player.currentHP <= 0) { gameState = "gameover"; showGameOver(); }
             enemies[i].dead = true;
+            onEnemyKilled(enemies[i]);
           }
         }
       }
@@ -2316,6 +2628,20 @@
         bosses[i].update(deltaTime);
         // --- Изменено: при столкновении с боссом проверяем наличие щита.
         if(circleCollision(bosses[i], player)) {
+          // Вычисляем вектор от босса к игроку
+          let dx = player.x - bosses[i].x;
+          let dy = player.y - bosses[i].y;
+          let dist = Math.hypot(dx, dy);
+          // Если расстояние оказалось нулевым (на всякий случай)
+          if (dist === 0) { dx = 1; dy = 0; dist = 1; }
+          // Определяем расстояние отбрасывания: 5 клеток
+          let knockBackDistance = 5 * actualGridSize; // например, 5 * 50 = 250 пикселей
+          // Сдвигаем позицию игрока по направлению от босса
+          player.x += (dx / dist) * knockBackDistance;
+          player.y += (dy / dist) * knockBackDistance;
+          // (Опционально) Ограничиваем позицию игрока границами канвы:
+          player.x = Math.max(player.radius, Math.min(width - player.radius, player.x));
+          player.y = Math.max(player.radius, Math.min(height - player.radius, player.y));
           if (player.activePowerUps.shield.duration > 0) {
             // Если щит активен – уменьшаем его оставшееся время на 1 секунду (1000 мс)
             player.activePowerUps.shield.duration = Math.max(0, player.activePowerUps.shield.duration - 100);
@@ -2344,8 +2670,25 @@
       for(let i = collectibles.length-1; i>=0; i--) {
         collectibles[i].update(deltaTime);
         if(circleCollision(collectibles[i], player)) {
-          powerMeter = Math.min(POWER_METER_MAX, powerMeter+20);
+          let addValue = 20;
+          // Если собран специальный collectible, даем в 2 раза больше
+          if (collectibles[i] instanceof SpecialCollectible) {
+            addValue *= 2;
+          }
+          if (player.activePowerUps.powerMeterBoost && player.activePowerUps.powerMeterBoost.duration > 0) {
+            addValue *= (1+player.activePowerUps.powerMeterBoost.stacks); 
+          }
+          powerMeter = Math.min(getPowerMeterMax(), powerMeter+addValue);
           collectibles.splice(i,1);
+        }
+      }
+      // Спавним специальный collectible в случайном месте, если условия выполнены
+      if (currentLevel >= 10 && bosses.length > 0) {
+        specialCollectibleSpawnTimer += deltaTime;
+        // Каждые 5000 мс (5 секунд) пробуем заспавнить специальный объект
+        if (specialCollectibleSpawnTimer >= 1000) {
+          spawnSpecialCollectibleRandom();
+          specialCollectibleSpawnTimer = 0;
         }
       }
       // Обновляем частицы
@@ -2418,8 +2761,8 @@
             if(b.freezeBlast) { 
                 enemies[i].frozenTime = Math.max(enemies[i].frozenTime, 3000);
             }
-            if(b.empBlast) { enemies[i].empTime = Math.max(enemies[i].empTime, 3000); }
-            if(b.lifeSteal) { player.currentHP = Math.min(player.maxHP, player.currentHP + b.damage); }
+            if(b.empBlast) { enemies[i].empTime = Math.max(enemies[i].empTime, 3000 * player.activePowerUps.empBlast.stacks); }
+            if(b.lifeSteal) { player.currentHP = Math.min(player.maxHP, player.currentHP + b.damage * player.activePowerUps.lifeSteal.stacks); }
             if(b.piercing) {
               b.piercingCount--;
               if(b.piercingCount <= 0) { b.dead = true; }
@@ -2446,6 +2789,7 @@
               spawnCollectible(enemies[i].x, enemies[i].y);
               score += (enemies[i].type==="elite")?200:100;
               enemies[i].dead = true;
+              onEnemyKilled(enemies[i]);
               break;
             }
           }
@@ -2508,7 +2852,7 @@
           }
         }
       }
-      if(powerMeter >= POWER_METER_MAX && gameState==="playing") {
+      if(powerMeter >= getPowerMeterMax() && gameState==="playing") {
         showPowerUpMenu();
       }
 
@@ -2545,6 +2889,8 @@
         }
         friends.forEach(friend => friend.update(deltaTime));
       }
+      // === combo timer
+      updateCombo(deltaTime);
 
       enemies = enemies.filter(enemy => !enemy.dead);
       bullets = bullets.filter(bullet => !bullet.dead);
@@ -2681,7 +3027,7 @@
       return key; // если не найдено, возвращаем исходное значение
     }
 
-    // =================== Draw Function ===================
+    // =================== Main Draw Function ===================
     function draw() {
       getCurrentBiome().drawBackground();
       collectibles.forEach(c => c.draw());
@@ -2702,7 +3048,7 @@
       ctx.fillStyle = "#222";
       ctx.fillRect(10 * uiScale,65 * uiScale,120 * uiScale,15 * uiScale);
       ctx.fillStyle = "#0f0";
-      ctx.fillRect(10 * uiScale,65 * uiScale,(120*(powerMeter/POWER_METER_MAX)) * uiScale,15 * uiScale);
+      ctx.fillRect(10 * uiScale,65 * uiScale,(120*(powerMeter/getPowerMeterMax())) * uiScale,15 * uiScale);
       ctx.strokeStyle = "#fff";
       ctx.strokeRect(10 * uiScale,65 * uiScale,120 * uiScale,15 * uiScale);
       // Health Bar
@@ -2720,7 +3066,7 @@
       if (player && player.activePowerUps.neonOverdrive && player.activePowerUps.neonOverdrive.duration > 0) {
         let beamStartX = player.x + Math.cos(player.angle) * (player.radius * scaleFactor);
         let beamStartY = player.y + Math.sin(player.angle) * (player.radius * scaleFactor);
-        let beamLength = Math.sqrt(width * width + height * height) * scaleFactor;
+        let beamLength = Math.sqrt(width * width + height * height);
         let beamEndX = beamStartX + Math.cos(player.angle) * beamLength;
         let beamEndY = beamStartY + Math.sin(player.angle) * beamLength;
         
@@ -2733,6 +3079,34 @@
         ctx.beginPath();
         ctx.moveTo(beamStartX, beamStartY);
         ctx.lineTo(beamEndX, beamEndY);
+        ctx.stroke();
+        ctx.restore();
+        // --- Дополнительные фиолетовые неоновые линии ---
+        // Параметр осцилляции (пульсация) рассчитывается на основе времени
+        let oscillation = Math.sin(performance.now() / 100) * (3 * scaleFactor); //       изменяется от -3*scaleFactor до +3*scaleFactor
+        let offsetBase = 10 * scaleFactor; // базовый отступ от основного луча
+        let offset = offsetBase + oscillation; // суммарный отступ
+
+        // Вычисляем перпендикуляр к направлению луча
+        let perpX = -Math.sin(player.angle);
+        let perpY = Math.cos(player.angle);
+
+        ctx.save();
+        ctx.lineWidth = 4 * scaleFactor; // более тонкие линии
+        ctx.strokeStyle = "rgba(138,43,226,0.8)"; // фиолетовый (цвет BlueViolet)
+        ctx.shadowColor = "rgba(138,43,226,1)";
+        ctx.shadowBlur = 15 * scaleFactor;
+
+        // Левая линия (смещена в сторону -perp)
+        ctx.beginPath();
+        ctx.moveTo(beamStartX - perpX * offset, beamStartY - perpY * offset);
+        ctx.lineTo(beamEndX - perpX * offset, beamEndY - perpY * offset);
+        ctx.stroke();
+
+        // Правая линия (смещена в сторону +perp)
+        ctx.beginPath();
+        ctx.moveTo(beamStartX + perpX * offset, beamStartY + perpY * offset);
+        ctx.lineTo(beamEndX + perpX * offset, beamEndY + perpY * offset);
         ctx.stroke();
         ctx.restore();
       }
@@ -2776,6 +3150,31 @@
            yOffset += 25;
         }
       }
+      // === Отрисовка комбо-счетчика
+      ctx.save();
+      ctx.textBaseline = "middle"; // выравниваем по вертикальному центру
+      let comboColor = "#fff";
+      if (comboCounter >= 30) comboColor = "#0ff";
+      if (comboCounter >= 70) comboColor = "#ff0";
+      if (comboCounter >= 100) comboColor = "#f00";
+      if (comboCounter >= 150) comboColor = "rgba(138,43,226,1)";
+      ctx.shadowColor = comboColor;    // подсветка
+      ctx.shadowBlur = 10 * uiScale;     // радиус свечения
+      if (comboCounter >= 200) {
+        comboColor = "#000";
+        ctx.shadowColor= "#fff"
+        ctx.shadowBlur = 5 * uiScale;
+      }
+      ctx.fillStyle = comboColor;
+      ctx.font = (24 * uiScale) + "px Arial";
+      // рассчитываем позицию: health bar начинается в 10, ширина 120, добавляем отступ 10
+      let comboX = (10 + 120 + 10) * uiScale;
+      // вертикальное положение – центр health bar (80 + 15/2)
+      let comboY = 80 * uiScale + (15 * uiScale) / 2;
+      ctx.fillText("Kills: " + comboCounter, comboX, comboY);
+      //ctx.fillText("Combo: " + comboCounter, 10 * uiScale, 140 * uiScale);
+      ctx.restore();
+
       // Отрисовка плавающих красных чисел урона
       damageTexts.forEach(dt => {
         ctx.save();
@@ -2801,6 +3200,7 @@
       permanentUpgrades.speed = 1;
       permanentUpgrades.fireRate = 1;
       permanentUpgrades.health = 0;
+      comboCounter = 0;
       enemySpawnTimer = 0;
       fireCooldown = 0;
       powerMeter = 0;
