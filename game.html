@@ -184,6 +184,15 @@
       });
 
     let cursorVisible = true; // изначально курсор видим
+    // ======== Обрезка для портретного режима
+    function getBottomCropHeight() {
+      // Получаем высоту джойстика (например, левый джойстик)
+      const joystick = document.getElementById("leftJoystick");
+      // Если по какой-то причине элемент ещё не измерен, задаём значение по умолчанию
+      const joystickHeight = joystick ? joystick.offsetHeight : 200;
+      const margin = 30; // отступ сверху джойстика (как в CSS: bottom: 20px)
+      return joystickHeight + margin;
+    }
 
     // We will store width/height in these, but NOT assign them to canvas yet.
     let width, height;
@@ -578,29 +587,6 @@
         }
       },
       // Добавляем новые биомы:
-      {
-        name: "Solar Flare",
-        drawBackground: function() {
-          // Фоновый градиент от тёмно-красного к золотому
-          let grad = ctx.createLinearGradient(0, 0, width, height);
-          grad.addColorStop(0, "#8B0000"); // тёмно-красный
-          grad.addColorStop(0.5, "#FF4500"); // оранжево-красный
-          grad.addColorStop(1, "#FFD700"); // золотой
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, width, height);
-          // Добавляем "вспышки" солнечных лучей
-          for (let i = 0; i < 15; i++) {
-            ctx.beginPath();
-            let x = Math.random() * width;
-            let y = Math.random() * height;
-            let flareSize = Math.random() * 30 + 10;
-            ctx.arc(x, y, flareSize, 0, Math.PI * 2);
-            ctx.strokeStyle = "rgba(255, 69, 0, 0.3)";
-            ctx.lineWidth = 2 * scaleFactor;
-            ctx.stroke();
-          }
-        }
-      },
       {
         name: "Cyber Grid Cyan",
         drawBackground: function() {
@@ -1006,9 +992,14 @@
           this.x += dx * effectiveSpeed;
           this.y += dy * effectiveSpeed;
         }
+        
+        const effectiveHeight = (isMobile && window.innerHeight > window.innerWidth)
+            ? height - getBottomCropHeight()
+            : height;
+
         // Constrain to canvas
         this.x = Math.max(this.radius, Math.min(width - this.radius, this.x));
-        this.y = Math.max(this.radius, Math.min(height - this.radius, this.y));
+        this.y = Math.max(this.radius, Math.min(effectiveHeight - this.radius, this.y));
         // Aiming: desktop uses mouse; mobile uses right joystick if active
         if (!isMobile) {
           // Desktop: aim with mouse
@@ -1865,11 +1856,16 @@
     // =================== Spawning Functions ===================
     function spawnEnemy() {
       let x, y;
+
+      const effectiveHeight = (isMobile && window.innerHeight > window.innerWidth)
+          ? height - getBottomCropHeight()
+          : height;
+
       const edge = Math.floor(Math.random() * 4);
       if (edge === 0) { x = Math.random() * width; y = -30; }
-      else if (edge === 1) { x = width + 30; y = Math.random() * height; }
-      else if (edge === 2) { x = Math.random() * width; y = height + 30; }
-      else { x = -30; y = Math.random() * height; }
+      else if (edge === 1) { x = width + 30; y = Math.random() * effectiveHeight; }
+      else if (edge === 2) { x = Math.random() * width; y = effectiveHeight + 30; }
+      else { x = -30; y = Math.random() * effectiveHeight; }
       let r = Math.random();
       let type = "basic";
       if(r < 0.35)          type = "basic";
@@ -3039,6 +3035,14 @@
 
     // =================== Main Draw Function ===================
     function draw() {
+      ctx.save();
+      // Вычисляем, сколько пикселей нужно обрезать снизу
+      const cropHeight = (isMobile && window.innerHeight > window.innerWidth) ?     getBottomCropHeight() : 0;
+      // Задаём область отрисовки – от (0,0) до (width, height - cropHeight)
+      ctx.beginPath();
+      ctx.rect(0, 0, width, height - cropHeight);
+      ctx.clip();
+
       getCurrentBiome().drawBackground();
       collectibles.forEach(c => c.draw());
       // *** NEW: Отрисовка объектов Friend ***
@@ -3049,7 +3053,27 @@
       // Отрисовка босса (или боссов)
       bosses.forEach(b => b.draw());
       particles.forEach(p => p.draw());
-      // HUD
+
+      if (isMobile && window.innerHeight > window.innerWidth) {
+        const effectiveHeight = height - getBottomCropHeight();
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(0, effectiveHeight);
+        ctx.lineTo(width, effectiveHeight);
+        // Настройка толщины линии (можно скорректировать под ваш uiScale)
+        ctx.lineWidth = 8 * uiScale;
+        // Устанавливаем бирюзовый цвет и неоновое свечение
+        ctx.strokeStyle = "rgba(0,255,255,0.8)";
+        ctx.shadowColor = "rgba(0,255,255,1)";
+        ctx.shadowBlur = 20 * uiScale;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // HUD 
+      ctx.save();              // сохраняем текущее состояние контекста
+      if (isMobile) ctx.globalAlpha = 0.5;
+
       ctx.fillStyle = "#fff";
       ctx.font = (20 * uiScale) + "px Arial";
       ctx.fillText("Score: " + Math.floor(score), 10, 30 * uiScale);
@@ -3065,7 +3089,7 @@
       if(player) {
         const grad = ctx.createLinearGradient(10 * uiScale,80 * uiScale,130 * uiScale,80 * uiScale);
         grad.addColorStop(0, "#f00");
-        grad.addColorStop(1, "#0f0");
+        grad.addColorStop(1, "rgba(0,255,0,0.5)");
         ctx.fillStyle = "#222";
         ctx.fillRect(10 * uiScale,80 * uiScale,120 * uiScale,15 * uiScale);
         ctx.fillStyle = grad;
@@ -3073,6 +3097,86 @@
         ctx.strokeStyle = "#fff";
         ctx.strokeRect(10 * uiScale,80 * uiScale,120 * uiScale,15 * uiScale);
       }
+      
+      // Отрисовка перманентных бонусов в правом верхнем углу
+      ctx.textAlign = "right";  // Выравнивание текста по правому краю
+      ctx.fillStyle = "#fff";
+      ctx.font = (20 * uiScale) + "px Arial";
+      ctx.fillText("Damage: " + permanentUpgrades.damage, (width - 10), 30 * uiScale);
+      ctx.fillText("Speed: " + permanentUpgrades.speed, (width - 10), 55 * uiScale);
+      ctx.fillText("Fire Rate: " + permanentUpgrades.fireRate, (width - 10), 80 * uiScale);
+      ctx.fillText("Health: " + (100 + permanentUpgrades.health), (width - 10), 105 * uiScale);  // *** NEW: отображение здоровья
+      ctx.textAlign = "left";  // Сброс выравнивания для дальнейшей отрисовки
+      // =================== Отрисовка активных усилений и негативных эффектов (HUD) ===================
+      if (player) {
+        let yOffset = 120;
+        // Сначала выводим активные (положительные) усиления белым цветом
+        if (player.activePowerUps) {
+          for (let key in player.activePowerUps) {
+            if (player.activePowerUps[key].duration > 0) {
+              const displayName = getPowerUpDisplayName(key);
+              ctx.fillStyle = "#fff";
+              ctx.fillText(displayName + " (" + Math.ceil(player.activePowerUps[key].duration / 1000) + "s, stacks: " + player.activePowerUps[key].stacks + ")", 10 * uiScale, yOffset * uiScale);
+              yOffset += 25;
+            }
+          }
+        }
+        // Затем выводим негативные эффекты красным цветом
+        if (player.frozenTime > 0) {
+           ctx.fillStyle = "#f00";
+           ctx.fillText("Frozen (" + Math.ceil(player.frozenTime / 1000) + "s)", 10 * uiScale, yOffset * uiScale);
+           yOffset += 25;
+        }
+        if (player.shootingDisabled > 0) {
+           ctx.fillStyle = "#f00";
+           ctx.fillText("Shooting Disabled (" + Math.ceil(player.shootingDisabled / 1000) + "s)", 10 * uiScale, yOffset * uiScale);
+           yOffset += 25;
+        }
+        if (player.empSlowed > 0) {
+           ctx.fillStyle = "#f00";
+           ctx.fillText("EMP Slowed (" + Math.ceil(player.empSlowed / 1000) + "s)", 10 * uiScale, yOffset * uiScale);
+           yOffset += 25;
+        }
+      }
+      ctx.restore(); 
+      // === Отрисовка комбо-счетчика
+      ctx.save();
+      if (isMobile) ctx.globalAlpha = 0.5;
+      
+      ctx.textBaseline = "middle"; // выравниваем по вертикальному центру
+      let comboColor = "#fff";
+      if (comboCounter >= 30) comboColor = "#0ff";
+      if (comboCounter >= 70) comboColor = "#ff0";
+      if (comboCounter >= 100) comboColor = "#f00";
+      if (comboCounter >= 150) comboColor = "rgba(138,43,226,1)";
+      ctx.shadowColor = comboColor;    // подсветка
+      ctx.shadowBlur = 10 * uiScale;     // радиус свечения
+      if (comboCounter >= 200) {
+        comboColor = "#000";
+        ctx.shadowColor= "#fff"
+        ctx.shadowBlur = 5 * uiScale;
+      }
+      ctx.fillStyle = comboColor;
+      ctx.font = (24 * uiScale) + "px Arial";
+      // рассчитываем позицию: health bar начинается в 10, ширина 120, добавляем отступ 10
+      let comboX = (10 + 120 + 10) * uiScale;
+      // вертикальное положение – центр health bar (80 + 15/2)
+      let comboY = 80 * uiScale + (15 * uiScale) / 2;
+      ctx.fillText("Kills: " + comboCounter, comboX, comboY);
+      //ctx.fillText("Combo: " + comboCounter, 10 * uiScale, 140 * uiScale);
+      ctx.restore();
+
+      // Отрисовка плавающих красных чисел урона
+      damageTexts.forEach(dt => {
+        ctx.save();
+        ctx.globalAlpha = dt.alpha;
+        ctx.fillStyle = "#f00";
+        ctx.font = (24 * uiScale) + "px Arial";
+        // Если dt.damage является числом – добавляем минус, иначе выводим как есть
+        const text = (typeof dt.damage === "number") ? "-" + dt.damage : dt.damage;
+        ctx.fillText(text, dt.x, dt.y);
+        ctx.restore();
+      });
       if (player && player.activePowerUps.neonOverdrive && player.activePowerUps.neonOverdrive.duration > 0) {
         let beamStartX = player.x + Math.cos(player.angle) * (player.radius * scaleFactor);
         let beamStartY = player.y + Math.sin(player.angle) * (player.radius * scaleFactor);
@@ -3120,82 +3224,6 @@
         ctx.stroke();
         ctx.restore();
       }
-      // Отрисовка перманентных бонусов в правом верхнем углу
-      ctx.textAlign = "right";  // Выравнивание текста по правому краю
-      ctx.fillStyle = "#fff";
-      ctx.font = (20 * uiScale) + "px Arial";
-      ctx.fillText("Damage: " + permanentUpgrades.damage, (width - 10), 30 * uiScale);
-      ctx.fillText("Speed: " + permanentUpgrades.speed, (width - 10), 55 * uiScale);
-      ctx.fillText("Fire Rate: " + permanentUpgrades.fireRate, (width - 10), 80 * uiScale);
-      ctx.fillText("Health: " + (100 + permanentUpgrades.health), (width - 10), 105 * uiScale);  // *** NEW: отображение здоровья
-      ctx.textAlign = "left";  // Сброс выравнивания для дальнейшей отрисовки
-      // =================== Отрисовка активных усилений и негативных эффектов (HUD) ===================
-      if (player) {
-        let yOffset = 120;
-        // Сначала выводим активные (положительные) усиления белым цветом
-        if (player.activePowerUps) {
-          for (let key in player.activePowerUps) {
-            if (player.activePowerUps[key].duration > 0) {
-              const displayName = getPowerUpDisplayName(key);
-              ctx.fillStyle = "#fff";
-              ctx.fillText(displayName + " (" + Math.ceil(player.activePowerUps[key].duration / 1000) + "s, stacks: " + player.activePowerUps[key].stacks + ")", 10 * uiScale, yOffset * uiScale);
-              yOffset += 25;
-            }
-          }
-        }
-        // Затем выводим негативные эффекты красным цветом
-        if (player.frozenTime > 0) {
-           ctx.fillStyle = "#f00";
-           ctx.fillText("Frozen (" + Math.ceil(player.frozenTime / 1000) + "s)", 10 * uiScale, yOffset * uiScale);
-           yOffset += 25;
-        }
-        if (player.shootingDisabled > 0) {
-           ctx.fillStyle = "#f00";
-           ctx.fillText("Shooting Disabled (" + Math.ceil(player.shootingDisabled / 1000) + "s)", 10 * uiScale, yOffset * uiScale);
-           yOffset += 25;
-        }
-        if (player.empSlowed > 0) {
-           ctx.fillStyle = "#f00";
-           ctx.fillText("EMP Slowed (" + Math.ceil(player.empSlowed / 1000) + "s)", 10 * uiScale, yOffset * uiScale);
-           yOffset += 25;
-        }
-      }
-      // === Отрисовка комбо-счетчика
-      ctx.save();
-      ctx.textBaseline = "middle"; // выравниваем по вертикальному центру
-      let comboColor = "#fff";
-      if (comboCounter >= 30) comboColor = "#0ff";
-      if (comboCounter >= 70) comboColor = "#ff0";
-      if (comboCounter >= 100) comboColor = "#f00";
-      if (comboCounter >= 150) comboColor = "rgba(138,43,226,1)";
-      ctx.shadowColor = comboColor;    // подсветка
-      ctx.shadowBlur = 10 * uiScale;     // радиус свечения
-      if (comboCounter >= 200) {
-        comboColor = "#000";
-        ctx.shadowColor= "#fff"
-        ctx.shadowBlur = 5 * uiScale;
-      }
-      ctx.fillStyle = comboColor;
-      ctx.font = (24 * uiScale) + "px Arial";
-      // рассчитываем позицию: health bar начинается в 10, ширина 120, добавляем отступ 10
-      let comboX = (10 + 120 + 10) * uiScale;
-      // вертикальное положение – центр health bar (80 + 15/2)
-      let comboY = 80 * uiScale + (15 * uiScale) / 2;
-      ctx.fillText("Kills: " + comboCounter, comboX, comboY);
-      //ctx.fillText("Combo: " + comboCounter, 10 * uiScale, 140 * uiScale);
-      ctx.restore();
-
-      // Отрисовка плавающих красных чисел урона
-      damageTexts.forEach(dt => {
-        ctx.save();
-        ctx.globalAlpha = dt.alpha;
-        ctx.fillStyle = "#f00";
-        ctx.font = (24 * uiScale) + "px Arial";
-        // Если dt.damage является числом – добавляем минус, иначе выводим как есть
-        const text = (typeof dt.damage === "number") ? "-" + dt.damage : dt.damage;
-        ctx.fillText(text, dt.x, dt.y);
-        ctx.restore();
-      });
       drawLevelProgressBar();
     }
 
@@ -3228,7 +3256,6 @@
       document.getElementById("overlay").classList.add("hidden");
     }
     
-
     mainMenu();
     requestAnimationFrame(gameLoop);
   })();
