@@ -1195,6 +1195,9 @@
         this.x += Math.cos(this.angle) * this.speed;
         this.y += Math.sin(this.angle) * this.speed;
         // --- Обработка отражения reflective пуль ---
+        const effectiveHeight = (isMobile && window.innerHeight > window.innerWidth)
+          ? height - getBottomCropHeight()
+          : height;
         if(this.reflective) {
           let bounced = false;
           if(this.x < this.radius) {
@@ -1210,8 +1213,8 @@
             this.y = this.radius;
             this.angle = -this.angle;
             bounced = true;
-          } else if(this.y > height - this.radius) {
-            this.y = height - this.radius;
+          } else if(this.y > effectiveHeight - this.radius) {
+            this.y = effectiveHeight - this.radius;
             this.angle = -this.angle;
             bounced = true;
           }
