@@ -2501,10 +2501,13 @@
       }
 
       // Обновляем пули
+      const effectiveHeight = (isMobile && window.innerHeight > window.innerWidth)
+          ? height - getBottomCropHeight()
+          : height;
       for(let i = bullets.length-1; i>=0; i--) {
         let b = bullets[i];
         b.update(deltaTime);
-        if(!b.reflective && (b.x < -10 || b.x > width+10 || b.y < -10 || b.y > height+10)) {
+        if(!b.reflective && (b.x < -10 || b.x > width+10 || b.y < -10 || b.y > effectiveHeight+10)) {
           b.dead = true;
         }
       }
@@ -2650,7 +2653,7 @@
           player.y += (dy / dist) * knockBackDistance;
           // (Опционально) Ограничиваем позицию игрока границами канвы:
           player.x = Math.max(player.radius, Math.min(width - player.radius, player.x));
-          player.y = Math.max(player.radius, Math.min(height - player.radius, player.y));
+          player.y = Math.max(player.radius, Math.min(effectiveHeight - player.radius, player.y));
           if (player.activePowerUps.shield.duration > 0) {
             // Если щит активен – уменьшаем его оставшееся время на 1 секунду (1000 мс)
             player.activePowerUps.shield.duration = Math.max(0, player.activePowerUps.shield.duration - 100);
