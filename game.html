@@ -720,24 +720,26 @@
           grad.addColorStop(1, "#0d0d0d");     // почти чёрный
           context.fillStyle = grad;
           context.fillRect(0, 0, width, height);
-          
-          // Добавляем "туманные облака" – полупрозрачные круги
-          for (let i = 0; i < 50; i++) {
-            let x = Math.random() * width;
-            let y = Math.random() * height;
-            let radius = Math.random() * 50 + 20;
-            context.beginPath();
-            context.arc(x, y, radius, 0, Math.PI * 2);
-            context.fillStyle = "rgba(156,39,176,0.1)";
-            context.fill();
-          }
-          
-          // Рассыпка случайных звёзд
-          for (let i = 0; i < 200; i++) {
-            let x = Math.random() * width;
-            let y = Math.random() * height;
-            context.fillStyle = "rgba(255,255,255," + (Math.random() * 0.8) + ")";
-            context.fillRect(x, y, 2, 2);
+          glitchFrameCounter++;
+          if (glitchFrameCounter % 5000 === 0) {
+            // Добавляем "туманные облака" – полупрозрачные круги
+            for (let i = 0; i < 50; i++) {
+              let x = Math.random() * width;
+              let y = Math.random() * height;
+              let radius = Math.random() * 50 + 20;
+              context.beginPath();
+              context.arc(x, y, radius, 0, Math.PI * 2);
+              context.fillStyle = "rgba(156,39,176,0.1)";
+              context.fill();
+            }
+
+            // Рассыпка случайных звёзд
+            for (let i = 0; i < 200; i++) {
+              let x = Math.random() * width;
+              let y = Math.random() * height;
+              context.fillStyle = "rgba(255,255,255," + (Math.random() * 0.8) + ")";
+              context.fillRect(x, y, 2, 2);
+            }
           }
         }
       },
@@ -751,19 +753,22 @@
           grad.addColorStop(1, "#000");
           context.fillStyle = grad;
           context.fillRect(0, 0, width, height);
+          glitchFrameCounter++;
+          if (glitchFrameCounter % 5000 === 0) {
           // Рисуем «неоновые пузыри»
-          for (let i = 0; i < 50; i++) {
-            let x = Math.random() * width;
-            let y = Math.random() * height;
-            let r = Math.random() * 30 + 10;
-            context.beginPath();
-            context.arc(x, y, r, 0, Math.PI * 2);
-            context.strokeStyle = "rgba(0,255,255,0.3)";
-            context.lineWidth = 4 * scaleFactor;
-            context.shadowColor = "rgba(0,255,255,0.8)";
-            context.shadowBlur = 15 * scaleFactor;
-            context.stroke();
-            context.shadowBlur = 0;
+            for (let i = 0; i < 100; i++) {
+              let x = Math.random() * width;
+              let y = Math.random() * height;
+              let r = Math.random() * 30 + 10;
+              context.beginPath();
+              context.arc(x, y, r, 0, Math.PI * 2);
+              context.strokeStyle = "rgba(0,255,255,0.3)";
+              context.lineWidth = 4 * scaleFactor;
+              context.shadowColor = "rgba(0,255,255,0.8)";
+              context.shadowBlur = 15 * scaleFactor;
+              context.stroke();
+              context.shadowBlur = 0;
+            }
           }
         }
       },
@@ -778,10 +783,13 @@
           context.fillStyle = "rgba(0,255,0,0.2)";
           const fontSize = 16 * scaleFactor;
           context.font = fontSize + "px monospace";
-          for (let i = 0; i < 100; i++) {
-            let x = Math.random() * width;
-            let y = Math.random() * height;
-            context.fillText(Math.random() > 0.5 ? "0" : "1", x, y);
+          glitchFrameCounter++;
+          if (glitchFrameCounter % 5000 === 0) {
+            for (let i = 0; i < 100; i++) {
+              let x = Math.random() * width;
+              let y = Math.random() * height;
+              context.fillText(Math.random() > 0.5 ? "0" : "1", x, y);
+            }
           }
         }
       },
@@ -821,21 +829,25 @@
           // Рисуем «схемные» линии и узлы
           context.strokeStyle = "#00f";
           context.lineWidth = 2 * scaleFactor;
-          for (let i = 0; i < 20; i++) {
-            let x = Math.random() * width;
-            let y = Math.random() * height;
-            context.beginPath();
-            context.moveTo(x, y);
-            context.lineTo(x + (Math.random() - 0.5) * 100, y + (Math.random() - 0.5) * 100);
-            context.stroke();
+          glitchFrameCounter++;
+          if (glitchFrameCounter % 5000 === 0) {
+            for (let i = 0; i < 20; i++) {
+              let x = Math.random() * width;
+              let y = Math.random() * height;
+              context.beginPath();
+              context.moveTo(x, y);
+              context.lineTo(x + (Math.random() - 0.5) * 100, y + (Math.random() - 0.5) * 100);
+              context.stroke();
+            }
+            for (let i = 0; i < 10; i++) {
+              let x = Math.random() * width;
+              let y = Math.random() * height;
+              context.beginPath();
+              context.arc(x, y, Math.random() * 20, 0, Math.PI * 2);
+              context.stroke();
+            }
           }
-          for (let i = 0; i < 10; i++) {
-            let x = Math.random() * width;
-            let y = Math.random() * height;
-            context.beginPath();
-            context.arc(x, y, Math.random() * 20, 0, Math.PI * 2);
-            context.stroke();
-          }
+          
         }
       },
       {
@@ -848,14 +860,17 @@
           grad.addColorStop(1, "#000");
           context.fillStyle = grad;
           context.fillRect(0, 0, width, height);
-          // Добавляем «глитч-артефакты»
-          for (let i = 0; i < 40; i++) {
-            context.fillStyle = "rgba(0,255,0,0.1)";
-            let x = Math.random() * width;
-            let y = Math.random() * height;
-            let w = Math.random() * 80;
-            let h = Math.random() * 20;
-            context.fillRect(x, y, w, h);
+          // Mobile: only update glitch e.g. once every 10 frames
+          glitchFrameCounter++;
+          if (glitchFrameCounter % 5000 === 0) {
+            for (let i = 0; i < 40; i++) {
+              context.fillStyle = "rgba(0,255,0,0.1)";
+              let x = Math.random() * width;
+              let y = Math.random() * height;
+              let w = Math.random() * 80;
+              let h = Math.random() * 20;
+              context.fillRect(x, y, w, h);
+            }
           }
         }
       },
@@ -893,22 +908,26 @@
           let context = ctxToUse || ctx;
           context.fillStyle = "#000";
           context.fillRect(0, 0, width, height);
-          // Рисуем случайные лазерные лучи
-          for (let i = 0; i < 15; i++) {
-            context.beginPath();
-            let startX = Math.random() * width;
-            let startY = Math.random() * height;
-            let angle = Math.random() * Math.PI * 2;
-            let length = Math.random() * 200 + 100;
-            context.moveTo(startX, startY);
-            context.lineTo(startX + Math.cos(angle) * length, startY + Math.sin(angle) * length);
-            context.strokeStyle = "rgba(255,0,0,0.5)";
-            context.lineWidth = 4 * scaleFactor;
-            context.shadowColor = "rgba(255,0,0,1)";
-            context.shadowBlur = 10 * scaleFactor;
-            context.stroke();
-            context.shadowBlur = 0;
-          }
+          // Mobile: only update glitch e.g. once every 10 frames
+          glitchFrameCounter++;
+          if (glitchFrameCounter % 5000 === 0) {
+            for (let i = 0; i < 15; i++) {
+              context.beginPath();
+              let startX = Math.random() * width;
+              let startY = Math.random() * height;
+              let angle = Math.random() * Math.PI * 2;
+              let length = Math.random() * 200 + 100;
+              context.moveTo(startX, startY);
+              context.lineTo(startX + Math.cos(angle) * length, startY + Math.sin(angle) * length);
+              context.strokeStyle = "rgba(255,0,0,0.5)";
+              context.lineWidth = 4 * scaleFactor;
+              context.shadowColor = "rgba(255,0,0,1)";
+              context.shadowBlur = 10 * scaleFactor;
+              context.stroke();
+              context.shadowBlur = 0;
+            }
+            }
+          
         }
       },
       {
@@ -920,13 +939,17 @@
           // Рисуем вихревые линии, создающие эффект воронки
           let centerX = width / 2;
           let centerY = height / 2;
-          for (let i = 0; i < 30; i++) {
-            context.beginPath();
-            let radius = (i / 30) * Math.max(width, height) / 2;
-            context.arc(centerX, centerY, radius, Math.PI * 0.5 + i * 0.2, Math.PI * 1.5 + i * 0.2);
-            context.strokeStyle = "rgba(0,255,255," + (0.1 + i / 300) + ")";
-            context.lineWidth = 3 * scaleFactor;
-            context.stroke();
+          // Mobile: only update glitch e.g. once every 10 frames
+          glitchFrameCounter++;
+          if (glitchFrameCounter % 1-0 === 0) {
+            for (let i = 0; i < 30; i++) {
+              context.beginPath();
+              let radius = (i / 30) * Math.max(width, height) / 2;
+              context.arc(centerX, centerY, radius, Math.PI * 0.5 + i * 0.2, Math.PI * 1.5 + i * 0.2);
+              context.strokeStyle = "rgba(0,255,255," + (0.1 + i / 300) + ")";
+              context.lineWidth = 3 * scaleFactor;
+              context.stroke();
+            }
           }
         }
       },
@@ -962,11 +985,15 @@
           let context = ctxToUse || ctx;
           context.fillStyle = "#000";
           context.fillRect(0,0,width,height);
-          for(let i=0;i<150;i++){
-            const x = Math.random()*width;
-            const y = Math.random()*height;
-            context.fillStyle = "#fff";
-            context.fillRect(x,y,2,2);
+          // Mobile: only update glitch e.g. once every 10 frames
+          glitchFrameCounter++;
+          if (glitchFrameCounter % 5000 === 0) {
+            for(let i=0;i<150;i++){
+              const x = Math.random()*width;
+              const y = Math.random()*height;
+              context.fillStyle = "#fff";
+              context.fillRect(x,y,2,2);
+            }
           }
         }
       },
@@ -1008,18 +1035,22 @@
           grad.addColorStop(1, "#fdd835");
           context.fillStyle = grad;
           context.fillRect(0, 0, width, height);
-          // Добавляем плавные линии, имитирующие сияние
-          for (let i = 0; i < 10; i++) {
-            context.beginPath();
-            context.moveTo(0, Math.random() * height);
-            context.bezierCurveTo(
-              width * 0.3, Math.random() * height,
-              width * 0.7, Math.random() * height,
-              width, Math.random() * height
-            );
-            context.strokeStyle = "rgba(255, 255, 255, 0.1)";
-            context.lineWidth = 2 * scaleFactor;
-            context.stroke();
+          glitchFrameCounter++;
+          if (glitchFrameCounter % 5000 === 0) {
+            // Добавляем плавные линии, имитирующие сияние
+            for (let i = 0; i < 10; i++) {
+              context.beginPath();
+              context.moveTo(0, Math.random() * height);
+              context.bezierCurveTo(
+                width * 0.3, Math.random() * height,
+                width * 0.7, Math.random() * height,
+                width, Math.random() * height
+              );
+
+              context.strokeStyle = "rgba(255, 255, 255, 0.1)";
+              context.lineWidth = 2 * scaleFactor;
+              context.stroke();
+            }
           }
         }
       },
@@ -1055,16 +1086,10 @@
           let context = ctxToUse || ctx;
           // Always draw the (current) glitchCanvas first.
           context.drawImage(glitchCanvas, 0, 0);
-          
-          if (!isMobile) {
-            // Desktop: re-generate glitch EVERY frame
+          // Mobile: only update glitch e.g. once every 10 frames
+          glitchFrameCounter++;
+          if (glitchFrameCounter % 5000 === 0) {
             generateGlitchPattern();
-          } else {
-            // Mobile: only update glitch e.g. once every 10 frames
-            glitchFrameCounter++;
-            if (glitchFrameCounter % 10 === 0) {
-              generateGlitchPattern();
-            }
           }
         }
       },
@@ -1079,20 +1104,24 @@
           grad.addColorStop(1, "#000");
           context.fillStyle = grad;
           context.fillRect(0, 0, width, height);
-          // Рисуем звёзды
-          for (let i = 0; i < 100; i++) {
-            context.fillStyle = "#fff";
-            let x = Math.random() * width;
-            let y = Math.random() * height;
-            context.fillRect(x, y, 1.5 * scaleFactor, 1.5 * scaleFactor);
-          }
-          // Лёгкие круговые вспышки для эффекта космических рифтов
-          for (let i = 0; i < 5; i++) {
-            context.beginPath();
-            context.arc(Math.random() * width, Math.random() * height, Math.random() * (100 * scaleFactor),     0, Math.PI * 2);
-            context.strokeStyle = "rgba(255, 0, 255, 0.1)";
-            context.lineWidth = 5 * scaleFactor;
-            context.stroke();
+          // Mobile: only update glitch e.g. once every 10 frames
+          glitchFrameCounter++;
+          if (glitchFrameCounter % 5000 === 0) {
+            // Рисуем звёзды
+            for (let i = 0; i < 100; i++) {
+              context.fillStyle = "#fff";
+              let x = Math.random() * width;
+              let y = Math.random() * height;
+              context.fillRect(x, y, 1.5 * scaleFactor, 1.5 * scaleFactor);
+            }
+            // Лёгкие круговые вспышки для эффекта космических рифтов
+            for (let i = 0; i < 5; i++) {
+              context.beginPath();
+              context.arc(Math.random() * width, Math.random() * height, Math.random() * (100 * scaleFactor),     0, Math.PI * 2);
+              context.strokeStyle = "rgba(255, 0, 255, 0.1)";
+              context.lineWidth = 5 * scaleFactor;
+              context.stroke();
+            }
           }
         }
       },
@@ -1119,14 +1148,17 @@
             context.lineTo(width, y);
             context.stroke();
           }
-          // Рисуем случайные "узлы" для имитации контактов
-          for (let i = 0; i < 20; i++) {
-            let x = Math.random() * width;
-            let y = Math.random() * height;
-            context.beginPath();
-            context.arc(x, y, 3 * scaleFactor, 0, Math.PI * 2);
-            context.fillStyle = "#0f0";
-            context.fill();
+          glitchFrameCounter++;
+          if (glitchFrameCounter % 5000 === 0) {
+            // Рисуем случайные "узлы" для имитации контактов
+            for (let i = 0; i < 20; i++) {
+              let x = Math.random() * width;
+              let y = Math.random() * height;
+              context.beginPath();
+              context.arc(x, y, 3 * scaleFactor, 0, Math.PI * 2);
+              context.fillStyle = "#0f0";
+              context.fill();
+            }
           }
         }
       },
@@ -1137,19 +1169,22 @@
           // Тёмный фон с неоновыми "деревьями"
           context.fillStyle = "#000";
           context.fillRect(0, 0, width, height);
-          // Рисуем неоновые столбы (как абстрактные деревья)
-          for (let i = 0; i < 10; i++) {
-            let x = Math.random() * width;
-            let treeHeight = Math.random() * (height / 2) + height / 4;
-            context.beginPath();
-            context.moveTo(x, height);
-            context.lineTo(x, height - treeHeight);
-            context.strokeStyle = "rgba(0,255,150,0.7)";
-            context.lineWidth = 4 * scaleFactor;
-            context.shadowColor = "rgba(0,255,150,0.7)";
-            context.shadowBlur = 10;
-            context.stroke();
-            context.shadowBlur = 0;
+          // Рисуем неоновые столбы (как абстрактные деревья)=
+          glitchFrameCounter++;
+          if (glitchFrameCounter % 5000 === 0) {
+            for (let i = 0; i < 10; i++) {
+              let x = Math.random() * width;
+              let treeHeight = Math.random() * (height / 2) + height / 4;
+              context.beginPath();
+              context.moveTo(x, height);
+              context.lineTo(x, height - treeHeight);
+              context.strokeStyle = "rgba(0,255,150,0.7)";
+              context.lineWidth = 4 * scaleFactor;
+              context.shadowColor = "rgba(0,255,150,0.7)";
+              context.shadowBlur = 10;
+              context.stroke();
+              context.shadowBlur = 0;
+            }
           }
         }
       }
@@ -1800,7 +1835,7 @@
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.shadowColor = this.color;
-        
+
         ctx.shadowBlur = 20 * scaleFactor;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
@@ -3501,25 +3536,9 @@
       ctx.clip();
 
       // ===== Модифицированная отрисовка фона (биома) =====
-      let currentTime = performance.now();
-      if (isMobile) {
-        // Если прошло больше BIOME_UPDATE_INTERVAL, обновляем offscreen‑canvas
-        if (currentTime - lastBiomeUpdateTime > BIOME_UPDATE_INTERVAL) {
-          // Обновляем размеры offscreen‑canvas (на случай, если холст изменился)
-          bgCanvas.width = width;
-          bgCanvas.height = height;
-          // Рисуем фон на offscreen‑canvas через его контекст bgCtx
-          // Важно: измените (при необходимости) функцию drawBackground так, чтобы она принимала контекст:
-          // Например, внутри biomes: drawBackground: function(ctxToUse) { ctxToUse.fillStyle = "#111"; ... }
-          getCurrentBiome().drawBackground(bgCtx);
-          lastBiomeUpdateTime = currentTime;
-        }
-        // Рисуем кешированный фон с offscreen‑canvas на основном холсте
-        ctx.drawImage(bgCanvas, 0, 0);
-      } else {
-        // На десктопе можно отрисовывать фон каждый кадр
-        getCurrentBiome().drawBackground(ctx);
-      }
+
+      getCurrentBiome().drawBackground(ctx);
+
       // ====================================================
 
       collectibles.forEach(c => c.draw());
