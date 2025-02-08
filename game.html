@@ -1377,16 +1377,26 @@
           }
         }
         if(this.type === "emp") {
+          const dx = player.x - this.x;
+          const dy = player.y - this.y;
+          const dist = Math.hypot(dx, dy);
+          const preferredDistance = 150 * scaleFactor;
+          if(dist > preferredDistance) {
+            this.shootCooldown -= deltaTime;
+            this.x += (dx/dist) * this.speed * (deltaTime/16);
+            this.y += (dy/dist) * this.speed * (deltaTime/16);
+          } else {
           this.shootCooldown -= deltaTime;
           if(this.shootCooldown <= 0) {
-             let angle = Math.atan2(player.y - this.y, player.x - this.x);
-             let b = new Bullet(this.x, this.y, angle);
-             b.empBlast = true;
-             b.speed = 4 * scaleFactor;
-             b.damage = this.bulletDamage;
-             b.fromEnemy = true;  // Помечаем как пуля врага
-             bullets.push(b);
-             this.shootCooldown = 2500;
+              let angle = Math.atan2(player.y - this.y, player.x - this.x);
+              let b = new Bullet(this.x, this.y, angle);
+              b.empBlast = true;
+              b.speed = 4 * scaleFactor;
+              b.damage = this.bulletDamage;
+              b.fromEnemy = true;  // Помечаем как пуля врага
+              bullets.push(b);
+              this.shootCooldown = 2500;
+            }
           }
         }
         if(this.type === "sharpshooter") {
