@@ -154,8 +154,6 @@
     // =================== Canvas & Initialization ===================
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
-
-    
       
       // Обработчик нажатия клавиш
       document.addEventListener("keydown", function(e) {
@@ -206,10 +204,10 @@
     let actualGridSize2 = cssGridSize2;
     let actualGridSize40 = cssGridSize40; 
 
-    let mainCollectibleLifeTime = 20000;
+    let mainCollectibleLifeTime = 30000;
 
     // Задаём интервалы обновления (в мс)
-    const BIOME_STATIC_UPDATE_INTERVAL = 50; // статическая часть обновляется каждые    5 секунд
+    const BIOME_STATIC_UPDATE_INTERVAL = 50; // статическая часть обновляется каждые   
 
     let lastBiomeStaticUpdate = 0;
 
@@ -418,7 +416,7 @@
     let player;
     let bullets = [];
     let enemies = [];
-    const collectibles = [];
+    let collectibles = [];
     const particles = [];
     // Вместо одиночного босса используем массив
     let bosses = [];
@@ -453,8 +451,8 @@
     mobilePauseButton.addEventListener("click", () => {
       if(gameState === "playing") 
       {
-        //pauseGame();
-        nextLevel();   //cheat
+        pauseGame();
+        //nextLevel();   //cheat
       }
     });
     document.addEventListener("pointerdown", (e) => {
@@ -3401,7 +3399,7 @@
       }
       // === combo timer
       updateCombo(deltaTime);
-
+      collectibles = collectibles.filter(collectible => !collectible.dead)
       enemies = enemies.filter(enemy => !enemy.dead);
       bullets = bullets.filter(bullet => !bullet.dead);
     }
@@ -3541,31 +3539,22 @@
     function draw() {
       // Полная очистка канвы
       ctx.clearRect(0, 0, width, height);
+      // Вычисляем, сколько пикселей нужно обрезать снизу
+      const cropHeight = (isMobile && window.innerHeight > window.innerWidth) ? getBottomCropHeight() : 0;
       const now = performance.now();
       updateBiomeCache(now);
 
 
       ctx.save();
-      // Вычисляем, сколько пикселей нужно обрезать снизу
-      const cropHeight = (isMobile && window.innerHeight > window.innerWidth) ? getBottomCropHeight() : 0;
       // Задаём область отрисовки – от (0,0) до (width, height - cropHeight)
       ctx.beginPath();
       ctx.rect(0, 0, width, height - cropHeight);
       ctx.clip();
 
       // ===== Модифицированная отрисовка фона (биома) =====
-      
       ctx.drawImage(cachedBiomeStaticCanvas, 0, 0);
-      ctx.restore();
       //getCurrentBiome().drawBackground(ctx);
-
       // ====================================================
-      
-      ctx.save();
-      // Задаём область отрисовки – от (0,0) до (width, height - cropHeight)
-      ctx.beginPath();
-      ctx.rect(0, 0, width, height - cropHeight);
-      ctx.clip();
 
       collectibles.forEach(c => c.draw());
       // *** NEW: Отрисовка объектов Friend ***
@@ -3579,7 +3568,7 @@
 
       if (isMobile && window.innerHeight > window.innerWidth) {
         const effectiveHeight = height - getBottomCropHeight();
-        ctx.save();
+        //ctx.save();
         ctx.beginPath();
         ctx.moveTo(0, effectiveHeight);
         ctx.lineTo(width, effectiveHeight);
@@ -3590,9 +3579,9 @@
         ctx.shadowColor = "rgba(0,255,255,1)";
         ctx.shadowBlur = 20 * uiScale;
         ctx.stroke();
-        ctx.restore();
+        //ctx.restore();
       }
-
+      ctx.restore();
       // HUD 
       ctx.save();              // сохраняем текущее состояние контекста
       if (isMobile) ctx.globalAlpha = 0.7;
