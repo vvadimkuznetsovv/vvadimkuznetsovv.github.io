@@ -206,16 +206,46 @@
     let actualGridSize2 = cssGridSize2;
     let actualGridSize40 = cssGridSize40; 
 
-    // Интервал обновления фона на мобильных (в мс)
-    const BIOME_UPDATE_INTERVAL = 1000; 
-    let lastBiomeUpdateTime = 0;
-    let cachedBiomeImage = null;  
 
-    // Создаём offscreen canvas для кеширования фона
-    let bgCanvas = document.createElement('canvas');
-    bgCanvas.width = width;
-    bgCanvas.height = height;
-    let bgCtx = bgCanvas.getContext('2d');
+
+
+    // Задаём интервалы обновления (в мс)
+    const BIOME_STATIC_UPDATE_INTERVAL = 50; // статическая часть обновляется каждые    5 секунд
+
+    let lastBiomeStaticUpdate = 0;
+
+    // Создаем два offscreen canvas для статического фона и для моргающего оверлея
+    const cachedBiomeStaticCanvas = document.createElement('canvas');
+    const cachedBiomeStaticCtx = cachedBiomeStaticCanvas.getContext('2d');
+
+    // Не забудьте при ресайзе обновлять размеры этих canvas:
+    // Например, внутри вашей функции onResize:
+    function updateCachedCanvasSizes() {
+      cachedBiomeStaticCanvas.width = width;
+      cachedBiomeStaticCanvas.height = height;
+    }
+    window.addEventListener("resize", () => {
+      onResize();
+      updateCachedCanvasSizes();
+      // Можно также сбросить время обновления, чтобы фон сразу перерисовался
+      lastBiomeStaticUpdate = 0;
+    });
+
+    // Функция обновления кэша биома; вызываем ее в каждом кадре, перед отрисовкой
+    function updateBiomeCache(timestamp) {
+      // Обновляем статический фон, если прошло больше BIOME_STATIC_UPDATE_INTERVAL
+      if (timestamp - lastBiomeStaticUpdate > BIOME_STATIC_UPDATE_INTERVAL) {
+        // Очищаем кэш и отрисовываем текущий биом (используйте вашу функцию, например,     getCurrentBiome().drawBackground)
+        cachedBiomeStaticCtx.clearRect(0, 0, width, height);
+
+        cachedBiomeStaticCtx.fillStyle = "red"; // замените на яркий цвет
+        cachedBiomeStaticCtx.fillRect(0, 0, width, height);
+        const currentBiome = getCurrentBiome();
+        currentBiome.drawBackground(cachedBiomeStaticCtx);
+        lastBiomeStaticUpdate = timestamp;
+      }
+    }
+
 
     // Глобальная переменная для таймера спавна специальных collectible
     let specialCollectibleSpawnTimer = 0;
@@ -303,6 +333,10 @@
       canvas.width = Math.floor(width * dpr);
       canvas.height = Math.floor(height * dpr);
       
+      // Обновляем размеры offscreen‑canvas:
+      updateCachedCanvasSizes();
+      // Сброс кэша, чтобы сразу перерисовать фон на новом размере
+      lastBiomeStaticUpdate = 0;
       // 5) Make 1 “unit” in your drawing code == 1 CSS pixel:
       // If browser supports resetTransform():
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -373,7 +407,7 @@
     let powerMeter = 0;
     //const POWER_METER_MAX = 100;
     function getPowerMeterMax() {
-      return 100 + Math.floor((currentLevel - 1) / 2) * 30;
+      return 100 + Math.floor((currentLevel - 1) / 2) * 80;  //Harm-mode
     }
     // Spawn & firing timers
     let enemySpawnTimer = 0;
@@ -776,7 +810,7 @@
           context.fillRect(0, 0, width, height);
           // Рисуем случайные «биты» в стиле матрицы
           context.fillStyle = "rgba(0,255,0,0.2)";
-          const fontSize = 16 * scaleFactor;
+          const fontSize = 44 * scaleFactor;
           context.font = fontSize + "px monospace";
           if (!isMobile) {
             for (let i = 0; i < 100; i++) {
@@ -786,7 +820,6 @@
             }
           } else {
             // Mobile: only update glitch e.g. once every 10 frames
-            const fontSize = 44 * scaleFactor;
             glitchFrameCounter++;
             if (glitchFrameCounter % 10 === 0) {
               for (let i = 0; i < 100; i++) {
@@ -1926,11 +1959,6 @@
       draw() {
         ctx.save();
         ctx.translate(this.x, this.y);
-        ctx.shadowColor = this.color;
-
-        ctx.shadowBlur = 20 * scaleFactor;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
 
         ctx.fillStyle = this.color;
         ctx.strokeStyle = this.color;
@@ -2020,7 +2048,7 @@
         // Базовые HP и скорость
         this.bossBaseHP = 50;
         let bossDifficulty = currentLevel < 4 ? 0.6 : 1;
-        this.maxHP = Math.floor((this.bossBaseHP + currentLevel * 25 * 1.5) * bossDifficulty);  //Hard-level
+        this.maxHP = Math.floor((this.bossBaseHP + currentLevel * 25 * 1.5) * bossDifficulty);  //Hard-mode
         this.hp = this.maxHP;
         const MAX_BOSS_SPEED = 5 * scaleFactor;
         this.speed = Math.min(((1 + currentLevel * 0.1) * bossDifficulty) * scaleFactor, MAX_BOSS_SPEED);
@@ -2781,7 +2809,7 @@
       // Очищаем массивы
       enemies.length = 0;
       bullets.length = 0;
-      collectibles.length = 0;
+      //collectibles.length = 0;   //Hard-mode
       particles.length = 0;
       bosses.length = 0;
       resumeGame();
@@ -3619,6 +3647,12 @@
 
     // =================== Main Draw Function ===================
     function draw() {
+      // Полная очистка канвы
+      ctx.clearRect(0, 0, width, height);
+      const now = performance.now();
+      updateBiomeCache(now);
+
+
       ctx.save();
       // Вычисляем, сколько пикселей нужно обрезать снизу
       const cropHeight = (isMobile && window.innerHeight > window.innerWidth) ?     getBottomCropHeight() : 0;
@@ -3629,9 +3663,12 @@
 
       // ===== Модифицированная отрисовка фона (биома) =====
 
-      getCurrentBiome().drawBackground(ctx);
+      ctx.drawImage(cachedBiomeStaticCanvas, 0, 0);
+      ctx.restore();
+      //getCurrentBiome().drawBackground(ctx);
 
       // ====================================================
+      
 
       collectibles.forEach(c => c.draw());
       // *** NEW: Отрисовка объектов Friend ***
