@@ -344,10 +344,6 @@
       overflow-y: auto;
     }
 
-    
-    
-
-    
     .pause-menu h2 {
       margin-top: 0;
       color: #0ff;
@@ -645,7 +641,8 @@
         playSfx("neonoverdrive")
       }
     }
-    
+
+    let psiBlastWave = null;
 
     // Ensure SFX volumes are set
     for (let key in sfxMap) {
@@ -681,7 +678,7 @@
         // ************************************
         // **  BUTTONS for Cheats  **
         // ************************************
-        /**/
+        /*
         if(e.key.toLowerCase() === "p") {
           spawnTwoBosses();
         }
@@ -693,14 +690,10 @@
         }
         if(e.key.toLowerCase() === "k") {
           givePlayerMagnetEffect();
-        }
+        }*/
         // Если нажата клавиша "X" (без учета регистра)
         if (e.key.toLowerCase() === "x") {
-          // Переключаем состояние видимости курсора
-          cursorVisible = !cursorVisible;
-          canvas.style.cursor = cursorVisible ? "default" : "none";
-          console.log("Cursor visible:", cursorVisible);
-          playSfx("click");
+          revivePlayer()
         }
       });
 
@@ -787,6 +780,23 @@
         // Добавляем специальный collectible в массив collectibles
         collectibles.push(new SpecialCollectible(x, y));
       }
+    }
+
+    function revivePlayer() {
+      // Если игра не в состоянии gameover – выходим
+      if (gameState !== "gameover") return;
+    
+      // Если игрок существует, восстанавливаем здоровье и активируем щит
+      if (player) {
+        // Восстанавливаем здоровье до 50% от максимума
+        player.currentHP = Math.floor(player.maxHP / 2);
+        // Активируем щит: задаём длительность щита (например, 5000 мс) и 1 стэк
+        player.activePowerUps.shield.duration = 5000; // щит действует 5 секунд
+        player.activePowerUps.shield.stacks = 1;
+      }
+    
+      // Скрываем оверлей "Game Over" и переводим игру в состояние "playing"
+      resumeGame();
     }
     
     //========== Combo переменные и func для комбо-системы
@@ -951,6 +961,7 @@
     let damageTexts = [];
     // *** NEW: Массив для объектов-друзей (Friend) ***
     let friends = [];
+    let acidTrails = [];
 
     // =================== Input Handling ===================
     const keys = {};
@@ -1849,7 +1860,8 @@
           // удвоение прироста powerMeter
           powerMeterBoost: { duration: 0, stacks: 0 },
           // Пуль всем хватит:
-          bulletTime: { duration: 0, stacks: 0 }
+          bulletTime: { duration: 0, stacks: 0 },
+          acidRain: { duration: 0, stacks: 0 }
         };
         // Additional status effects (негативные эффекты)
         this.frozenTime = 0;
@@ -1859,14 +1871,13 @@
       }
       update(deltaTime) {
         // Обновление таймеров усилений: уменьшаем время и сбрасываем стеки, когда время истекает
-        const nonDecayingEffects = ["friend", "scoreMagnet", "neonOverdrive", "powerMeterBoost", "damageBoost", "shield", "shielspeedBoostd"];
+        const nonDecayingEffects = ["friend", "scoreMagnet", "neonOverdrive", "acidRain", "powerMeterBoost", "damageBoost", "shield", "shielspeedBoostd"];
         const nonDecayingEffects2 = ["doubleShot", "tripleShot", "scatterShot"];
         for (let key in this.activePowerUps) {
           let pu = this.activePowerUps[key];
           if (pu.duration > 0) {
             if (
-              this.activePowerUps.neonOverdrive &&
-              this.activePowerUps.neonOverdrive.duration > 0 &&
+              ((this.activePowerUps.neonOverdrive && this.activePowerUps.neonOverdrive.duration > 0) || (this.activePowerUps.acidRain && this.activePowerUps.acidRain.duration > 0)) &&
               !nonDecayingEffects.includes(key)
             ){
 
@@ -1880,9 +1891,7 @@
               // Обновляем время действия эффекта
               pu.duration -= deltaTime;
               if (pu.duration < 0) pu.duration = 0;
-
             }
-
 
             // Сохраняем предыдущее количество стэков, чтобы понять, сколько стэков "упало" за этот кадр
             let previousStacks = pu.stacks || 0;
@@ -2113,16 +2122,152 @@
         ctx.restore();
       }
     }
+    // =================== Вспомогательные функции ===================
+    function distancePointToLine(px, py, x1, y1, x2, y2) {
+      let A = px - x1, B = py - y1, C = x2 - x1, D = y2 - y1;
+      let dot = A * C + B * D, len_sq = C * C + D * D;
+      let param = len_sq !== 0 ? dot / len_sq : -1;
+      let xx, yy;
+      if (param < 0) { xx = x1; yy = y1; }
+      else if (param > 1) { xx = x2; yy = y2; }
+      else { xx = x1 + param * C; yy = y1 + param * D; }
+      let dx = px - xx, dy = py - yy;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
 
+    // Помогательная функция для вычисления точки пересечения луча с границами канвы
+    function getRayIntersection(x, y, angle, width, height) {
+      let tValues = [];
+      const cosA = Math.cos(angle), sinA = Math.sin(angle);
+      if(cosA > 0) {
+        let t = (width - x) / cosA;
+        if(t >= 0) tValues.push(t);
+      } else if(cosA < 0) {
+        let t = (0 - x) / cosA;
+        if(t >= 0) tValues.push(t);
+      }
+      if(sinA > 0) {
+        let t = (height - y) / sinA;
+        if(t >= 0) tValues.push(t);
+      } else if(sinA < 0) {
+        let t = (0 - y) / sinA;
+        if(t >= 0) tValues.push(t);
+      }
+      if(tValues.length === 0) return {x: x, y: y};
+      let tMin = Math.min(...tValues);
+      return { x: x + cosA * tMin, y: y + sinA * tMin };
+    }
+
+    // =================== Класс AcidTrail (след от Acid Rain) ===================
+    class AcidTrail {
+      constructor(x, y, angle) {
+        this.x = x;
+        this.y = y;
+        this.angle = angle;
+        this.duration = 10000; // След живёт 2000 мс (2 секунды)
+        this.damagePerSecond = 0.05 * permanentUpgrades.damage; // Урон единицы в секунду
+      }
+      update(deltaTime) {
+        this.duration -= deltaTime;
+        if(this.duration < 0) this.duration = 0;
+        // Вычисляем конечную точку луча по пересечению с границами канвы
+        const endPoint = getRayIntersection(this.x, this.y, this.angle, width, height);
+
+        // Проверка коллизий с врагами
+        enemies.forEach(enemy => {
+          let dist = distancePointToLine(enemy.x, enemy.y, this.x, this.y, endPoint.x, endPoint.y);
+          if (dist < enemy.radius) {
+            enemy.hp -= this.damagePerSecond;
+            // Эффект попадания
+            if(enemy.hp <= 0) {
+              if(enemy.type === "exploder") {
+                // When an exploder dies, it explodes—damaging nearby enemies.
+                for(let k=0; k<enemies.length; k++){
+                  const dx = enemy.x - enemy.x;
+                  const dy = enemy.y - enemy.y;
+                  if(Math.hypot(dx,dy) < 50) {
+                    enemy.hp -= 5;
+                  }
+                }
+              }
+              if(enemy.type === "splitter") {
+                // Splitter splits into two basic enemies when killed.
+                enemies.push(new Enemy(enemy.x, enemy.y, "basic"));
+                enemies.push(new Enemy(enemy.x, enemy.y, "basic"));
+              }
+              for(let k=0; k<20; k++){
+                particles.push(new Particle(enemy.x, enemy.y, enemy.color));
+              }
+              spawnCollectible(enemy.x, enemy.y);
+              score += (enemy.type==="elite")?200:100;
+              enemy.dead = true;
+              onEnemyKilled(enemy);
+            }
+            else{
+              for (let blood = 0; blood < 8; blood++) {
+                particles.push(new Particle(enemy.x, enemy.y, enemy.color));
+              }
+            }
+          }
+        });
+        // Проверка коллизий с боссами
+        bosses.forEach(boss => {
+          let dist = distancePointToLine(boss.x, boss.y, this.x, this.y, endPoint.x, endPoint.y);
+          if (dist < boss.radius) {
+            boss.hp -= this.damagePerSecond;
+            for (let blood = 0; blood < 8; blood++) {
+              particles.push(new Particle(boss.x, boss.y, "#f00"));
+            }
+          }
+        });
+
+        // *** Новый блок: уничтожение пуль врагов при столкновении с лучом ***
+        bullets.forEach(b => {
+          // Рассматриваем только пули, выпущенные врагами или боссами
+          if (b.fromEnemy || b.fromBoss) {
+              let dist = distancePointToLine(b.x, b.y, this.x, this.y, endPoint.x, endPoint.y);
+              // Если использовать для отрисовки луча lineWidth = 8*scaleFactor, то его "половина" равна 4*scaleFactor.
+              // Добавляем также радиус пули для более корректного расчёта.
+              if (dist < (b.radius + 4 * scaleFactor)) {
+                  b.dead = true;
+              }
+          }
+        });
+      }
+      draw() {
+        ctx.save();
+        ctx.lineWidth = 10 * scaleFactor;
+        ctx.strokeStyle = "#00ff00";
+        ctx.shadowColor = "#00ff00";
+        ctx.shadowBlur = 20 * scaleFactor;
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        const endPoint = getRayIntersection(this.x, this.y, this.angle, width, height);
+        ctx.lineTo(endPoint.x, endPoint.y);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
     // --- Bullet ---
     class Bullet {
-      constructor(x, y, angle, dmgFactor = 1) {
+      constructor(x, y, angle, dmgFactor = 1, source = "player") {
         this.x = x;
         this.y = y;
         this.angle = angle;
         this.speed = 6 * scaleFactor;
         this.radius = 4 * scaleFactor;
-        this.damage = 1 * permanentUpgrades.damage * dmgFactor;
+        this.damage = 1 * dmgFactor * (source === "player" ? permanentUpgrades.damage : 1);
+
+        // Сохранение источника пули
+        this.source = source;
+        // Если пуля принадлежит игроку и активирован power‑up Acid Rain, создаём кислотный след
+        if (this.source === "player" && player && player.activePowerUps.acidRain.duration > 0) {
+          acidTrails.push(new AcidTrail(this.x, this.y, this.angle));
+          this.hasAcidTrail = false;
+        } else {
+          this.hasAcidTrail = false;
+        }
+
         // Special properties (default off)
         this.piercing = false;
         this.piercingCount = 0;
@@ -2134,9 +2279,19 @@
         this.critical = false;
         this.lifeSteal = false;
         this.fromBoss = false;
+        this.fromFriend = false;
         this.dead = false;
         // --- Добавлен счётчик отскоков для reflective пуль ---
         this.bounceCount = 0;
+        // Убираем свойства для кислотного следа в самой пуле
+        // Если пуля игрока и power‑up Acid Rain активен, создаём объект AcidTrail
+        if (!this.fromEnemy && !this.fromBoss && player && player.activePowerUps.acidRain.duration > 0) {
+          acidTrails.push(new AcidTrail(this.x, this.y, this.angle));
+          // Не даём пуле отрисовывать свой собственный кислотный след
+          this.hasAcidTrail = false;
+        } else {
+          this.hasAcidTrail = false;
+        }
       }
       update(deltaTime) {
         // Homing effect: adjust angle toward nearest enemy
@@ -2158,6 +2313,10 @@
         const effectiveHeight = (isMobile && window.innerHeight > window.innerWidth)
           ? height - getBottomCropHeight()
           : height;
+
+        if(!this.reflective && (this.x < -10 || this.x > width+10 || this.y < -10 || this.y > effectiveHeight+10)) {
+          this.dead = true;
+        }
         if(this.reflective) {
           let bounced = false;
           if(this.x < this.radius) {
@@ -2321,7 +2480,7 @@
               const angle = Math.atan2(dy, dx);
               let spawnX = this.x + Math.cos(angle) * (this.radius + 5);
               let spawnY = this.y + Math.sin(angle) * (this.radius + 5);
-              let b = new Bullet(spawnX, spawnY, angle);
+              let b = new Bullet(spawnX, spawnY, angle, 1, "enemy");
               b.fromEnemy = true;         // Помечаем как пуля врага
               b.speed = 6 * scaleFactor;
               b.damage = this.bulletDamage; // Урон берётся из врага
@@ -2343,7 +2502,7 @@
           this.shootCooldown -= deltaTime;
           if(this.shootCooldown <= 0) {
               let angle = Math.atan2(player.y - this.y, player.x - this.x);
-              let b = new Bullet(this.x, this.y, angle);
+              let b = new Bullet(this.x, this.y, angle, 1, "enemy");
               b.empBlast = true;
               b.speed = 4 * scaleFactor;
               b.damage = this.bulletDamage;
@@ -2476,7 +2635,7 @@
         const minBossSize = 20;
         this.baseRadius = Math.max(60 / Math.pow(2, Math.floor((currentLevel - 1) / 5)), minBossSize);
         this.radius = this.baseRadius * scaleFactor;
-        
+        this.stunDuration = 0;
         // Базовые HP и скорость
         this.bossBaseHP = 50;
         let bossDifficulty = currentLevel < 4 ? 0.6 : 1;
@@ -2520,80 +2679,83 @@
           effectiveSpeed *= 0.5;
           this.freezeSlow -= deltaTime;
         }
-      
-        // --- Движение босса ---
-        const dx = player.x - this.x;
-        const dy = player.y - this.y;
-        const dist = Math.hypot(dx, dy);
-        if (dist !== 0) {
-          let currentSpeed = effectiveSpeed;
-          if (stage >= 4) currentSpeed *= 1.2;
-          this.x += (dx / dist) * currentSpeed;
-          this.y += (dy / dist) * currentSpeed;
-        }
-        // Добавляем небольшое колебание: если достигнута максимальная (самая "низкая") стадия и она равна 5,
-        // добавляем дрожание, иначе — небольшое косинусоидальное смещение.
-        if (stage === 5) {
-          this.x += (Math.random() - 0.5) * 5;
-          this.y += (Math.random() - 0.5) * 5;
-        } else {
-          this.x += Math.cos(performance.now() / 500) * 0.5;
-        }
-      
-        // --- Шаблоны стрельбы в зависимости от стадии ---
-        this.shootCooldown -= deltaTime;
-        if (this.shootCooldown <= 0) {
-          if (stage === 1) {
-            const baseAngle = Math.atan2(player.y - this.y, player.x - this.x);
-            for (let offset of [-0.1, 0, 0.1]) {
-              let b = new Bullet(this.x, this.y, baseAngle + offset);
-              b.fromBoss = true;
-              b.speed = 5 * scaleFactor;
-              b.damage = 20;
-              bullets.push(b);
+        if (this.stunDuration > 0) {
+          this.stunDuration -= deltaTime;
+        }else{
+          // --- Движение босса ---
+          const dx = player.x - this.x;
+          const dy = player.y - this.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist !== 0) {
+            let currentSpeed = effectiveSpeed;
+            if (stage >= 4) currentSpeed *= 1.2;
+            this.x += (dx / dist) * currentSpeed;
+            this.y += (dy / dist) * currentSpeed;
+          }
+          // Добавляем небольшое колебание: если достигнута максимальная (самая "низкая") стадия и она равна 5,
+          // добавляем дрожание, иначе — небольшое косинусоидальное смещение.
+          if (stage === 5) {
+            this.x += (Math.random() - 0.5) * 5;
+            this.y += (Math.random() - 0.5) * 5;
+          } else {
+            this.x += Math.cos(performance.now() / 500) * 0.5;
+          }
+        
+          // --- Шаблоны стрельбы в зависимости от стадии ---
+          this.shootCooldown -= deltaTime;
+          if (this.shootCooldown <= 0) {
+            if (stage === 1) {
+              const baseAngle = Math.atan2(player.y - this.y, player.x - this.x);
+              for (let offset of [-0.1, 0, 0.1]) {
+                let b = new Bullet(this.x, this.y, baseAngle + offset, 1, "boss");
+                b.fromBoss = true;
+                b.speed = 5 * scaleFactor;
+                b.damage = 20;
+                bullets.push(b);
+              }
+              this.shootCooldown = 3000;
+            } else if (stage === 2) {
+              const baseAngle = Math.atan2(player.y - this.y, player.x - this.x);
+              for (let offset of [-0.2, -0.1, 0, 0.1, 0.2]) {
+                let b = new Bullet(this.x, this.y, baseAngle + offset, 1, "boss");
+                b.fromBoss = true;
+                b.speed = 6 * scaleFactor;
+                b.damage = 25;
+                bullets.push(b);
+              }
+              this.shootCooldown = 2000;
+            } else if (stage === 3) {
+              const baseAngle = Math.atan2(player.y - this.y, player.x - this.x);
+              for (let offset of [-0.1, 0, 0.1]) {
+                let b = new Bullet(this.x, this.y, baseAngle + offset, 1, "boss");
+                b.fromBoss = true;
+                b.speed = 6 * scaleFactor;
+                b.damage = 30;
+                b.homing = true;
+                bullets.push(b);
+              }
+              this.shootCooldown = 1000;
+            } else if (stage === 4) {
+              for (let i = 0; i < 8; i++) {
+                let angle = i * (Math.PI * 2 / 8);
+                let b = new Bullet(this.x, this.y, angle, 1, "boss");
+                b.fromBoss = true;
+                b.speed = 7 * scaleFactor;
+                b.damage = 20;
+                bullets.push(b);
+              }
+              this.shootCooldown = 500;
+            } else if (stage === 5) {
+              const baseAngle = Math.atan2(player.y - this.y, player.x - this.x);
+              for (let offset of [-0.3, -0.15, 0, 0.15, 0.3]) {
+                let b = new Bullet(this.x, this.y, baseAngle + offset, 1, "boss");
+                b.fromBoss = true;
+                b.speed = 8 * scaleFactor;
+                b.damage = 35;
+                bullets.push(b);
+              }
+              this.shootCooldown = 150;
             }
-            this.shootCooldown = 3000;
-          } else if (stage === 2) {
-            const baseAngle = Math.atan2(player.y - this.y, player.x - this.x);
-            for (let offset of [-0.2, -0.1, 0, 0.1, 0.2]) {
-              let b = new Bullet(this.x, this.y, baseAngle + offset);
-              b.fromBoss = true;
-              b.speed = 6 * scaleFactor;
-              b.damage = 25;
-              bullets.push(b);
-            }
-            this.shootCooldown = 2000;
-          } else if (stage === 3) {
-            const baseAngle = Math.atan2(player.y - this.y, player.x - this.x);
-            for (let offset of [-0.1, 0, 0.1]) {
-              let b = new Bullet(this.x, this.y, baseAngle + offset);
-              b.fromBoss = true;
-              b.speed = 6 * scaleFactor;
-              b.damage = 30;
-              b.homing = true;
-              bullets.push(b);
-            }
-            this.shootCooldown = 1000;
-          } else if (stage === 4) {
-            for (let i = 0; i < 8; i++) {
-              let angle = i * (Math.PI * 2 / 8);
-              let b = new Bullet(this.x, this.y, angle);
-              b.fromBoss = true;
-              b.speed = 7 * scaleFactor;
-              b.damage = 20;
-              bullets.push(b);
-            }
-            this.shootCooldown = 500;
-          } else if (stage === 5) {
-            const baseAngle = Math.atan2(player.y - this.y, player.x - this.x);
-            for (let offset of [-0.3, -0.15, 0, 0.15, 0.3]) {
-              let b = new Bullet(this.x, this.y, baseAngle + offset);
-              b.fromBoss = true;
-              b.speed = 8 * scaleFactor;
-              b.damage = 35;
-              bullets.push(b);
-            }
-            this.shootCooldown = 150;
           }
         }
       }
@@ -2844,7 +3006,6 @@
       }
     }
 
-
     // --- Particle ---
     class Particle {
       constructor(x,y,color) {
@@ -3039,7 +3200,9 @@
       "Friend": "friend",
       "Neon Overdrive": "neonOverdrive",   // ← новая запись
       "Power Meter Boost": "powerMeterBoost",
-      "Bullet Time": "bulletTime"
+      "Bullet Time": "bulletTime",
+      "Psi Blast": "psiBlast",
+      "Acid Rain": "acidRain"
     };
     
     // =================== Temporary Power‑Up Pool & Durations ===================
@@ -3047,7 +3210,7 @@
       "Double Shot", "Triple Shot", "Rapid Fire", "Shield", "Speed Boost",
       "Damage Boost", "Piercing", "Homing", "Bomb", "Freeze Blast",
       "Reflective", "Life Steal", "EMP Blast", "Critical Strike", "Overcharge",
-      "Scatter Shot", "Health Boost", "Restore Health", "Magnet", "Friend", "Neon Overdrive", "Power Meter Boost", "Bullet Time"
+      "Scatter Shot", "Health Boost", "Restore Health", "Magnet", "Friend", "Neon Overdrive", "Power Meter Boost", "Bullet Time", "Psi Blast", "Acid Rain"
     ];
     const powerUpDurations = {
       "Reflective": 10000, // 10 секунд для Reflective
@@ -3060,7 +3223,8 @@
       "Friend": 40000,
       "Neon Overdrive": 10000,
       "Power Meter Boost": 15000, // 15 секунд
-      "Bullet Time": 15000  // 15 секунд   
+      "Bullet Time": 15000,  // 15 секунд   
+      "Acid Rain": 10000
     };
 
     // =================== Temporary Power‑Up Selection ===================
@@ -3146,6 +3310,31 @@
           powerMeter = 0;
           resumeGame();
           return;
+      } else if (choice === "Psi Blast") {
+        // Проходим по массиву врагов и устанавливаем у каждого frozenTime = 5000 (5 секунд)
+        enemies.forEach(enemy => {
+          enemy.frozenTime = 5000;
+        });
+        // Для боссов добавим новое свойство stunDuration (оглушение)
+        bosses.forEach(boss => {
+          boss.stunDuration = 5000;
+        });
+
+        // Создаем визуальный эффект волны в позиции игрока
+        psiBlastWave = {
+          x: player.x,
+          y: player.y,
+          radius: 0,
+          // Максимальный радиус – диагональ канвы (чтобы охватить всю карту)
+          maxRadius: Math.sqrt(width * width + height * height),
+          duration: 500,   // эффект длится 500 мс (можно настроить)
+          elapsed: 0
+        };
+        // Можно добавить эффект частиц или проиграть звук (например, playSfx ("psiBlast"))
+        resumeGame();
+        // Обнуляем powerMeter (если нужно)
+        powerMeter = 0;
+        return;
       } else {
         if (key && player) {
           const timePerStack = powerUpDurations[choice] || 30000;
@@ -3666,6 +3855,10 @@
         effectiveFireRate *= 1.5;
         player.empSlowed -= deltaTime;
       }
+      // Если активен Acid Rain – стрельба становится медленнее:
+      if (player.activePowerUps.acidRain.duration > 0) {
+        effectiveFireRate = BASE_FIRE_RATE*3;
+      }
       // Изменённая логика автострельбы с учётом стэков усилений
       if (player && player.shootingDisabled <= 0&& !(player.activePowerUps.neonOverdrive && player.activePowerUps.neonOverdrive.duration > 0)) {
         fireCooldown -= deltaTime;
@@ -3683,26 +3876,28 @@
           // Базово 1 пуля, но если активны усиления Double Shot и/или Triple Shot – применяем мультипликативный эффект
           let bulletCount = 1;
           let totalSpread = 0;
-          // Если Double Shot активен, умножаем количество пуль на 2 для каждого стэка
-          if (player.activePowerUps.doubleShot.duration > 0) {
-            bulletCount *= Math.pow(2, player.activePowerUps.doubleShot.stacks);
-            totalSpread += 0.1 * player.activePowerUps.doubleShot.stacks;
-          }
-          // Если Triple Shot активен, умножаем количество пуль на 3 для каждого стэка
-          if (player.activePowerUps.tripleShot.duration > 0) {
-            bulletCount *= Math.pow(3, player.activePowerUps.tripleShot.stacks);
-            totalSpread += 0.15 * player.activePowerUps.tripleShot.stacks;
-          }
-          // Scatter Shot теперь добавляет +4 пули за каждый стэк
-          if (player.activePowerUps.scatterShot.duration > 0) {
-            bulletCount += 4 * player.activePowerUps.scatterShot.stacks;
-            totalSpread += 0.3 * player.activePowerUps.scatterShot.stacks;
-          }
-          if (player.activePowerUps.bulletTime.duration > 0) {
-            // Если исходное число пуль ≤ 8, прибавляем 8; иначе ставим 16 (максимум)
-            bulletCount = (bulletCount <= 10) ? (bulletCount + 10) : 10 * player.activePowerUps.bulletTime.stacks;
-            // При этом задаём разброс на 360 градусов (2π радиан)
-            totalSpread = Math.PI * 2;
+          if (!(player.activePowerUps.acidRain.duration > 0)) {
+            // Если Double Shot активен, умножаем количество пуль на 2 для каждого стэка
+            if (player.activePowerUps.doubleShot.duration > 0) {
+              bulletCount *= Math.pow(2, player.activePowerUps.doubleShot.stacks);
+              totalSpread += 0.1 * player.activePowerUps.doubleShot.stacks;
+            }
+            // Если Triple Shot активен, умножаем количество пуль на 3 для каждого стэка
+            if (player.activePowerUps.tripleShot.duration > 0) {
+              bulletCount *= Math.pow(3, player.activePowerUps.tripleShot.stacks);
+              totalSpread += 0.15 * player.activePowerUps.tripleShot.stacks;
+            }
+            // Scatter Shot теперь добавляет +4 пули за каждый стэк
+            if (player.activePowerUps.scatterShot.duration > 0) {
+              bulletCount += 4 * player.activePowerUps.scatterShot.stacks;
+              totalSpread += 0.3 * player.activePowerUps.scatterShot.stacks;
+            }
+            if (player.activePowerUps.bulletTime.duration > 0) {
+              // Если исходное число пуль ≤ 8, прибавляем 8; иначе ставим 16 (максимум)
+              bulletCount = (bulletCount <= 10) ? (bulletCount + 10) : 10 * player.activePowerUps.bulletTime.stacks;
+              // При этом задаём разброс на 360 градусов (2π радиан)
+              totalSpread = Math.PI * 2;
+            }
           }
           // Overcharge теперь не влияет на число пуль, а ускоряет их – поэтому здесь не модифицируем bulletCount
           let newBullets = [];
@@ -3804,6 +3999,14 @@
           b.dead = true;
         }
       }
+      // Обновляем кислотные следы (AcidRain)
+      for(let i = acidTrails.length-1; i>=0; i--) {
+        acidTrails[i].update(deltaTime);
+        if(acidTrails[i].duration <= 0) {
+          acidTrails.splice(i,1);
+        }
+      }
+
       // Если активен Neon Overdrive – стреляем лазером вместо обычных пуль
       if (player.activePowerUps.neonOverdrive.duration > 0) {
         playNeonOverdriveSound();
@@ -3983,6 +4186,14 @@
         }
         if(circleCollision(collectibles[i], player)) {
           let addValue = 20;
+          // Если уровень выше 15, увеличиваем награду:
+          if (currentLevel > 15) {
+            // Вычисляем, сколько "пакетов" по 5 уровней прошло после 15-го:
+            // Math.ceil((currentLevel - 15) / 5) возвращает 1 для уровней 16-20, 2 для 21-25 и т.д.
+            let bonusMultiplier = Math.ceil((currentLevel - 15) / 5) + 1;
+            // Коэффициент увеличения: 1 + 0.3 * bonusMultiplier
+            addValue *= (1 + 0.3 * bonusMultiplier);
+          }
           // Если собран специальный collectible, даем в 2 раза больше
           if (collectibles[i] instanceof SpecialCollectible) {
             addValue *= 2;
@@ -4206,6 +4417,16 @@
         }
         friends.forEach(friend => friend.update(deltaTime));
       }
+      // Обновление эффекта волны "Psi Blast", если он активен
+      if (psiBlastWave) {
+        psiBlastWave.elapsed += deltaTime;
+        // Линейное увеличение радиуса: от 0 до максимума за заданное время duration
+        psiBlastWave.radius = psiBlastWave.maxRadius * (psiBlastWave.elapsed / psiBlastWave.duration);
+        // Если эффект закончился, сбрасываем его
+        if (psiBlastWave.elapsed >= psiBlastWave.duration) {
+          psiBlastWave = null;
+        }
+      }
       // === combo timer
       updateCombo(deltaTime);
       collectibles = collectibles.filter(collectible => !collectible.dead)
@@ -4374,6 +4595,7 @@
       // Отрисовка босса (или боссов)
       bosses.forEach(b => b.draw());
       particles.forEach(p => p.draw());
+      acidTrails.forEach(trail => trail.draw());
 
       if (isMobile && window.innerHeight > window.innerWidth) {
         const effectiveHeight = height - getBottomCropHeight();
@@ -4545,8 +4767,19 @@
         ctx.stroke();
         ctx.restore();
       }
+      if (psiBlastWave) {
+        ctx.save();
+        // Плавное исчезновение: альфа уменьшается от 1 до 0
+        let alpha = 1 - (psiBlastWave.elapsed / psiBlastWave.duration);
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = "rgba(0,255,255,1)"; // цвет волны (например, циановый)
+        ctx.lineWidth = 8 * uiScale;
+        ctx.beginPath();
+        ctx.arc(psiBlastWave.x, psiBlastWave.y, psiBlastWave.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
       drawLevelProgressBar();
-
       if (!isMobile) drawMouseIndicator();
       else drawMobileCursor();
     }
