@@ -488,6 +488,84 @@
       }
     }
 
+    function drawMouseIndicator() {
+      // Если игрок ещё не создан – ничего не рисуем
+      if (!player) return;
+      
+      // Можно взять угол из игрока, так как для десктопа он обновляется как:
+      // this.angle = Math.atan2(mouse.y - this.y, mouse.x - this.x);
+      let angle = player.angle;
+      
+      // --- Первая стрелка на позиции курсора ---
+      ctx.save();
+      ctx.translate(mouse.x, mouse.y);
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.moveTo(0, -15 * uiScale);
+      ctx.lineTo(0, 15 * uiScale);
+      ctx.lineTo(50 * uiScale, 0);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(255,255,255,0.8)";
+      ctx.fill();
+      ctx.restore();
+
+      // --- Вторая стрелка в середине между игроком и курсором ---
+      const midX = (player.x + mouse.x) / 2;
+      const midY = (player.y + mouse.y) / 2;
+      
+      ctx.save();
+      ctx.translate(midX, midY);
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.moveTo(0, -15 * uiScale);
+      ctx.lineTo(0, 15 * uiScale);
+      ctx.lineTo(50 * uiScale, 0);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(255,255,255,0.4)";
+      ctx.fill();
+      ctx.restore();
+    }
+    function drawMobileCursor() {
+      if (!player) return;
+      
+      // Задаём базовое расстояние от игрока
+      const offset = 50 * uiScale; // можно регулировать это значение
+      // Вычисляем второе расстояние как удвоенное
+      const offset2 = offset * 2;
+      
+      // Рисуем первую стрелку на расстоянии offset
+      const cursorX1 = player.x + Math.cos(player.angle) * offset;
+      const cursorY1 = player.y + Math.sin(player.angle) * offset;
+      
+      ctx.save();
+      ctx.translate(cursorX1, cursorY1);
+      ctx.rotate(player.angle);
+      ctx.beginPath();
+      ctx.moveTo(0, -5 * uiScale);
+      ctx.lineTo(0, 5 * uiScale);
+      ctx.lineTo(20 * uiScale, 0);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(255,255,255,0.7)";
+      ctx.fill();
+      ctx.restore();
+      
+      // Рисуем вторую стрелку на расстоянии offset2
+      const cursorX2 = player.x + Math.cos(player.angle) * offset2;
+      const cursorY2 = player.y + Math.sin(player.angle) * offset2;
+      
+      ctx.save();
+      ctx.translate(cursorX2, cursorY2);
+      ctx.rotate(player.angle);
+      ctx.beginPath();
+      ctx.moveTo(0, -5 * uiScale);
+      ctx.lineTo(0, 5 * uiScale);
+      ctx.lineTo(20 * uiScale, 0);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(255,255,255,0.2)";
+      ctx.fill();
+      ctx.restore();
+    }
+    
 
     /****************************************************
     * 3) Modify playCurrentMusic() to pause *all* tracks,
@@ -603,7 +681,7 @@
         // ************************************
         // **  BUTTONS for Cheats  **
         // ************************************
-        /*
+        /**/
         if(e.key.toLowerCase() === "p") {
           spawnTwoBosses();
         }
@@ -615,7 +693,7 @@
         }
         if(e.key.toLowerCase() === "k") {
           givePlayerMagnetEffect();
-        }*/
+        }
         // Если нажата клавиша "X" (без учета регистра)
         if (e.key.toLowerCase() === "x") {
           // Переключаем состояние видимости курсора
@@ -641,6 +719,10 @@
     let width, height;
     let dpr = window.devicePixelRatio || 1;
     const isMobile = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
+    if (!isMobile) {
+      canvas.style.cursor = "none";
+    }
+    
     let cssGridSize = (isMobile) ? (50 * (1 / dpr)) : 50;
     let cssGridSize2 = (isMobile) ? (60 * (1 / dpr)) : 60;
     let cssGridSize40 = (isMobile) ? (40 * (1 / dpr)) : 40;
@@ -648,7 +730,7 @@
     let actualGridSize2 = cssGridSize2;
     let actualGridSize40 = cssGridSize40; 
 
-    let mainCollectibleLifeTime = 30000;
+    let mainCollectibleLifeTime = 40000;
 
     // Задаём интервалы обновления (в мс)
     const BIOME_STATIC_UPDATE_INTERVAL = 50; // статическая часть обновляется каждые   
@@ -4464,6 +4546,9 @@
         ctx.restore();
       }
       drawLevelProgressBar();
+
+      if (!isMobile) drawMouseIndicator();
+      else drawMobileCursor();
     }
 
     // =================== Game Start ===================
