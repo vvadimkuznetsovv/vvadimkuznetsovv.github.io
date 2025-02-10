@@ -47,6 +47,11 @@
       text-align: center;
       user-select: none;
       font-size: calc(16px * var(--ui-scale));
+      /* Let the overlay itself scroll if it’s taller than the screen */
+      overflow-y: auto;
+      /* a padding or margin so that the content doesn't butt up against edges */
+      box-sizing: border-box; 
+      padding: calc(20px * var(--ui-scale));
     }
     #overlay.hidden {
       display: none;
@@ -124,6 +129,269 @@
       }
     }
     
+
+    /* The container for all audio settings */
+    /* The container for all audio settings */
+    .audio-settings {
+      margin-top: calc(20px * var(--ui-scale));
+      color: #0ff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    /* The mute checkbox + label styling */
+    .mute-label {
+      display: inline-flex;
+      align-items: center;
+      margin: calc(10px * var(--ui-scale));
+      padding: calc(6px * var(--ui-scale)) calc(12px * var(--ui-scale));
+      border: calc(2px * var(--ui-scale)) solid #0ff;
+      border-radius: calc(8px * var(--ui-scale));
+      background: #222;
+      box-shadow: 0 0 calc(10px * var(--ui-scale)) calc(2px * var(--ui-scale)) rgba(0, 255, 255, 0.5);
+      cursor: pointer;
+    }
+    .mute-checkbox {
+      margin-right: calc(8px * var(--ui-scale));
+      width: calc(18px * var(--ui-scale));
+      height: calc(18px * var(--ui-scale));
+      accent-color: #0ff; /* for browsers that support accent-color */
+    }
+
+    /* Each volume slider block */
+    .slider-container {
+      margin: calc(15px * var(--ui-scale)) 0;
+    }
+
+    .slider-label {
+      display: block;
+      margin-bottom: calc(6px * var(--ui-scale));
+    }
+
+    /* Base slider styling */
+    .slider {
+      -webkit-appearance: none; /* Remove default styling */
+      width: calc(220px * var(--ui-scale));
+      height: calc(6px * var(--ui-scale));
+      background: #333;
+      border-radius: calc(6px * var(--ui-scale));
+      outline: none;
+      margin: 0 auto;
+      cursor: pointer;
+    }
+
+    /* Neon glow effect */
+    .neon-slider {
+      box-shadow: 0 0 calc(10px * var(--ui-scale)) rgba(0,255,255,0.3);
+    }
+
+    /* Chrome / Safari thumb */
+    .neon-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: calc(20px * var(--ui-scale));
+      height: calc(20px * var(--ui-scale));
+      background: #0ff;
+      border-radius: 50%;
+      box-shadow: 0 0 calc(5px * var(--ui-scale)) #0ff,
+                  0 0 calc(10px * var(--ui-scale)) #0ff;
+      cursor: pointer;
+    }
+
+    /* Firefox thumb */
+    .neon-slider::-moz-range-thumb {
+      width: calc(20px * var(--ui-scale));
+      height: calc(20px * var(--ui-scale));
+      background: #0ff;
+      border-radius: 50%;
+      box-shadow: 0 0 calc(5px * var(--ui-scale)) #0ff,
+                  0 0 calc(10px * var(--ui-scale)) #0ff;
+      cursor: pointer;
+    }
+
+    .collapsible-container {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.4s ease;
+      width: 100%; 
+      margin: 0 auto;
+    }
+    
+    .collapsible-container.open {
+      max-height: 180vh;
+    }
+
+    .pause-menu::-webkit-scrollbar,
+    #customTracksUL::-webkit-scrollbar {
+      width: calc(8px * var(--ui-scale)); /* slightly bigger on high DPI */
+      height: calc(8px * var(--ui-scale));/* for horizontal scroll, if any */
+    }
+
+    .pause-menu::-webkit-scrollbar-track,
+    #customTracksUL::-webkit-scrollbar-track {
+      background: #333; /* track background */
+    }
+
+    .pause-menu::-webkit-scrollbar-thumb,
+    #customTracksUL::-webkit-scrollbar-thumb {
+      background: #0ff; /* “thumb” color (the draggable part) */
+      border-radius: calc(4px * var(--ui-scale));
+      /* a subtle glow (optional) */
+      box-shadow: 0 0 calc(5px * var(--ui-scale)) rgba(0,255,255,0.5);
+    }
+
+    .pause-menu::-webkit-scrollbar-thumb:hover,
+    #customTracksUL::-webkit-scrollbar-thumb:hover {
+      background: #0cc; /* a slightly different color on hover */
+    }
+    
+    
+
+    /* Neon-style dropdown */
+    .neon-select {
+      background: #222;
+      color: #0ff;
+      border: calc(2px * var(--ui-scale)) solid #0ff;
+      border-radius: calc(8px * var(--ui-scale));
+      padding: calc(6px * var(--ui-scale)) calc(12px * var(--ui-scale));
+      box-shadow: 0 0 calc(10px * var(--ui-scale)) calc(2px * var(--ui-scale)) rgba(0,255,255,0.3);
+      outline: none;
+      cursor: pointer;
+      margin: 0 auto;
+      text-align: center; 
+    }
+
+    /* Focus/hover states for dropdown */
+    .neon-select:hover,
+    .neon-select:focus {
+      box-shadow: 0 0 calc(10px * var(--ui-scale)) calc(2px * var(--ui-scale)) #0ff;
+      border-color: #0ff;
+      background: #111;
+    }
+
+    /* Example specialized style for #pauseMusicToggleBtn */
+    #pauseMusicToggleBtn {
+      margin: calc(10px * var(--ui-scale));
+      padding: calc(8px * var(--ui-scale)) calc(16px * var(--ui-scale));
+      border: calc(2px * var(--ui-scale)) solid #0ff;
+      color: #0ff;
+      background: #222;
+      border-radius: calc(10px * var(--ui-scale));
+      cursor: pointer;
+      box-shadow: 0 0 calc(10px * var(--ui-scale)) calc(2px * var(--ui-scale)) #0ff;
+      font-size: calc(18px * var(--ui-scale));
+    }
+
+    #pauseMusicToggleBtn:hover {
+      background: #0ff;
+      color: #000;
+    }
+
+    #customTracksContainer {
+      margin-top: calc(20px * var(--ui-scale));
+    }
+    
+    #customTrackURL {
+      background: #222;
+      border: calc(2px * var(--ui-scale)) solid #0ff;
+      color: #0ff;
+      border-radius: 8px;
+      padding: 6px 12px;
+      width: 60%;
+      box-shadow: 0 0 calc(5px * var(--ui-scale)) rgba(0,255,255,0.5);
+    }
+    #customTrackURL:focus {
+      outline: none;
+      box-shadow: 0 0 calc(10px * var(--ui-scale)) #0ff;
+    }
+    
+    .file-choose-btn {
+      display: inline-block;
+      background: #222;
+      color: #0ff;
+      padding: calc(10px * var(--ui-scale)) calc(20px * var(--ui-scale));
+      border: calc(2px * var(--ui-scale)) solid #0ff;
+      border-radius: calc(10px * var(--ui-scale));
+      cursor: pointer;
+      box-shadow: 0 0 calc(10px * var(--ui-scale)) calc(2px * var(--ui-scale)) #0ff;
+      margin-right: calc(10px * var(--ui-scale));
+      text-align: center;
+    }
+    
+    .file-choose-btn:hover {
+      background: #0ff;
+      color: #000;
+    }
+    
+    .file-chosen-label {
+      margin-right: calc(10px * var(--ui-scale));
+      color: #ccc;
+      font-family: Arial, sans-serif;
+    
+    }
+    
+
+    .pause-menu {
+      background: rgba(0,0,0,0.85);
+      border: calc(2px * var(--ui-scale)) solid #0ff;
+      border-radius: calc(10px * var(--ui-scale));
+      box-shadow: 0 0 calc(10px * var(--ui-scale)) #0ff;
+      padding: calc(20px * var(--ui-scale));
+      max-width: calc(400px * var(--ui-scale));
+      width: 90%;
+      box-sizing: border-box;
+      text-align: center;
+      max-height: calc(100vh * var(--ui-scale) - 20px);
+      overflow-y: auto;
+    }
+
+    
+    
+
+    
+    .pause-menu h2 {
+      margin-top: 0;
+      color: #0ff;
+      font-size: calc(24px * var(--ui-scale));
+    }
+    
+    .pause-menu-buttons {
+      margin: calc(10px * var(--ui-scale)) 0;
+    
+      /* Make them align side by side with spacing */
+      display: flex;
+      justify-content: center;       /* center horizontally */
+      flex-wrap: wrap;              /* if there's no room, wrap onto next line */
+      gap: calc(10px * var(--ui-scale)); /* spacing between the buttons */
+    }
+    
+    
+    .pause-menu-buttons .button {
+      margin: 0 calc(5px * var(--ui-scale));
+    }
+
+    #customTracksUL {
+      list-style-type: none;
+      padding-left: 0;
+    
+      /* Scale vertical margin */
+      margin: calc(10px * var(--ui-scale)) 0;
+    
+      /* Scale max-height so it can display ~3 items when ui-scale=1 
+         (adjust if you'd like a different base size). */
+      max-height: calc(200px * var(--ui-scale));
+    
+      overflow-y: auto;
+    }
+    
+    #customTracksUL li {
+      /* Scale margin-bottom for each list item */
+      margin-bottom: calc(6px * var(--ui-scale));
+    }
+    
+    
+
+    /* Keep or reuse your neon styles from earlier, e.g.: */
+    
   </style>
 </head>
 <body>
@@ -151,6 +419,162 @@
 
   <script>
   (function(){
+
+     // =================== AUDIO GLOBALS ===================
+    let soundEnabled = true;           // Master on/off
+    let musicVolume = 0.5;            // 0.0 to 1.0
+    let sfxVolume = 0.8;              // 0.0 to 1.0
+    let currentMusicTrack = "phonk";
+
+    // New arrays for calm/phonk music
+    // (Use as many tracks as you want; here we do 5 each)
+    const calmTracks = [
+    new Audio("assets/music/calm/fragments-of-love-by-sascha-ende-from-filmmusic-io.mp3"),
+    new Audio("assets/music/calm/relaxing-lofi-tessera-by-sascha-ende-from-filmmusic-io.mp3"),
+    new Audio("assets/music/calm/childhood-by-sascha-ende-from-filmmusic-io.mp3"),
+    new Audio("assets/music/calm/the-children-of-mh17-by-sascha-ende-from-filmmusic-io.mp3"),
+    //new Audio("assets/music/calm5.mp3"),
+    ];
+    const phonkTracks = [
+    new Audio("assets/music/phonk/phonk (1).mp3"),
+    new Audio("assets/music/phonk/phonk (2).mp3"),
+    new Audio("assets/music/phonk/phonk (3).mp3"),
+    new Audio("assets/music/phonk/phonk (4).mp3"),
+    new Audio("assets/music/phonk/phonk (5).mp3"),
+    new Audio("assets/music/phonk/phonk (6).mp3"),
+    new Audio("assets/music/phonk/phonk (7).mp3"),
+    new Audio("assets/music/phonk/phonk (8).mp3"),
+    new Audio("assets/music/phonk/phonk (9).mp3"),
+    //new Audio("assets/music/phonk5.mp3"),
+    ];
+
+    const customTracks = []; 
+
+    // Initially we start at track index 0 for each array
+    let calmIndex = 0;
+    let phonkIndex = 0;
+    let customIndex = 0;
+
+    // Also a boolean for looping the *current* track endlessly
+    let loopSingleTrack = false;
+
+    // Make sure each track’s volume is set (and not set to loop)
+    calmTracks.forEach(track => {
+      track.volume = musicVolume;
+      track.loop = false;  // We'll handle looping ourselves
+    });
+    phonkTracks.forEach(track => {
+      track.volume = musicVolume;
+      track.loop = false;
+    });
+
+    /****************************************************
+    * 2) Adjust getActiveMusic() to return
+    *    the *current track* from the correct array:
+    ****************************************************/
+    function getActiveMusic() {
+      if (currentMusicTrack === "phonk") {
+        return phonkTracks[phonkIndex];
+      } else if (currentMusicTrack === "custom") {
+        // If no custom tracks exist, return null so we don't crash
+        if (customTracks.length > 0) {
+          return customTracks[customIndex];
+        } else {
+          return null;
+        }
+      } else {
+        // default calm
+        return calmTracks[calmIndex];
+      }
+    }
+
+
+    /****************************************************
+    * 3) Modify playCurrentMusic() to pause *all* tracks,
+    *    then attach an 'ended' listener that either
+    *    goes to next track or replays the same track.
+    ****************************************************/
+    function playCurrentMusic() {
+      if (!soundEnabled) return;
+
+      // Pause all calm & phonk & custom tracks so only one can play
+      calmTracks.forEach(t => t.pause());
+      phonkTracks.forEach(t => t.pause());
+      customTracks.forEach(t => t.pause());
+
+      const music = getActiveMusic();
+      if (!music) {
+        // If null (e.g. custom is empty), just return
+        console.warn("No track to play (maybe custom list is empty)");
+        return;
+      }
+
+      music.currentTime = 0;
+      music.volume = musicVolume;
+
+      // Remove old 'ended' listeners
+      music.onended = null;
+
+      music.onended = () => {
+        if (loopSingleTrack) {
+          music.currentTime = 0;
+          music.play().catch(err => {});
+        } else {
+          nextTrack();
+        }
+      };
+
+      music.play().catch(err => console.warn("Music play error:", err));
+    }
+
+
+    /***************************************************
+    * 4) Add helper function: nextTrack() to skip ahead
+    ***************************************************/
+    function nextTrack() {
+      if (currentMusicTrack === "phonk") {
+        phonkIndex = (phonkIndex + 1) % phonkTracks.length;
+      } else if (currentMusicTrack === "custom") {
+        if (customTracks.length > 0) {
+          customIndex = (customIndex + 1) % customTracks.length;
+        }
+      } else {
+        // calm
+        calmIndex = (calmIndex + 1) % calmTracks.length;
+      }
+      playCurrentMusic();
+    }
+
+
+    // Sound effects dictionary
+    const sfxMap = {
+      //shot:        new Audio("assets/sfx/shot.wav"),
+      //explosion:   new Audio("assets/sfx/explosion.wav"),
+      //freeze:      new Audio("assets/sfx/freeze.wav"),
+      //powerUp:     new Audio("assets/sfx/powerup.wav"),
+      //bossDeath:   new Audio("assets/sfx/boss_death.wav"),
+      //click:       new Audio("assets/sfx/click.wav"),
+      // ... add more as desired ...
+    };
+
+    // Ensure SFX volumes are set
+    for (let key in sfxMap) {
+      sfxMap[key].volume = sfxVolume;
+    }
+
+    // Helper to play SFX (checks mute, sets volume, etc.)
+    function playSfx(name) {
+      if (!soundEnabled) return;
+      const audio = sfxMap[name];
+      if (!audio) return;
+      
+      // For multiple concurrent plays (e.g., repeated shots), clone the audio
+      // or re-load a new audio instance. Example:
+      const clone = audio.cloneNode();
+      clone.volume = sfxVolume;
+      clone.play().catch(err => console.warn("SFX play error:", err));
+    }
+
     // =================== Canvas & Initialization ===================
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
@@ -429,17 +853,51 @@
     const keys = {};
     const mouse = { x: width/2, y: height/2, down: false };
     window.addEventListener("keydown", (e) => {
-      keys[e.key.toLowerCase()] = true;
       if((gameState === "menu" || gameState === "gameover") && (e.key === " " || e.code === "Space")) {
         startGame();
       }
-      if(e.key === "Escape") {
-        if(gameState === "playing") pauseGame(); 
-        else if(gameState === "pause") resumeGame(); 
+      switch(e.code) {
+        case "KeyW":
+        case "ArrowUp":
+          keys.up = true;
+          break;
+        case "KeyA":
+        case "ArrowLeft":
+          keys.left = true;
+          break;
+        case "KeyS":
+        case "ArrowDown":
+          keys.down = true;
+          break;
+        case "KeyD":
+        case "ArrowRight":
+          keys.right = true;
+          break;
+        case "Escape":
+          if (gameState === "playing") pauseGame();
+          else if (gameState === "pause") resumeGame();
+          break;
       }
     });
     window.addEventListener("keyup", (e) => {
-      keys[e.key.toLowerCase()] = false;
+      switch(e.code) {
+        case "KeyW":
+        case "ArrowUp":
+          keys.up = false;
+          break;
+        case "KeyA":
+        case "ArrowLeft":
+          keys.left = false;
+          break;
+        case "KeyS":
+        case "ArrowDown":
+          keys.down = false;
+          break;
+        case "KeyD":
+        case "ArrowRight":
+          keys.right = false;
+          break;
+      }
     });
     canvas.addEventListener("mousemove", (e) => {
       const rect = canvas.getBoundingClientRect();
@@ -1374,10 +1832,10 @@
         }
         let dx = 0, dy = 0;
         if(!isMobile) {
-          if(keys["w"]) dy -= 1;
-          if(keys["s"]) dy += 1;
-          if(keys["a"]) dx -= 1;
-          if(keys["d"]) dx += 1;
+          if (keys.up)    dy -= 1;
+          if (keys.down)  dy += 1;
+          if (keys.left)  dx -= 1;
+          if (keys.right) dx += 1;
         } else {
           dx = leftJoystick.dx/(80 * uiScale);
           dy = leftJoystick.dy/(80 * uiScale);
@@ -2547,6 +3005,7 @@
           ${options.map((option, index) => `<button class="button" id="pu${index+1}">${option}</button>`).join("")}
         </div>`;
       overlay.classList.remove("hidden");
+      
       options.forEach((option, index) => {
         document.getElementById("pu" + (index + 1))
           .addEventListener("click", () => applyPowerUp(option));
@@ -2554,6 +3013,7 @@
     }
     // =================== Функция применения усиления ===================
     function applyPowerUp(choice) {
+      playSfx("powerUp");
       // *** NEW: При выборе "Restore Health" – мгновенное восстановление 30 HP (учитывая текущий maxHP) ***
       const key = powerUpMap[choice];
       if (choice === "Restore Health") {
@@ -2699,26 +3159,276 @@
       bosses.length = 0;
       resumeGame();
     }
+    let wasMusicPlaying = false;
 
     // =================== Pause & Game Over ===================
     function pauseGame() {
-      if(gameState === "playing") {
+      if (gameState === "playing") {
         gameState = "pause";
         const overlay = document.getElementById("overlay");
-        overlay.innerHTML = `<h1>Paused</h1>
-          <div>
-            <button class="button" id="resumeBtn">Resume</button>
-            <button class="button" id="restartBtn">Restart</button>
-            <button class="button" id="menuBtn">Main Menu</button>
-          </div>`;
+        overlay.innerHTML = `
+          <div class="pause-menu">
+            <h2>Paused</h2>
+            
+            <div class="pause-menu-buttons">
+              <button class="button" id="resumeBtn">Resume</button>
+              <button class="button" id="restartBtn">Restart</button>
+              <button class="button" id="menuBtn">Main Menu</button>
+            </div>
+
+            <button class="button" id="pauseMusicToggleBtn"></button>
+            <button class="button" id="toggleAudioBtn">Audio Settings</button>
+
+            <div id="audioSettingsContainer" class="collapsible-container">
+              <div id="audioSettingsInner">
+
+                <label class="mute-label">
+                  <input type="checkbox" id="muteCheckbox" class="mute-checkbox"/>
+                  Mute All
+                </label>
+          
+                <div class="slider-container">
+                  <label class="slider-label">Music Volume</label>
+                  <input type="range" id="musicVolumeSlider" class="slider neon-slider"
+                        min="0" max="1" step="0.01" value="0.5">
+                </div>
+          
+                <div class="slider-container">
+                  <label class="slider-label">SFX Volume</label>
+                  <input type="range" id="sfxVolumeSlider" class="slider neon-slider"
+                        min="0" max="1" step="0.01" value="0.8">
+                </div>
+          
+                <!-- Music Genre Select -->
+                <div class="slider-container">
+                  <label class="slider-label">Music Genre</label>
+                  <select id="musicGenreSelect" class="neon-select">
+                    <option value="calm">Calm</option>
+                    <option value="phonk">Phonk</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </div>
+          
+                <div id="musicNavContainer" class="music-nav">
+                  <button class="button" id="nextTrackBtn">»</button>
+                  <button class="button" id="loopTrackBtn">⟳</button>
+                </div>
+
+                <!-- Custom tracks UI -->
+                <div id="customTracksContainer">
+                  <!-- A button to toggle/hide the custom list area -->
+                  <button class="button" id="toggleCustomTracksBtn">Custom Tracks</button>
+
+                  <!-- Hidden by default, we'll toggle with JS. -->
+                  <div id="customTracksList" style="display: none; margin-top: 10px;">
+                    <h3 id="customTracksCount">Custom Tracks (0)</h3>
+                    <ul id="customTracksUL" style="list-style-type: none; padding-left: 0;"></ul>
+
+                    <div style="margin-top: 10px;">
+                      <!-- Hidden file input -->
+                      <input type="file" id="customTrackFile" accept="audio/*" style="display: none;"/>
+                      <!-- Neon label for the file picker -->
+                      <label for="customTrackFile" id="customFileLabel" class="file-choose-btn">
+                        Choose a file
+                      </label>
+                      <!-- Text area for "No file chosen" or the selected filename -->
+                      <span id="customFileName" class="file-chosen-label">No file chosen</span>
+
+                      <!-- Add Track button -->
+                      <button class="button" id="addCustomTrackBtn">Add Track</button>
+                    </div>
+                  </div>
+                </div>
+
+              </div><!-- end #audioSettingsInner -->
+            </div><!-- end #audioSettingsContainer -->
+          </div><!-- end .pause-menu -->
+        `;
         overlay.classList.remove("hidden");
+
+        // ========== 1) Immediately pause the music  ==========
+        const activeMusic = getActiveMusic();
+        if (activeMusic && !activeMusic.paused) {
+          wasMusicPlaying = true;  // it was playing
+        }
+        // Force music to pause
+        if (activeMusic) activeMusic.pause();
+    
+        // ========== Button event handlers (Resume, Restart, Menu) ==========
         document.getElementById("resumeBtn").addEventListener("click", resumeGame);
         document.getElementById("restartBtn").addEventListener("click", restartGame);
         document.getElementById("menuBtn").addEventListener("click", mainMenu);
+    
+        // ========== Collapsible audio settings toggle ==========
+        const audioToggleBtn = document.getElementById("toggleAudioBtn");
+        const audioSettings = document.getElementById("audioSettingsContainer");
+        audioToggleBtn.addEventListener("click", () => {
+          audioSettings.classList.toggle("open");
+        });
+
+        // ========== 4) NEW: Music toggle button logic ==========
+        const pauseMusicToggleBtn = document.getElementById("pauseMusicToggleBtn");
+
+        // We'll store a boolean to track "music playing in pause or not"
+        // We just paused it above, so let's say it's currently "false"
+        let pauseMusicPlaying = false;
+
+        // Label the button "Music: Off" initially (since we just paused)
+        pauseMusicToggleBtn.innerText = "Music: Off";
+        
+        // On click, we either play or pause the music
+        pauseMusicToggleBtn.addEventListener("click", () => {
+          const music = getActiveMusic();
+          if (!music) return;
+          
+          if (pauseMusicPlaying) {
+            // was playing in pause → now pause it
+            music.pause();
+            pauseMusicToggleBtn.innerText = "Music: Off";
+          } else {
+            // was paused in pause → now play it
+            // user interaction => allowed
+            music.play().catch(err => console.warn("Music play error:", err));
+            pauseMusicToggleBtn.innerText = "Music: On";
+          }
+          // flip the boolean
+          pauseMusicPlaying = !pauseMusicPlaying;
+        });
+    
+        // ========== Mute checkbox ==========
+        const muteCheckbox = document.getElementById("muteCheckbox");
+        muteCheckbox.checked = !soundEnabled;
+        muteCheckbox.addEventListener("change", (e) => {
+          soundEnabled = !e.target.checked;
+          if (!soundEnabled) {
+            getActiveMusic().pause();
+          } else {
+            getActiveMusic().play().catch(err => {});
+          }
+        });
+    
+        // ========== Music Volume slider ==========
+        const musicSlider = document.getElementById("musicVolumeSlider");
+        musicSlider.addEventListener("input", (e) => {
+          musicVolume = parseFloat(e.target.value);
+          getActiveMusic().volume = musicVolume;
+        });
+    
+        // ========== SFX Volume slider ==========
+        const sfxSlider = document.getElementById("sfxVolumeSlider");
+        sfxSlider.addEventListener("input", (e) => {
+          sfxVolume = parseFloat(e.target.value);
+          for (let key in sfxMap) {
+            sfxMap[key].volume = sfxVolume;
+          }
+        });
+    
+        // ========== NEW: Music Genre Dropdown ==========
+        const musicGenreSelect = document.getElementById("musicGenreSelect");
+        // Set initial option (e.g. if 'currentMusicTrack' was 'phonk')
+        musicGenreSelect.value = currentMusicTrack;
+    
+        musicGenreSelect.addEventListener("change", (e) => {
+          // Switch global track choice
+          currentMusicTrack = e.target.value;
+    
+          if (pauseMusicPlaying === false) {
+            pauseMusicToggleBtn.click();
+          }
+          
+          // Immediately play the chosen genre
+          playCurrentMusic();
+        });
+    
+        // ========== Next track & loop toggles ==========
+        const nextTrackBtn = document.getElementById("nextTrackBtn");
+        nextTrackBtn.addEventListener("click", () => {
+          nextTrack();
+        });
+    
+        const loopTrackBtn = document.getElementById("loopTrackBtn");
+        loopTrackBtn.addEventListener("click", () => {
+          loopSingleTrack = !loopSingleTrack;
+          if (loopSingleTrack) {
+            loopTrackBtn.style.background = "#0ff";
+            loopTrackBtn.style.color = "#000";
+          } else {
+            loopTrackBtn.style.background = "#222";
+            loopTrackBtn.style.color = "#0ff";
+          }
+        });
+
+        // ===== NEW: Custom Tracks UI =====
+        const toggleCustomTracksBtn = document.getElementById("toggleCustomTracksBtn");
+        const customTracksListDiv = document.getElementById("customTracksList");
+        const customTracksCountEl = document.getElementById("customTracksCount");
+        const customTracksUL = document.getElementById("customTracksUL");
+        const customTrackFileInput = document.getElementById("customTrackFile");
+        const customFileNameSpan = document.getElementById("customFileName");
+        const addCustomTrackBtn = document.getElementById("addCustomTrackBtn");
+
+        // Whenever the user selects a file, update the text:
+        customTrackFileInput.addEventListener("change", () => {
+          if (customTrackFileInput.files.length > 0) {
+            customFileNameSpan.textContent = customTrackFileInput.files[0].name;
+          } else {
+            customFileNameSpan.textContent = "No file chosen";
+          }
+        });
+
+        // Toggle the custom tracks list area
+        toggleCustomTracksBtn.addEventListener("click", () => {
+          if (customTracksListDiv.style.display === "none") {
+            customTracksListDiv.style.display = "block";
+          } else {
+            customTracksListDiv.style.display = "none";
+          }
+        });
+
+        function updateCustomTracksUI() {
+          // Update the count heading
+          customTracksCountEl.textContent = `Custom Tracks (${customTracks.length})`;
+
+          // Rebuild the <ul>
+          customTracksUL.innerHTML = "";
+          customTracks.forEach((audioObj, index) => {
+            const li = document.createElement("li");
+            li.style.marginBottom = "6px";
+            li.textContent = `Track #${index + 1} - ${audioObj.src}`;
+            customTracksUL.appendChild(li);
+          });
+        }
+
+        // When "Add Track" is clicked:
+        addCustomTrackBtn.addEventListener("click", () => {
+          const file = customTrackFileInput.files[0];
+          if (!file) return;
+        
+          const objectURL = URL.createObjectURL(file);
+          const audioObj = new Audio(objectURL);
+          audioObj.volume = musicVolume;
+          audioObj.loop = false;
+        
+          customTracks.push(audioObj);
+        
+          // Reset the file input for next time
+          customTrackFileInput.value = "";
+          customFileNameSpan.textContent = "No file chosen";
+          updateCustomTracksUI();
+        });
+
+        // Initialize display to reflect any existing custom tracks
+        updateCustomTracksUI();
       }
     }
+    
     function resumeGame() {
       if(gameState !== "playing") {
+
+        const music = getActiveMusic();
+        if (wasMusicPlaying && soundEnabled) {
+          music.play().catch(err => {});
+        }
         gameState = "playing";
         document.getElementById("overlay").classList.add("hidden");
       }
@@ -2748,6 +3458,7 @@
     }
     function mainMenu() {
       gameState = "menu";
+      getActiveMusic().pause();
       document.getElementById("overlay").innerHTML = `<h1 class="cyan_color" >Neon Nexus: Ultimate Gauntlet</h1>
       <p id="overlayText">Move with WASD, aim with your mouse (or use on‑screen joysticks on mobile),</br> and auto‑fire is enabled.<br>
          Fill your power meter by defeating enemies and choose temporary power‑ups.<br>
@@ -2758,52 +3469,13 @@
     }
     function showGameOver() {
       gameState = "gameover";
+      getActiveMusic().pause();
       const overlay = document.getElementById("overlay");
       overlay.innerHTML = `<h1 class="cyan_color" >Game Over</h1>
         <p>Your Score: ${Math.floor(score)}</p>
-        <p>Enter your name: <input type="text" id="playerName" placeholder="Your Name"></p>
-        <button class="button" id="saveScoreBtn">Save Score</button>
-        <button class="button" id="scoreboardBtn">ScoreBoard</button>
         <p>${isMobile ? "Tap anywhere" : "Press SPACE"} to restart</p>
         <p class="cyan_color" >The game was made by the developers</br> of the game "Fearful Obscured Grounds"</p>`;
       overlay.classList.remove("hidden");
-
-      document.getElementById("saveScoreBtn").addEventListener("click", async () => {
-        const name = document.getElementById("playerName").value || "Anonymous";
-        await appendScore(name, Math.floor(score));
-      });
-      document.getElementById("scoreboardBtn").addEventListener("click", () => {
-        window.location.href = "scoreboard.html";
-      });
-    }
-
-    // Функция для записи (дописывания) результатов в файл с использованием File System Access API
-    async function appendScore(name, score) {
-      if (!window.showOpenFilePicker) {
-        alert("Ваш браузер не поддерживает File System Access API.");
-        return;
-      }
-      try {
-        // Предлагаем пользователю выбрать существующий файл (например, scores.txt)
-        const [handle] = await window.showOpenFilePicker({
-          types: [{
-            description: 'Text Files',
-            accept: { 'text/plain': ['.txt'] }
-          }]
-        });
-        // Читаем существующие данные
-        const file = await handle.getFile();
-        let contents = await file.text();
-        // Добавляем новую запись (имя и счёт, разделённые запятой)
-        contents += name + "," + score + "\n";
-        // Открываем файл для записи и перезаписываем его содержимое
-        const writable = await handle.createWritable();
-        await writable.write(contents);
-        await writable.close();
-        alert("Score saved!");
-      } catch (e) {
-        console.error(e);
-      }
     }
     // =================== Main Game Loop ===================
     let lastTime = performance.now();
@@ -2988,6 +3660,8 @@
             newBullets.push(b);
           }
           newBullets.forEach(b => bullets.push(b));
+          // Play a shot sound
+          playSfx("shot");
         }
       }
 
@@ -3162,6 +3836,7 @@
           }
         }
         if(bosses[i].hp <= 0) {
+          playSfx("bossDeath");
           score += 1000;
           bosses.splice(i, 1);
           if(bosses.length === 0) {
@@ -3268,6 +3943,7 @@
              }
             if(b.freezeBlast) { 
                 enemies[i].frozenTime = Math.max(enemies[i].frozenTime, 3000);
+                playSfx("freeze");
             }
             if(b.empBlast) { enemies[i].empTime = Math.max(enemies[i].empTime, 3000 * player.activePowerUps.empBlast.stacks); }
             if(b.lifeSteal) { player.currentHP = Math.min(player.maxHP, player.currentHP + b.damage * player.activePowerUps.lifeSteal.stacks); }
@@ -3285,6 +3961,7 @@
                      enemies[k].hp -= 5;
                   }
                 }
+                playSfx("explosion");
                 for(let k=0; k<20; k++){
                   particles.push(new Particle(enemies[i].x, enemies[i].y, "#fa0"));
                 }
@@ -3765,11 +4442,16 @@
       player = new Player(width/2, height/2);
       player.maxHP = 100 + permanentUpgrades.health;  // *** NEW: учитываем перманентное здоровье
       player.currentHP = player.maxHP;
+      // Start music if enabled
+      if (soundEnabled) {
+        playCurrentMusic();
+      }
       document.getElementById("overlay").classList.add("hidden");
     }
     
     mainMenu();
     requestAnimationFrame(gameLoop);
+    
   })();
   </script>
 </body>
