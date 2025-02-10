@@ -422,8 +422,8 @@
 
      // =================== AUDIO GLOBALS ===================
     let soundEnabled = true;           // Master on/off
-    let musicVolume = 0.2;            // 0.0 to 1.0
-    let sfxVolume = 0.2;              // 0.0 to 1.0
+    let musicVolume = 0.05;            // 0.0 to 1.0
+    let sfxVolume = 0.05;              // 0.0 to 1.0
     let currentMusicTrack = "phonk";
 
     // New arrays for calm/phonk music
@@ -545,28 +545,6 @@
       playCurrentMusic();
     }
 
-    // Глобальный массив для отслеживания экземпляров neonoverdrive
-    let neonOverdriveInstances = [];
-
-    // Функция для воспроизведения звука neonoverdrive с трекингом
-    function playNeonOverdriveSound() {
-      if (!soundEnabled) return;
-      const originalAudio = sfxMap["neonoverdrive"];
-      // Создаем клон звука, чтобы его можно было независимо управлять
-      const clone = originalAudio.cloneNode();
-      clone.volume = sfxVolume;
-      clone.play().catch(err => console.warn("Neon Overdrive play error:", err));
-      neonOverdriveInstances.push(clone);
-    }
-
-    // Функция для остановки и сброса всех экземпляров neonoverdrive
-    function disableNeonOverdriveSound() {
-      neonOverdriveInstances.forEach(instance => {
-        instance.pause();
-        instance.currentTime = 0;
-      });
-      neonOverdriveInstances = [];
-    }
     // Sound effects dictionary
     const sfxMap = {
       shot:        new Audio("assets/sfx/shot.ogg"),
@@ -576,8 +554,20 @@
       bossDeath:   new Audio("assets/sfx/boss_death.ogg"),
       click:       new Audio("assets/sfx/click.ogg"),
       neonoverdrive:  new Audio("assets/sfx/neonoverdrive.ogg"),
+      deadenemy: new Audio("assets/sfx/deadenemy.ogg"),
       // ... add more as desired ...
     };
+
+    let lastNeonOverdriveTime = 0;
+
+    function playNeonOverdriveSound() {
+      const now = Date.now();
+      if (now - lastNeonOverdriveTime >= 100) {
+        lastNeonOverdriveTime = now;
+        playSfx("neonoverdrive")
+      }
+    }
+    
 
     // Ensure SFX volumes are set
     for (let key in sfxMap) {
@@ -593,7 +583,14 @@
       // For multiple concurrent plays (e.g., repeated shots), clone the audio
       // or re-load a new audio instance. Example:
       let clone = audio.cloneNode();
-      clone.volume = sfxVolume;
+
+        // Вычисляем допустимый диапазон громкости, не отклоняющийся более чем на 0.02
+        let minVolume = Math.max(0, sfxVolume - 0.01);
+        let maxVolume = Math.min(1, sfxVolume + 0.01);
+
+        // Выбираем случайное значение громкости из допустимого диапазона
+        clone.volume = minVolume + Math.random() * (maxVolume - minVolume);
+
       clone.play().catch(err => console.warn("SFX play error:", err));
     }
 
@@ -754,6 +751,7 @@
     }
     // В функции, где обрабатывается убийство врага:
     function onEnemyKilled(enemy) {
+      playSfx("deadenemy");
       // Добавляем эффекты уничтожения, начисление очков и т.д.
       increaseCombo();
       // Другие действия: spawnCollectible, particles, score += и т.п.
@@ -3189,7 +3187,6 @@
 
     // =================== Pause & Game Over ===================
     function pauseGame() {
-      disableNeonOverdriveSound();
       playSfx("click");
       if (gameState === "playing") {
         gameState = "pause";
@@ -3218,13 +3215,13 @@
                 <div class="slider-container">
                   <label class="slider-label">Music Volume</label>
                   <input type="range" id="musicVolumeSlider" class="slider neon-slider"
-                        min="0" max="1" step="0.01" value="0.2">
+                        min="0" max="1" step="0.01" value="0.05">
                 </div>
           
                 <div class="slider-container">
                   <label class="slider-label">SFX Volume</label>
                   <input type="range" id="sfxVolumeSlider" class="slider neon-slider"
-                        min="0" max="1" step="0.01" value="0.2">
+                        min="0" max="1" step="0.01" value="0.05">
                 </div>
           
                 <!-- Music Genre Select -->
@@ -3335,18 +3332,22 @@
             getActiveMusic().play().catch(err => {});
           }
         });
-    
+
+
         // ========== Music Volume slider ==========
         const musicSlider = document.getElementById("musicVolumeSlider");
         musicSlider.addEventListener("input", (e) => {
-          musicVolume = parseFloat(e.target.value);
+          const sliderVal = parseFloat(e.target.value); // значение от 0 до 1
+          // Применяем квадратичное преобразование (можно экспериментировать со степенью)
+          musicVolume = Math.pow(sliderVal, 2);
           getActiveMusic().volume = musicVolume;
         });
     
         // ========== SFX Volume slider ==========
         const sfxSlider = document.getElementById("sfxVolumeSlider");
         sfxSlider.addEventListener("input", (e) => {
-          sfxVolume = parseFloat(e.target.value);
+          const sliderVal = parseFloat(e.target.value);
+          sfxVolume = Math.pow(sliderVal, 2);
           for (let key in sfxMap) {
             sfxMap[key].volume = sfxVolume;
           }
@@ -3494,6 +3495,14 @@
     function mainMenu() {
       playSfx("click");
       gameState = "menu";
+
+      soundEnabled = false;
+      if (!soundEnabled) {
+        getActiveMusic().pause();
+      } else {
+        getActiveMusic().play().catch(err => {});
+      }
+      
       getActiveMusic().pause();
       document.getElementById("overlay").innerHTML = `<h1 class="cyan_color" >Neon Nexus: Ultimate Gauntlet</h1>
       <p id="overlayText">Move with WASD, aim with your mouse (or use on‑screen joysticks on mobile),</br> and auto‑fire is enabled.<br>
@@ -3504,7 +3513,6 @@
       document.getElementById("overlay").classList.remove("hidden");
     }
     function showGameOver() {
-      disableNeonOverdriveSound();
       gameState = "gameover";
       getActiveMusic().pause();
       const overlay = document.getElementById("overlay");
@@ -3698,7 +3706,6 @@
           }
           newBullets.forEach(b => bullets.push(b));
           
-          disableNeonOverdriveSound();
           // Play a shot sound
           playSfx("shot");
         }
@@ -3792,7 +3799,7 @@
                 }
             }
         });
-      }
+      } 
 
       // Спавн врагов (если не идёт бой с боссом)
       if(bosses.length === 0) {
@@ -3982,8 +3989,10 @@
                particles.push(new Particle(b.x, b.y, enemies[i].color));
              }
             if(b.freezeBlast) { 
+              if(enemies[i].hp > 0) {  // если враг остался жив после нанесённого урона
                 enemies[i].frozenTime = Math.max(enemies[i].frozenTime, 3000);
                 playSfx("freeze");
+              }
             }
             if(b.empBlast) { enemies[i].empTime = Math.max(enemies[i].empTime, 3000 * player.activePowerUps.empBlast.stacks); }
             if(b.lifeSteal) { player.currentHP = Math.min(player.maxHP, player.currentHP + b.damage * player.activePowerUps.lifeSteal.stacks); }
@@ -4459,6 +4468,13 @@
 
     // =================== Game Start ===================
     function startGame() {
+      if (currentMusicTrack === "phonk") {
+        phonkIndex = Math.floor(Math.random() * phonkTracks.length);
+      } else if (currentMusicTrack === "calm") {
+        calmIndex = Math.floor(Math.random() * calmTracks.length);
+      } else if (currentMusicTrack === "custom" && customTracks.length > 0) {
+        customIndex = Math.floor(Math.random() * customTracks.length);
+      }
       gameState = "playing";
       score = 0;
       currentLevel = 1;
