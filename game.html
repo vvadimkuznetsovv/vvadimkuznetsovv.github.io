@@ -484,6 +484,8 @@
       }
     }
 
+
+    // ========== Scope Drawing Start ============
     function drawMouseIndicator() {
       // Если игрок ещё не создан – ничего не рисуем
       if (!player) return;
@@ -562,6 +564,82 @@
       ctx.restore();
     }
     
+    // ========== Scope Drawing End ============
+
+    // ========== Ninja Spirit Start ============
+    function getClosestTarget() {
+      let closest = null;
+      let minDist = Infinity;
+      // Фильтруем пули, выпущенные врагами/боссами:
+      let enemyBullets = bullets.filter(b => b.fromEnemy || b.fromBoss);
+      // Объединяем массивы врагов и боссов (если оба используются)
+      let targets = enemies.concat(bosses, enemyBullets);
+      for (let target of targets) {
+        let d = Math.hypot(target.x - player.x, target.y - player.y);
+        if (d < minDist) {
+          minDist = d;
+          closest = target;
+        }
+      }
+      return closest;
+    }
+    function computeInterceptAngle(shooter, bulletSpeed, target, targetVelocity) {
+      // Вектор от стрелка к цели:
+      let r = { x: target.x - shooter.x, y: target.y - shooter.y };
+      
+      // Коэффициенты квадратного уравнения:
+      let A = targetVelocity.x * targetVelocity.x + targetVelocity.y * targetVelocity.y - bulletSpeed * bulletSpeed;
+      let B = 2 * (r.x * targetVelocity.x + r.y * targetVelocity.y);
+      let C = r.x * r.x + r.y * r.y;
+      
+      let t = 0;
+      if (Math.abs(A) < 0.001) {
+        // Если A очень маленькое – линейное приближение
+        t = -C / B;
+      } else {
+        let discriminant = B * B - 4 * A * C;
+        if (discriminant < 0) {
+          // Нет действительного решения – просто стреляем по текущей позиции
+          t = 0;
+        } else {
+          let t1 = (-B + Math.sqrt(discriminant)) / (2 * A);
+          let t2 = (-B - Math.sqrt(discriminant)) / (2 * A);
+          // Выбираем минимальное положительное время
+          t = Math.min(t1, t2);
+          if (t < 0) {
+            t = Math.max(t1, t2);
+          }
+          if (t < 0) t = 0;
+        }
+      }
+      
+      // Предсказанная позиция цели:
+      let aimX = target.x + targetVelocity.x * t;
+      let aimY = target.y + targetVelocity.y * t;
+      
+      return Math.atan2(aimY - shooter.y, aimX - shooter.x);
+    }
+    function getTargetVelocity(target) {
+      // Если это пуля (предполагаем, что у объектов класса Bullet есть свойства speed и angle)
+      if (target instanceof Bullet) {
+        return { 
+          x: Math.cos(target.angle) * target.speed, 
+          y: Math.sin(target.angle) * target.speed 
+        };
+      } else {
+        // Для врагов/боссов: можно предположить, что они движутся в направлении игрока
+        let dx = player.x - target.x;
+        let dy = player.y - target.y;
+        let d = Math.hypot(dx, dy);
+        if (d === 0) return { x: 0, y: 0 };
+        return { 
+          x: (dx / d) * target.speed, 
+          y: (dy / d) * target.speed 
+        };
+      }
+    }
+    
+    // ========== Ninja Spirit End ============
 
     /****************************************************
     * 3) Modify playCurrentMusic() to pause *all* tracks,
@@ -673,29 +751,54 @@
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
       
-      // Обработчик нажатия клавиш
-      document.addEventListener("keydown", function(e) {
-        // ************************************
-        // **  BUTTONS for Cheats  **
-        // ************************************
-        /**/
-        if(e.key.toLowerCase() === "p") {
-          spawnTwoBosses();
-        }
-        if(e.key.toLowerCase() === "n") {
-          nextLevel();
-        }
-        if(e.key.toLowerCase() === "m") {
-          showPowerUpMenu();
-        }
-        if(e.key.toLowerCase() === "k") {
-          givePlayerMagnetEffect();
-        }
-        // Если нажата клавиша "X" (без учета регистра)
-        if (e.key.toLowerCase() === "x") {
-          revivePlayer()
-        }
-      });
+    // Обработчик нажатия клавиш
+    document.addEventListener("keydown", function(e) {
+      // ************************************
+      // **  BUTTONS for Cheats  **
+      // ************************************
+      /*
+      if(e.key.toLowerCase() === "p") {
+        spawnTwoBosses();
+      }
+      if(e.key.toLowerCase() === "n") {
+        nextLevel();
+      }
+      if(e.key.toLowerCase() === "m") {
+        showPowerUpMenu();
+      }
+      if(e.key.toLowerCase() === "k") {
+        givePlayerMagnetEffect();
+      }*/
+      // Если нажата клавиша "X" (без учета регистра)
+      if (e.key.toLowerCase() === "x") {
+        revivePlayer()
+      }
+    });
+    canvas.addEventListener("click", function(e) {
+      console.log("Canvas click event");
+    
+      if (!player || gameState !== "playing") {
+        console.log("Клик не обрабатывается: player =", player, "gameState =", gameState);
+        return;
+      }
+      
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      console.log("Координаты клика:", clickX, clickY);
+    
+      const barX = 10 * uiScale;
+      const barY = 80 * uiScale;
+      const barWidth = 120 * uiScale;
+      const barHeight = 15 * uiScale;
+      console.log("Область здоровья:", barX, barY, barWidth, barHeight);
+    
+      if (clickX >= barX && clickX <= barX + barWidth &&
+          clickY >= barY && clickY <= barY + barHeight) {
+        console.log("Активирован Ninja Spirit");
+        applyPowerUp("Ninja Spirit");
+      }
+    });
 
     let cursorVisible = true; // изначально курсор видим
     // ======== Обрезка для портретного режима
@@ -1026,7 +1129,7 @@
     mobilePauseButton.addEventListener("click", () => {
       if(gameState === "playing") 
       {
-        applyPowerUp("Acid Rain");
+        //applyPowerUp("Acid Rain");   //cheat
         pauseGame();
         //nextLevel();   //cheat
         
@@ -1865,7 +1968,8 @@
           powerMeterBoost: { duration: 0, stacks: 0 },
           // Пуль всем хватит:
           bulletTime: { duration: 0, stacks: 0 },
-          acidRain: { duration: 0, stacks: 0 }
+          acidRain: { duration: 0, stacks: 0 },
+          ninjaSpirit: { duration: 0, stacks: 0 },
         };
         // Additional status effects (негативные эффекты)
         this.frozenTime = 0;
@@ -1875,8 +1979,8 @@
       }
       update(deltaTime) {
         // Обновление таймеров усилений: уменьшаем время и сбрасываем стеки, когда время истекает
-        const nonDecayingEffects = ["friend", "scoreMagnet", "neonOverdrive", "powerMeterBoost", "damageBoost", "shield", "speedBoost"];
-        const nonDecayingEffectsRainAcid = ["friend", "scoreMagnet", "acidRain","neonOverdrive", "powerMeterBoost","damageBoost", "shield", "speedBoost"];
+        const nonDecayingEffects = ["friend", "scoreMagnet", "neonOverdrive", "powerMeterBoost", "damageBoost", "shield", "speedBoost", "ninjaSpirit"];
+        const nonDecayingEffectsRainAcid = ["friend", "scoreMagnet", "acidRain","neonOverdrive", "powerMeterBoost","damageBoost", "shield", "speedBoost", "ninjaSpirit"];
         const nonDecayingEffects2 = ["doubleShot", "tripleShot", "scatterShot"];
         for (let key in this.activePowerUps) {
           let pu = this.activePowerUps[key];
@@ -1980,14 +2084,50 @@
         this.x = Math.max(this.radius, Math.min(width - this.radius, this.x));
         this.y = Math.max(this.radius, Math.min(effectiveHeight - this.radius, this.y));
         // Aiming: desktop uses mouse; mobile uses right joystick if active
+        let effectiveFireRate = BASE_FIRE_RATE / permanentUpgrades.fireRate;
+        if(player.activePowerUps.rapidFire.duration > 0) effectiveFireRate /= 2;
+        if(player.empSlowed > 0) {
+          effectiveFireRate *= 1.5;
+          player.empSlowed -= deltaTime;
+        }
+        // Если активен Acid Rain – стрельба становится медленнее:
+        if (player.activePowerUps.acidRain.duration > 0) {
+          effectiveFireRate = BASE_FIRE_RATE*3;
+        }
         if (!isMobile) {
-          // Desktop: aim with mouse
-          this.angle = Math.atan2(mouse.y - this.y, mouse.x - this.x);
+          // Aim Mechanic
+          if (this.activePowerUps.ninjaSpirit.duration > 0) {
+            let target = getClosestTarget();
+            if (target) {
+              let targetVel = getTargetVelocity(target);
+              
+              this.angle = computeInterceptAngle(this, effectiveFireRate, target, targetVel);
+            }
+            // Если цели нет – можно оставить предыдущий угол или задать дефолтное значение
+          } else {
+            // Обычный режим – угол определяется мышью
+            this.angle = Math.atan2(mouse.y - this.y, mouse.x - this.x);
+          }
+          //Old Desktop: aim with mouse
+          //this.angle = Math.atan2(mouse.y - this.y, mouse.x - this.x);
         } else {
+          if (this.activePowerUps.ninjaSpirit.duration > 0) {
+            let target = getClosestTarget();
+            if (target) {
+              let targetVel = getTargetVelocity(target);
+              this.angle = computeInterceptAngle(this, effectiveFireRate, target, targetVel);
+            }
+          } else {
+            if (rightJoystick.active && (rightJoystick.dx || rightJoystick.dy)) {
+              this.angle = rightJoystick.angle;
+            }
+          }
+
+          /* Old 
           // Mobile: only use right joystick if active
           if (rightJoystick.active && (rightJoystick.dx || rightJoystick.dy)) {
             this.angle = rightJoystick.angle;
-          }
+          }*/
         }
       }
       draw() {
@@ -2096,7 +2236,7 @@
       
         // Логика стрельбы: стреляем только если угол почти совпадает с целевым (порог 0.1 радиана)
         this.shootCooldown -= deltaTime;
-        let friendFireRate = 400 / permanentUpgrades.fireRate;; // базовый интервал в мс
+        let friendFireRate = 400 / permanentUpgrades.fireRate; // базовый интервал в мс
 
         let friendStacks = player.activePowerUps.friend.stacks || 1;
         if (player.activePowerUps.friend && player.activePowerUps.friend.stacks >= 3) {
@@ -3232,7 +3372,8 @@
       "Power Meter Boost": "powerMeterBoost",
       "Bullet Time": "bulletTime",
       "Psi Blast": "psiBlast",
-      "Acid Rain": "acidRain"
+      "Acid Rain": "acidRain",
+      "Ninja Spirit": "ninjaSpirit",
     };
     
     // =================== Temporary Power‑Up Pool & Durations ===================
@@ -3240,7 +3381,7 @@
       "Double Shot", "Triple Shot", "Rapid Fire", "Shield", "Speed Boost",
       "Damage Boost", "Piercing", "Homing", "Bomb", "Freeze Blast",
       "Reflective", "Life Steal", "EMP Blast", "Critical Strike", "Overcharge",
-      "Scatter Shot", "Health Boost", "Restore Health", "Magnet", "Friend", "Neon Overdrive", "Power Meter Boost", "Bullet Time", "Psi Blast", "Acid Rain"
+      "Scatter Shot", "Health Boost", "Restore Health", "Magnet", "Friend", "Neon Overdrive", "Power Meter Boost", "Bullet Time", "Psi Blast", "Acid Rain", "Ninja Spirit",
     ];
     const powerUpDurations = {
       "Reflective": 10000, // 10 секунд для Reflective
@@ -3254,7 +3395,8 @@
       "Neon Overdrive": 10000,
       "Power Meter Boost": 15000, // 15 секунд
       "Bullet Time": 15000,  // 15 секунд   
-      "Acid Rain": 10000
+      "Acid Rain": 10000,
+      "Ninja Spirit": 10000,
     };
 
     // =================== Temporary Power‑Up Selection ===================
@@ -3281,6 +3423,7 @@
         if (choice === "Power Meter Boost" && case_to_much_powerMeterBoost) return false;
         if (choice === "Neon Overdrive" && case_to_much_neonOverDrive) return false;
         return true;
+        if (choice === "Ninja Spirit" && player.activePowerUps.ninjaSpirit >= 2) return false;
       });
 
       let options = [];
@@ -3878,6 +4021,8 @@
         if(player.shootingDisabled > 0) player.shootingDisabled -= deltaTime;
         player.update(deltaTime);
       }
+
+      // Определение скорости стрельбы
       // Adjust fire rate (rapid fire and EMP effects)
       let effectiveFireRate = BASE_FIRE_RATE / permanentUpgrades.fireRate;
       if(player.activePowerUps.rapidFire.duration > 0) effectiveFireRate /= 2;
@@ -3889,6 +4034,8 @@
       if (player.activePowerUps.acidRain.duration > 0) {
         effectiveFireRate = BASE_FIRE_RATE*3;
       }
+      //Конец определения скорости стрельбы
+
       // Изменённая логика автострельбы с учётом стэков усилений
       if (player && player.shootingDisabled <= 0&& !(player.activePowerUps.neonOverdrive && player.activePowerUps.neonOverdrive.duration > 0)) {
         fireCooldown -= deltaTime;
