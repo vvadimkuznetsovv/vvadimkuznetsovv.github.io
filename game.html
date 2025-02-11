@@ -810,18 +810,20 @@
       comboTimer = COMBO_RESET_TIME;
       // Пример: активация бонусов
       if (comboCounter === 5) {
-        applyPowerUp("Damage Boost");
+        applyPowerUp("Damage Boost", true);
       } else if (comboCounter === 30) {
-        applyPowerUp("Bullet Time");
+        applyPowerUp("Bullet Time", true);
       } else if (comboCounter === 70) {
-        applyPowerUp("Power Meter Boost");
+        applyPowerUp("Power Meter Boost", true);
       } else if (comboCounter === 100) {
-        applyPowerUp("Friend");
+        applyPowerUp("Friend", true);
       }else if (comboCounter === 150) {
-        applyPowerUp("Restore Health");
+        applyPowerUp("Restore Health", true);
       }else if (comboCounter === 200) {
-        applyPowerUp("Neon Overdrive");
-        applyPowerUp("Shield");
+        applyPowerUp("Neon Overdrive", true);
+        applyPowerUp("Shield", true);
+      }else if (comboCounter === 300) {
+        applyPowerUp("Psi Blast", true);
       }else if (comboCounter === 400) {
         showPermanentUpgradeMenu();
         resetCombo();
@@ -1295,7 +1297,7 @@
     // =================== Main Biomes / Backgrounds ===================
    
     const biomes = [
-      {
+      {   // biome_1
         name: "Neon Arena",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -1318,7 +1320,7 @@
           }
         }
       },
-      {
+      {   // biome_2
         name: "Galactic Nebula",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -1349,7 +1351,7 @@
           }
         }
       },
-      {
+      {   // biome_3
         name: "Neon Abyss",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -1375,7 +1377,7 @@
           }
         }
       },
-      {
+      {   // biome_4
         name: "Pixelated Matrix",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -1393,14 +1395,14 @@
           }
         }
       },
-      {
+      {   // biome_5
         name: "Retro Wave",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
           // Градиент от пурпурного к оранжевому
           let grad = context.createLinearGradient(0, 0, 0, height);
-          grad.addColorStop(0, "rgba(128,0,128,0.5)");
-          grad.addColorStop(1, "rgba(255,140,0,0.5)");
+          grad.addColorStop(0, "rgba(128,0,128,0.7)");
+          grad.addColorStop(1, "rgba(0,255,255,0.9)");
           context.fillStyle = grad;
           context.fillRect(0, 0, width, height);
           // Лёгкая сетка
@@ -1872,7 +1874,7 @@
       update(deltaTime) {
         // Обновление таймеров усилений: уменьшаем время и сбрасываем стеки, когда время истекает
         const nonDecayingEffects = ["friend", "scoreMagnet", "neonOverdrive", "powerMeterBoost", "damageBoost", "shield", "speedBoost"];
-        const nonDecayingEffectsRainAcid = ["friend", "scoreMagnet", "acidRain", "powerMeterBoost", "shield", "speedBoost"];
+        const nonDecayingEffectsRainAcid = ["friend", "scoreMagnet", "acidRain","neonOverdrive", "powerMeterBoost","damageBoost", "shield", "speedBoost"];
         const nonDecayingEffects2 = ["doubleShot", "tripleShot", "scatterShot"];
         for (let key in this.activePowerUps) {
           let pu = this.activePowerUps[key];
@@ -1882,7 +1884,7 @@
               !nonDecayingEffects.includes(key)
             ){
 
-            } else if (
+            } else if(
               (this.activePowerUps.acidRain && this.activePowerUps.acidRain.duration > 0) &&
               !nonDecayingEffectsRainAcid.includes(key)
             ){
@@ -2092,14 +2094,14 @@
       
         // Логика стрельбы: стреляем только если угол почти совпадает с целевым (порог 0.1 радиана)
         this.shootCooldown -= deltaTime;
-        let friendFireRate = 400; // базовый интервал в мс
+        let friendFireRate = 400 / permanentUpgrades.fireRate;; // базовый интервал в мс
 
         let friendStacks = player.activePowerUps.friend.stacks || 1;
         if (player.activePowerUps.friend && player.activePowerUps.friend.stacks >= 3) {
           friendFireRate = (400 / (1 + 0.5 * (friendStacks - 1))) * scaleFactor;  // при 3+ стэках – ускоряем стрельбу
         }
         if (this.shootCooldown <= 0 && Math.abs(normalizeAngle(targetAngle - this.angle)) < 0.1) {
-          let bullet = new Bullet(this.x, this.y, this.angle);
+          let bullet = new Bullet(this.x, this.y, this.angle,1 * player.activePowerUps.damageBoost.stacks * permanentUpgrades.damage,"friend");
           bullet.fromFriend = true;  // Помечаем пулю как выпущенную другом
           bullets.push(bullet);
           this.shootCooldown = friendFireRate;
@@ -2171,7 +2173,7 @@
         this.y = y;
         this.angle = angle;
         this.duration = 10000; // След живёт 2000 мс (2 секунды)
-        this.damagePerSecond = 0.05 * permanentUpgrades.damage; // Урон единицы в секунду
+        this.damagePerSecond = 0.1 * permanentUpgrades.damage * player.activePowerUps.damageBoost.stacks; // Урон единицы в секунду
         this.length = 0;  // начальная длина линии равна 0
         // Задаём скорость удлинения.
         // Если пуля движется со скоростью 6 * scaleFactor, можно установить, например:
@@ -2552,7 +2554,7 @@
               const angle = Math.atan2(dy, dx);
               let spawnX = this.x + Math.cos(angle) * this.radius;
               let spawnY = this.y + Math.sin(angle) * this.radius;
-              let b = new Bullet(spawnX, spawnY, angle, "enemy");
+              let b = new Bullet(spawnX, spawnY, angle, 1, "enemy");
               b.fromEnemy = true;        // Помечаем как пуля врага
               b.radius = 8 * scaleFactor;
               b.speed = 7 * scaleFactor;
@@ -3306,7 +3308,7 @@
       });
     }
     // =================== Функция применения усиления ===================
-    function applyPowerUp(choice) {
+    function applyPowerUp(choice,comboPowerUp=false) {
       // *** NEW: При выборе "Restore Health" – мгновенное восстановление 30 HP (учитывая текущий maxHP) ***
       const key = powerUpMap[choice];
       if (choice === "Restore Health") {
@@ -3332,7 +3334,7 @@
           // сразу же увеличим HP игрока
           player.maxHP += 50;
           player.currentHP += 50;
-          powerMeter = 0;
+          if(!comboPowerUp) powerMeter = 0;
           resumeGame();
           return;
       } else if (choice === "Psi Blast") {
@@ -3358,7 +3360,7 @@
         // Можно добавить эффект частиц или проиграть звук (например, playSfx ("psiBlast"))
         resumeGame();
         // Обнуляем powerMeter (если нужно)
-        powerMeter = 0;
+        if(!comboPowerUp) powerMeter = 0;
         return;
       } else {
         if (key && player) {
@@ -3373,7 +3375,7 @@
           }
         }
       }
-      powerMeter = 0;
+      if(!comboPowerUp) powerMeter = 0;
       resumeGame();
     }
 
