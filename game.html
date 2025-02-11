@@ -1026,8 +1026,10 @@
     mobilePauseButton.addEventListener("click", () => {
       if(gameState === "playing") 
       {
+        applyPowerUp("Acid Rain");
         pauseGame();
         //nextLevel();   //cheat
+        
       }
     });
     document.addEventListener("pointerdown", (e) => {
@@ -2173,11 +2175,11 @@
         this.y = y;
         this.angle = angle;
         this.duration = 10000; // След живёт 2000 мс (2 секунды)
-        this.damagePerSecond = 0.1 * permanentUpgrades.damage * player.activePowerUps.damageBoost.stacks; // Урон единицы в секунду
+        this.damagePerSecond = 0.1 * permanentUpgrades.damage * (1+player.activePowerUps.damageBoost.stacks); // Урон единицы в секунду
         this.length = 0;  // начальная длина линии равна 0
         // Задаём скорость удлинения.
         // Если пуля движется со скоростью 6 * scaleFactor, можно установить, например:
-        this.extensionSpeed = BASE_FIRE_RATE * 3;
+        this.extensionSpeed = BASE_FIRE_RATE * 3 * scaleFactor;
       }
       update(deltaTime) {
         this.duration -= deltaTime;
@@ -2193,8 +2195,9 @@
           y: this.y + Math.sin(this.angle) * this.length
         };
 
+        let actualTime = isMobile ? 1700 : 430;
         // ==== стало
-        this.length += this.extensionSpeed * (deltaTime / 430);
+        this.length += this.extensionSpeed * (deltaTime / actualTime);
     
         // (Опционально) Ограничиваем длину максимальной величиной, чтобы AcidTrail не выходил за границы канвы.
         const maxEnd = getRayIntersection(this.x, this.y, this.angle, width, height);
