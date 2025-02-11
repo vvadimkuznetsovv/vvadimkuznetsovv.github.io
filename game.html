@@ -678,7 +678,7 @@
         // ************************************
         // **  BUTTONS for Cheats  **
         // ************************************
-        /*
+        /**/
         if(e.key.toLowerCase() === "p") {
           spawnTwoBosses();
         }
@@ -690,7 +690,7 @@
         }
         if(e.key.toLowerCase() === "k") {
           givePlayerMagnetEffect();
-        }*/
+        }
         // Если нажата клавиша "X" (без учета регистра)
         if (e.key.toLowerCase() === "x") {
           revivePlayer()
@@ -1871,17 +1871,23 @@
       }
       update(deltaTime) {
         // Обновление таймеров усилений: уменьшаем время и сбрасываем стеки, когда время истекает
-        const nonDecayingEffects = ["friend", "scoreMagnet", "neonOverdrive", "acidRain", "powerMeterBoost", "damageBoost", "shield", "shielspeedBoostd"];
+        const nonDecayingEffects = ["friend", "scoreMagnet", "neonOverdrive", "powerMeterBoost", "damageBoost", "shield", "speedBoost"];
+        const nonDecayingEffectsRainAcid = ["friend", "scoreMagnet", "acidRain", "powerMeterBoost", "shield", "speedBoost"];
         const nonDecayingEffects2 = ["doubleShot", "tripleShot", "scatterShot"];
         for (let key in this.activePowerUps) {
           let pu = this.activePowerUps[key];
           if (pu.duration > 0) {
             if (
-              ((this.activePowerUps.neonOverdrive && this.activePowerUps.neonOverdrive.duration > 0) || (this.activePowerUps.acidRain && this.activePowerUps.acidRain.duration > 0)) &&
+              (this.activePowerUps.neonOverdrive && this.activePowerUps.neonOverdrive.duration > 0) &&
               !nonDecayingEffects.includes(key)
             ){
 
             } else if (
+              (this.activePowerUps.acidRain && this.activePowerUps.acidRain.duration > 0) &&
+              !nonDecayingEffectsRainAcid.includes(key)
+            ){
+
+            }else if (
               this.activePowerUps.bulletTime &&
               this.activePowerUps.bulletTime.duration > 0 &&
               nonDecayingEffects2.includes(key)
@@ -2166,12 +2172,34 @@
         this.angle = angle;
         this.duration = 10000; // След живёт 2000 мс (2 секунды)
         this.damagePerSecond = 0.05 * permanentUpgrades.damage; // Урон единицы в секунду
+        this.length = 0;  // начальная длина линии равна 0
+        // Задаём скорость удлинения.
+        // Если пуля движется со скоростью 6 * scaleFactor, можно установить, например:
+        this.extensionSpeed = BASE_FIRE_RATE * 3;
       }
       update(deltaTime) {
         this.duration -= deltaTime;
         if(this.duration < 0) this.duration = 0;
+
         // Вычисляем конечную точку луча по пересечению с границами канвы
-        const endPoint = getRayIntersection(this.x, this.y, this.angle, width, height);
+
+        // ==== было
+        //const endPoint = getRayIntersection(this.x, this.y, this.angle, width, height);
+
+        const endPoint = {
+          x: this.x + Math.cos(this.angle) * this.length,
+          y: this.y + Math.sin(this.angle) * this.length
+        };
+
+        // ==== стало
+        this.length += this.extensionSpeed * (deltaTime / 430);
+    
+        // (Опционально) Ограничиваем длину максимальной величиной, чтобы AcidTrail не выходил за границы канвы.
+        const maxEnd = getRayIntersection(this.x, this.y, this.angle, width, height);
+        const maxLength = Math.hypot(maxEnd.x - this.x, maxEnd.y - this.y);
+        if (this.length > maxLength) {
+          this.length = maxLength;
+        }
 
         // Проверка коллизий с врагами
         enemies.forEach(enemy => {
@@ -2236,14 +2264,20 @@
       }
       draw() {
         ctx.save();
-        ctx.lineWidth = 10 * scaleFactor;
-        ctx.strokeStyle = "#00ff00";
+        ctx.lineWidth = 5 * scaleFactor;
+        ctx.strokeStyle = "rgba(0,255,0,0.5)";
         ctx.shadowColor = "#00ff00";
         ctx.shadowBlur = 20 * scaleFactor;
         ctx.beginPath();
         ctx.moveTo(this.x, this.y);
-        const endPoint = getRayIntersection(this.x, this.y, this.angle, width, height);
-        ctx.lineTo(endPoint.x, endPoint.y);
+        //const endPoint = getRayIntersection(this.x, this.y, this.angle, width, height);
+
+        // Вычисляем конечную точку на основе текущей длины
+        const endX = this.x + Math.cos(this.angle) * this.length;
+        const endY = this.y + Math.sin(this.angle) * this.length;
+        ctx.lineTo(endX, endY); 
+
+        //ctx.lineTo(endPoint.x, endPoint.y);
         ctx.stroke();
         ctx.restore();
       }
@@ -2264,9 +2298,9 @@
         if (this.source === "player" && player && player.activePowerUps.acidRain.duration > 0) {
           acidTrails.push(new AcidTrail(this.x, this.y, this.angle));
           this.hasAcidTrail = false;
-        } else {
-          this.hasAcidTrail = false;
         }
+        this.hasAcidTrail = false;
+  
 
         // Special properties (default off)
         this.piercing = false;
@@ -2283,15 +2317,6 @@
         this.dead = false;
         // --- Добавлен счётчик отскоков для reflective пуль ---
         this.bounceCount = 0;
-        // Убираем свойства для кислотного следа в самой пуле
-        // Если пуля игрока и power‑up Acid Rain активен, создаём объект AcidTrail
-        if (!this.fromEnemy && !this.fromBoss && player && player.activePowerUps.acidRain.duration > 0) {
-          acidTrails.push(new AcidTrail(this.x, this.y, this.angle));
-          // Не даём пуле отрисовывать свой собственный кислотный след
-          this.hasAcidTrail = false;
-        } else {
-          this.hasAcidTrail = false;
-        }
       }
       update(deltaTime) {
         // Homing effect: adjust angle toward nearest enemy
@@ -2527,7 +2552,7 @@
               const angle = Math.atan2(dy, dx);
               let spawnX = this.x + Math.cos(angle) * this.radius;
               let spawnY = this.y + Math.sin(angle) * this.radius;
-              let b = new Bullet(spawnX, spawnY, angle);
+              let b = new Bullet(spawnX, spawnY, angle, "enemy");
               b.fromEnemy = true;        // Помечаем как пуля врага
               b.radius = 8 * scaleFactor;
               b.speed = 7 * scaleFactor;
