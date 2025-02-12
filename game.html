@@ -101,7 +101,7 @@
     }
     #mobilePauseButton {
       position: absolute;
-      top: calc(110px * var(--ui-scale));
+      top: calc(135px * var(--ui-scale));
       right: calc(20px * var(--ui-scale));
       z-index: 50;
       margin: calc(10px * var(--ui-scale));
@@ -1151,7 +1151,7 @@
     mobilePauseButton.addEventListener("click", () => {
       if(gameState === "playing") 
       {
-        //applyPowerUp("Acid Rain");   //cheat
+        applyPowerUp("Light Saber");   //cheat
         pauseGame();
         //nextLevel();   //cheat
         
@@ -3987,6 +3987,7 @@
       permanentUpgrades.speed = 1;
       permanentUpgrades.fireRate = 1;
       permanentUpgrades.health = 0;   // *** NEW: сброс здоровья ***
+      permanentUpgrades.damageReduction = 0;
       powerMeter = 0;
       enemySpawnTimer = 0;
       fireCooldown = 0;
@@ -5053,6 +5054,7 @@
       ctx.fillText("Speed: " + permanentUpgrades.speed, (width - 10), 55 * uiScale);
       ctx.fillText("Fire Rate: " + permanentUpgrades.fireRate, (width - 10), 80 * uiScale);
       ctx.fillText("Health: " + (100 + permanentUpgrades.health), (width - 10), 105 * uiScale);  // *** NEW: отображение здоровья
+      ctx.fillText("Reduction: " + (permanentUpgrades.damageReduction), (width - 10), 130 * uiScale);
       ctx.textAlign = "left";  // Сброс выравнивания для дальнейшей отрисовки
       // =================== Отрисовка активных усилений и негативных эффектов (HUD) ===================
       if (player) {
@@ -5172,13 +5174,13 @@
           ctx.rotate(offset);
           // Рисуем рукоять меча
           ctx.fillStyle = "gray";
-          ctx.fillRect(20, -3.5 * scaleFactor, handleLength, 7 * scaleFactor);
+          ctx.fillRect(20 * scaleFactor, -3.5 * scaleFactor, handleLength, 7 * scaleFactor);
           // Рисуем лезвие – используем случайный цвет из эффекта
           let lightsaberColor = player.activePowerUps.lightSaber.color || "red";
           ctx.fillStyle = lightsaberColor;
           ctx.shadowColor = lightsaberColor;
           ctx.shadowBlur = 70 * scaleFactor;
-          ctx.fillRect(handleLength + 20, -bladeWidth / 2, bladeLength, bladeWidth);
+          ctx.fillRect(handleLength + 20 * scaleFactor, -bladeWidth / 2, bladeLength, bladeWidth);
           ctx.restore();
         });
 
@@ -5266,6 +5268,7 @@
       permanentUpgrades.speed = 1;
       permanentUpgrades.fireRate = 1;
       permanentUpgrades.health = 0;
+      permanentUpgrades.damageReduction = 0;
       comboCounter = 0;
       enemySpawnTimer = 0;
       fireCooldown = 0;
