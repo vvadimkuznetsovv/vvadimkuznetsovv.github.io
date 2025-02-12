@@ -565,7 +565,22 @@
     }
     
     // ========== Scope Drawing End ============
-
+    function getClosestTargetWithoutBullet() {
+      let closest = null;
+      let minDist = Infinity;
+      // Фильтруем пули, выпущенные врагами/боссами:
+      //let enemyBullets = bullets.filter(b => b.fromEnemy || b.fromBoss);
+      // Объединяем массивы врагов и боссов (если оба используются)
+      let targets = enemies.concat(bosses);
+      for (let target of targets) {
+        let d = Math.hypot(target.x - player.x, target.y - player.y);
+        if (d < minDist) {
+          minDist = d;
+          closest = target;
+        }
+      }
+      return closest;
+    }
     // ========== Ninja Spirit Start ============
     function getClosestTarget() {
       let closest = null;
@@ -756,7 +771,7 @@
       // ************************************
       // **  BUTTONS for Cheats  **
       // ************************************
-      /*
+      /**/
       if(e.key.toLowerCase() === "p") {
         spawnTwoBosses();
       }
@@ -768,10 +783,13 @@
       }
       if(e.key.toLowerCase() === "k") {
         givePlayerMagnetEffect();
-      }*/
+      }
       // Если нажата клавиша "X" (без учета регистра)
       if (e.key.toLowerCase() === "x") {
         revivePlayer()
+      }
+      if (e.key.toLowerCase() === "l") {
+        applyPowerUp("Light Saber",true);
       }
     });
     canvas.addEventListener("click", function(e) {
@@ -1040,7 +1058,8 @@
       damage: 1,
       speed: 1,
       fireRate: 1,
-      health: 0            // *** NEW: добавлено для перманентного увеличения здоровья ***
+      health: 0,            // *** NEW: добавлено для перманентного увеличения здоровья ***
+      damageReduction: 0
     };
     // Power meter for temporary power‑ups
     let powerMeter = 0;
@@ -1067,6 +1086,9 @@
     // *** NEW: Массив для объектов-друзей (Friend) ***
     let friends = [];
     let acidTrails = [];
+    const randomLightsaberColors = ["green", "red", "purple", "blue", "#FF00DE", "cyan"];
+    let lightSaberWaveTimer = 0;
+    let lightSaberWave = null;
 
     // =================== Input Handling ===================
     const keys = {};
@@ -1970,6 +1992,8 @@
           bulletTime: { duration: 0, stacks: 0 },
           acidRain: { duration: 0, stacks: 0 },
           ninjaSpirit: { duration: 0, stacks: 0 },
+          lightSaber: { duration: 0, stacks: 0, color: "#fff"},
+          
         };
         // Additional status effects (негативные эффекты)
         this.frozenTime = 0;
@@ -1980,8 +2004,9 @@
       update(deltaTime) {
         // Обновление таймеров усилений: уменьшаем время и сбрасываем стеки, когда время истекает
         const nonDecayingEffects = ["friend", "scoreMagnet", "neonOverdrive", "powerMeterBoost", "damageBoost", "shield", "speedBoost", "ninjaSpirit"];
-        const nonDecayingEffectsRainAcid = ["friend", "scoreMagnet", "acidRain","neonOverdrive", "powerMeterBoost","damageBoost", "shield", "speedBoost", "ninjaSpirit"];
-        const nonDecayingEffects2 = ["doubleShot", "tripleShot", "scatterShot"];
+        const nonDecayingEffectsLightSaber = ["friend", "scoreMagnet","neonOverdrive", "lightSaber", "powerMeterBoost", "damageBoost", "shield", "speedBoost", "ninjaSpirit"];
+        const nonDecayingEffectsRainAcid = ["friend", "scoreMagnet", "acidRain", "lightSaber", "neonOverdrive", "powerMeterBoost","damageBoost", "shield", "speedBoost", "ninjaSpirit"];
+        const nonDecayingEffects2 = ["doubleShot", "tripleShot", "scatterShot","ninjaSpirit"];
         for (let key in this.activePowerUps) {
           let pu = this.activePowerUps[key];
           if (pu.duration > 0) {
@@ -1995,6 +2020,11 @@
               !nonDecayingEffectsRainAcid.includes(key)
             ){
 
+            } else if (
+              (this.activePowerUps.lightSaber && this.activePowerUps.lightSaber.duration > 0) &&
+              !nonDecayingEffectsLightSaber.includes(key)
+            ) {
+              // Если LightSaber активен, уменьшаем время для эффектов, которые в nonDecayingEffectsLightSaber
             }else if (
               this.activePowerUps.bulletTime &&
               this.activePowerUps.bulletTime.duration > 0 &&
@@ -2019,7 +2049,7 @@
         
             // Если это Health Boost – снимаем бонус постепенно (по 50 за каждый потерянный стэк)
             if (key === "healthBoost") {
-              const bonusPerStack = 50; // бонус, который даёт один стэк
+              const bonusPerStack = 70; // бонус, который даёт один стэк
               let expiredStacks = previousStacks - pu.stacks;
               if (expiredStacks > 0) {
                 let bonusToRemove = bonusPerStack * expiredStacks;
@@ -2446,7 +2476,7 @@
         }
         this.hasAcidTrail = false;
   
-
+        this.owner;
         // Special properties (default off)
         this.piercing = false;
         this.piercingCount = 0;
@@ -2715,6 +2745,19 @@
             this.x += (dx/dist) * effSpeed;
             this.y += (dy/dist) * effSpeed;
           }
+        }
+        const effectiveHeight = (isMobile && window.innerHeight > window.innerWidth)
+        ? height - getBottomCropHeight()
+        : height;
+        if (this.x < this.radius) {
+          this.x = this.radius;
+        } else if (this.x > width - this.radius) {
+          this.x = width - this.radius;
+        }
+        if (this.y < this.radius) {
+          this.y = this.radius;
+        } else if (this.y > effectiveHeight - this.radius) {
+          this.y = effectiveHeight - this.radius;
         }
       }
       draw() {
@@ -3374,6 +3417,7 @@
       "Psi Blast": "psiBlast",
       "Acid Rain": "acidRain",
       "Ninja Spirit": "ninjaSpirit",
+      "Light Saber": "lightSaber",
     };
     
     // =================== Temporary Power‑Up Pool & Durations ===================
@@ -3381,7 +3425,7 @@
       "Double Shot", "Triple Shot", "Rapid Fire", "Shield", "Speed Boost",
       "Damage Boost", "Piercing", "Homing", "Bomb", "Freeze Blast",
       "Reflective", "Life Steal", "EMP Blast", "Critical Strike", "Overcharge",
-      "Scatter Shot", "Health Boost", "Restore Health", "Magnet", "Friend", "Neon Overdrive", "Power Meter Boost", "Bullet Time", "Psi Blast", "Acid Rain", "Ninja Spirit",
+      "Scatter Shot", "Health Boost", "Restore Health", "Magnet", "Friend", "Neon Overdrive", "Power Meter Boost", "Bullet Time", "Psi Blast", "Acid Rain", "Ninja Spirit","Light Saber",
     ];
     const powerUpDurations = {
       "Reflective": 10000, // 10 секунд для Reflective
@@ -3397,6 +3441,7 @@
       "Bullet Time": 15000,  // 15 секунд   
       "Acid Rain": 10000,
       "Ninja Spirit": 10000,
+      "Light Saber": 20000,
     };
 
     // =================== Temporary Power‑Up Selection ===================
@@ -3463,6 +3508,16 @@
           powerMeter = Math.max(0, powerMeter - getPowerMeterMax());
           resumeGame();
           return;
+      } else if (choice === "Light Saber") {
+        // Задаём длительность усиления как обычно
+        const timePerStack = powerUpDurations[choice] || 20000;
+        if (player.activePowerUps.lightSaber.duration <= 0) {
+          player.activePowerUps.lightSaber.duration = timePerStack;
+          // Присваиваем случайный цвет из массива
+          player.activePowerUps.lightSaber.color = randomLightsaberColors[Math.floor(Math.random() * randomLightsaberColors.length)];
+        } else {
+          player.activePowerUps.lightSaber.duration += timePerStack;
+        }
       } else if (choice === "Health Boost") {
           // Изменено: теперь Health Boost даёт бонус +50 к maxHP и +50 к текущему здоровью
           let bonusHealth = 50;
@@ -3534,8 +3589,13 @@
         { id: "upgDamage", name: "Damage Up", weight: 40 },
         { id: "upgSpeed", name: "Speed Up", weight: 30 },
         { id: "upgFireRate", name: "Fire Rate Up", weight: 20 },
-        { id: "upgHealth", name: "Health Up", weight: 10 }
+        { id: "upgHealth", name: "Health Up", weight: 10 },
+        { id: "upgDamageReduction", name: "Damage Reduction Up", weight: 20 }
       ];
+      // Если Fire Rate уже выше 6.5, исключаем эту опцию
+      if (permanentUpgrades.fireRate > 6.5) {
+        upgrades = upgrades.filter(upg => upg.id !== "upgFireRate");
+      }
       // Выбираем 3 уникальных улучшения с учётом их весов
       const chosenUpgrades = [];
       const availableUpgrades = [...upgrades]; // создаём копию массива, чтобы не менять исходный список
@@ -3584,11 +3644,15 @@
               permanentUpgrades.fireRate += 0.5;
               break;
             case "Health Up":
-              permanentUpgrades.health += 15;
+              permanentUpgrades.health += 30;
               if (player) {
                 player.maxHP += 15;
                 player.currentHP += 15;
               }
+              break;
+            case "Damage Reduction Up":
+              // Например, увеличиваем на 1 единицу
+              permanentUpgrades.damageReduction += 1;
               break;
           }
           version===1? resumeGame(): nextLevel();
@@ -4037,7 +4101,9 @@
       //Конец определения скорости стрельбы
 
       // Изменённая логика автострельбы с учётом стэков усилений
-      if (player && player.shootingDisabled <= 0&& !(player.activePowerUps.neonOverdrive && player.activePowerUps.neonOverdrive.duration > 0)) {
+      if (player && player.shootingDisabled <= 0&& !( (player.activePowerUps.neonOverdrive && player.activePowerUps.neonOverdrive.duration > 0) ||
+      (player.activePowerUps.lightSaber && player.activePowerUps.lightSaber.duration > 0) ) ) 
+      {
         fireCooldown -= deltaTime;
         if (fireCooldown <= 0) {
           fireCooldown = effectiveFireRate;
@@ -4183,7 +4249,165 @@
           acidTrails.splice(i,1);
         }
       }
+      // ===== LightSaber
+      if (
+        player &&
+        player.activePowerUps.lightSaber &&
+        player.activePowerUps.lightSaber.duration > 0 &&
+        !(player.activePowerUps.neonOverdrive && player.activePowerUps.neonOverdrive.duration > 0)
+      ) {
+        let lsStacks = player.activePowerUps.lightSaber.stacks;
+        // Параметры меча
+        let bladeLength = 220 * scaleFactor; // длина лезвия (подберите по вкусу)
+        // Расчет урона меча: базовый урон (например, 10) умноженный на постоянный бонус и количество стэков, затем делим в 2 раза
+        let swordDamage = 1 * permanentUpgrades.damage * player.activePowerUps.lightSaber.stacks;
+        // Определяем массив угловых смещений относительно основного направления (player.angle)
+        // Здесь задаются различные схемы в зависимости от количества стэков
+        let angleOffsets = [];
+        if (lsStacks === 1) {
+          angleOffsets = [0];
+        } else if (lsStacks === 2) {
+          angleOffsets = [0, Math.PI];
+        } else if (lsStacks === 3) {
+          angleOffsets = [0, (3 * Math.PI) / 4, (5 * Math.PI) / 4];
+        } else if (lsStacks === 4) {
+          angleOffsets = [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2];
+        } else if (lsStacks >= 5) {
+          angleOffsets = [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2];
+        }
+        angleOffsets.forEach(offset => {
+          // Эффективный угол для текущего меча: основное направление игрока плюс смещение
+          let effectiveAngle = player.angle + offset;
+          
+          // Начало меча – от центра игрока смещаемся на его радиус
+          let bladeStartX = player.x + Math.cos(effectiveAngle) * player.radius;
+          let bladeStartY = player.y + Math.sin(effectiveAngle) * player.radius;
+          
+          // Конец меча – на расстоянии (player.radius + bladeLength) по направлению effectiveAngle
+          let bladeEndX = player.x + Math.cos(effectiveAngle) * (player.radius + bladeLength);
+          let bladeEndY = player.y + Math.sin(effectiveAngle) * (player.radius + bladeLength);
 
+
+          // Проверка коллизий с врагами
+          enemies.forEach(enemy => {
+            let dist = distancePointToLine(
+              enemy.x, enemy.y,
+              bladeStartX, bladeStartY,
+              bladeEndX, bladeEndY
+            );
+            if (dist < enemy.radius) {
+              enemy.hp -= swordDamage;
+              // Эффект попадания
+              if(enemy.hp <= 0) {
+                if(enemy.type === "exploder") {
+                  // When an exploder dies, it explodes—damaging nearby enemies.
+                  for(let k=0; k<enemies.length; k++){
+                    const dx = enemy.x - enemy.x;
+                    const dy = enemy.y - enemy.y;
+                    if(Math.hypot(dx,dy) < 50) {
+                      enemy.hp -= 5;
+                    }
+                  }
+                }
+                if(enemy.type === "splitter") {
+                  // Splitter splits into two basic enemies when killed.
+                  enemies.push(new Enemy(enemy.x, enemy.y, "basic"));
+                  enemies.push(new Enemy(enemy.x, enemy.y, "basic"));
+                }
+                for(let k=0; k<20; k++){
+                  particles.push(new Particle(enemy.x, enemy.y, enemy.color));
+                }
+                spawnCollectible(enemy.x, enemy.y);
+                score += (enemy.type==="elite")?200:100;
+                enemy.dead = true;
+                onEnemyKilled(enemy);
+              }
+              else{
+                for (let blood = 0; blood < 8; blood++) {
+                  particles.push(new Particle(enemy.x, enemy.y, enemy.color));
+                }
+              }
+            }
+          });
+          
+          // Проверка коллизий с боссами
+          bosses.forEach(boss => {
+            let dist = distancePointToLine(boss.x, boss.y,
+            bladeStartX, bladeStartY,
+            bladeEndX, bladeEndY);
+            if (dist < boss.radius) {
+              boss.hp -= swordDamage/6;
+              for (let blood = 0; blood < 8; blood++) {
+                particles.push(new Particle(boss.x, boss.y, "#f00"));
+              }
+            }
+          });
+
+          bullets.forEach(b => {
+            // Рассматриваем только пули, выпущенные врагами или боссами
+            if (b.fromEnemy || b.fromBoss) {
+              let dist = distancePointToLine(b.x, b.y,
+              bladeStartX, bladeStartY,
+              bladeEndX, bladeEndY);
+              if (dist < (b.radius + 4 * scaleFactor)) {
+                b.fromEnemy = false;
+                b.fromBoss = false;
+                b.source = "player";
+
+                let target = getClosestTargetWithoutBullet();
+                if (target) {
+                  let dx = target.x - b.x;
+                  let dy = target.y - b.y;
+                  b.angle = Math.atan2(dy, dx);
+                } else {
+                  // Если противников нет, можно задать любое дефолтное направление
+                  b.angle = player.angle;
+                }
+              }
+            }
+          });
+        });
+      }
+
+      // ==== lightSaber Wave
+      if (player && player.activePowerUps.lightSaber.duration > 0 &&
+        player.activePowerUps.lightSaber.stacks >= 5) {
+        lightSaberWaveTimer += deltaTime;
+        if (lightSaberWaveTimer >= 3000) {
+          // Применяем отбрасывание врагов
+          enemies.forEach(enemy => {
+            let dx = enemy.x - player.x;
+            let dy = enemy.y - player.y;
+            let dist = Math.hypot(dx, dy);
+            if (dist > 0) {
+              // Например, knockBackDistance = 4 * actualGridSize (где actualGridSize = cssGridSize)
+              let knockBackDistance = 4 * actualGridSize;
+              enemy.x += (dx / dist) * knockBackDistance;
+              enemy.y += (dy / dist) * knockBackDistance;
+              enemy.frozenTime = 2000;
+            }
+          });
+          // Создаём визуальный эффект волны
+          lightSaberWave = {
+            x: player.x,
+            y: player.y,
+            radius: 0,
+            maxRadius: Math.sqrt(width * width + height * height),
+            duration: 500,  // длительность эффекта, например, 500 мс
+            elapsed: 0
+          };
+          lightSaberWaveTimer = 0;
+        }
+      }
+
+      // Обновление визуальной волны, если она существует
+      if (lightSaberWave) {
+        lightSaberWave.elapsed += deltaTime;
+        lightSaberWave.radius = lightSaberWave.maxRadius * (lightSaberWave.elapsed / lightSaberWave.duration);
+        if (lightSaberWave.elapsed >= lightSaberWave.duration) {
+          lightSaberWave = null;
+        }
+      }
       // Если активен Neon Overdrive – стреляем лазером вместо обычных пуль
       if (player.activePowerUps.neonOverdrive.duration > 0) {
         playNeonOverdriveSound();
@@ -4241,7 +4465,7 @@
         bosses.forEach(boss => {
             let dist = distancePointToLine(boss.x, boss.y, beamStartX, beamStartY, beamEndX, beamEndY);
             if (dist < boss.radius) {
-                boss.hp -= beamDamage;
+                boss.hp -= beamDamage/6;
                 for (let blood = 0; blood < 8; blood++) {
                   particles.push(new Particle(boss.x, boss.y, "#f00"));
                 }
@@ -4293,14 +4517,19 @@
         if(circleCollision(enemies[i], player)) {
           // --- Изменено: если щит активен, урон от обычных врагов блокируется полностью ---
           if(player.activePowerUps.shield.duration > 0) {
+            player.activePowerUps.shield.duration = Math.max(0, player.activePowerUps.shield.duration - 100);
+            // Можно отобразить специальное сообщение об уменьшении времени щита:
+            damageTexts.push({ x: player.x, y: player.y, damage: "Shield -0.1s", alpha: 1, lifetime: 1000 });
             enemies[i].dead = true;
             onEnemyKilled(enemies[i]);
           } else {
+            let bonusDamage = Math.floor((currentLevel - 1) / 3);  //Hard-mode
             let damage = 20;
             if(enemies[i].type === "freeze") { playSfx("freeze"); player.frozenTime = 2000; damage = 10; }
             else if(enemies[i].type === "parasite") { player.shootingDisabled = 2000; damage = 10; }
             else if(enemies[i].type === "emp") { player.empSlowed = 2000; damage = 15; }
-            player.currentHP -= damage;
+            let resultDamage = Math.max(0, damage + bonusDamage - permanentUpgrades.damageReduction);
+            player.currentHP -= resultDamage;
             // --- Добавлено: отображение полученного урона красным цветом ---
             damageTexts.push({ x: player.x, y: player.y, damage: damage, alpha: 1, lifetime: 1000 });
             if(player.currentHP <= 0) { gameState = "gameover"; showGameOver(); }
@@ -4321,21 +4550,19 @@
           // Если расстояние оказалось нулевым (на всякий случай)
           if (dist === 0) { dx = 1; dy = 0; dist = 1; }
           // Определяем расстояние отбрасывания: 5 клеток
-          let knockBackDistance = 5 * actualGridSize; // например, 5 * 50 = 250 пикселей
-          // Сдвигаем позицию игрока по направлению от босса
+          let knockBackDistance = 5 * actualGridSize; 
           player.x += (dx / dist) * knockBackDistance;
           player.y += (dy / dist) * knockBackDistance;
-          // (Опционально) Ограничиваем позицию игрока границами канвы:
           player.x = Math.max(player.radius, Math.min(width - player.radius, player.x));
           player.y = Math.max(player.radius, Math.min(effectiveHeight - player.radius, player.y));
           if (player.activePowerUps.shield.duration > 0) {
-            // Если щит активен – уменьшаем его оставшееся время на 1 секунду (1000 мс)
             player.activePowerUps.shield.duration = Math.max(0, player.activePowerUps.shield.duration - 100);
             // Можно отобразить специальное сообщение об уменьшении времени щита:
             damageTexts.push({ x: player.x, y: player.y, damage: "Shield -0.1s", alpha: 1, lifetime: 1000 });
           } else {
             // Если щита нет – наносим обычный урон от босса (30 единиц)
-            let bossDamage = 30;
+            let bonusDamage = Math.floor((currentLevel - 1) / 3); //Hard-mode
+            let bossDamage = Math.max(0, 30 + bonusDamage - permanentUpgrades.damageReduction);
             player.currentHP -= bossDamage;
             damageTexts.push({ x: player.x, y: player.y, damage: bossDamage, alpha: 1, lifetime: 1000 });
             if (player.currentHP <= 0) {
@@ -4897,6 +5124,66 @@
         ctx.fillText(text, dt.x, dt.y);
         ctx.restore();
       });
+      if (lightSaberWave) {
+        ctx.save();
+        let alpha = 1 - (lightSaberWave.elapsed / lightSaberWave.duration);
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = "rgba(255,255,255,0.3)"; // можно подобрать другой цвет
+        ctx.lineWidth = 8 * uiScale;
+        ctx.beginPath();
+        ctx.arc(lightSaberWave.x, lightSaberWave.y, lightSaberWave.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+      if (
+        player &&
+        player.activePowerUps.lightSaber &&
+        player.activePowerUps.lightSaber.duration > 0 &&
+        !(player.activePowerUps.neonOverdrive && player.activePowerUps.neonOverdrive.duration > 0)
+      ) {
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        ctx.rotate(player.angle);
+
+        let lsStacks = player.activePowerUps.lightSaber.stacks;
+        let angles = [];
+
+        if (lsStacks === 1) {
+          angles = [0]; // только вперёд
+        } else if (lsStacks === 2) {
+          angles = [0, Math.PI]; // вперёд и назад
+        } else if (lsStacks === 3) {
+          // один меч вперёд, два сзади по диагонали (135° и 225°)
+          angles = [0, (3 * Math.PI) / 4, (5 * Math.PI) / 4];
+        } else if (lsStacks === 4) {
+          // мечи с четырёх сторон
+          angles = [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2];
+        } else if (lsStacks >= 5) {
+          // используем ту же схему, что и для 4 стека
+          angles = [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2];
+        }
+
+        let handleLength = 30 * scaleFactor;  // рукоять длиной 10
+        let bladeLength = 170 * scaleFactor;    // лезвие длиной 240
+        let bladeWidth = 5 * scaleFactor;         // толщина лезвия 
+
+        angles.forEach(offset => {
+          ctx.save();
+          ctx.rotate(offset);
+          // Рисуем рукоять меча
+          ctx.fillStyle = "gray";
+          ctx.fillRect(20, -3.5 * scaleFactor, handleLength, 7 * scaleFactor);
+          // Рисуем лезвие – используем случайный цвет из эффекта
+          let lightsaberColor = player.activePowerUps.lightSaber.color || "red";
+          ctx.fillStyle = lightsaberColor;
+          ctx.shadowColor = lightsaberColor;
+          ctx.shadowBlur = 70 * scaleFactor;
+          ctx.fillRect(handleLength + 20, -bladeWidth / 2, bladeLength, bladeWidth);
+          ctx.restore();
+        });
+
+        ctx.restore();
+      }
       if (player && player.activePowerUps.neonOverdrive && player.activePowerUps.neonOverdrive.duration > 0) {
         let beamStartX = player.x + Math.cos(player.angle) * (player.radius * scaleFactor);
         let beamStartY = player.y + Math.sin(player.angle) * (player.radius * scaleFactor);
