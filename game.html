@@ -1982,6 +1982,7 @@
         this.currentHP = 100;
         this.baseSpeed = 3 * scaleFactor;
         this.speed = this.baseSpeed;
+        this.reflectedKillCount = 0;
         // Temporary power‑ups (duration in ms)
         this.activePowerUps = {
           // Double Shot – позволяет одновременно выпускать две пули с небольшим угловым отклонением.
@@ -2067,9 +2068,22 @@
               }
               // Если эффект не входит в список – его время остаётся неизменным
             } else {
-              // Если BulletTime не активен – уменьшаем время для всех эффектов
-              pu.duration -= deltaTime;
-              if (pu.duration < 0) pu.duration = 0;
+              // Определяем, какой дополнительный эффект активен – приоритет: Acid Rain > Light Saber > Neon Overdrive
+              let consumedList;
+              if (this.activePowerUps.acidRain && this.activePowerUps.acidRain.duration > 0) {
+                consumedList = consumedEffectsAcidRain;
+              } else if (this.activePowerUps.lightSaber && this.activePowerUps.lightSaber.duration > 0) {
+                consumedList = consumedEffectsLightSaber;
+              } else if (this.activePowerUps.neonOverdrive && this.activePowerUps.neonOverdrive.duration > 0) {
+                consumedList = consumedEffectsNeonOverdrive;
+              } else {
+                consumedList = consumedEffectsBulletTimeOnly;
+              }
+              // Если этот эффект входит в список, то его длительность уменьшаем
+              if (consumedList.includes(key)) {
+                pu.duration -= deltaTime;
+                if (pu.duration < 0) pu.duration = 0;
+              }
             }
 
             // Сохраняем предыдущее количество стэков, чтобы понять, сколько стэков "упало" за этот кадр
@@ -2105,6 +2119,9 @@
                 if (this.currentHP > this.maxHP) this.currentHP = this.maxHP;
                 pu.bonus = 0;
               }
+              if (key === "lightSaber"){
+                this.reflectedKillCount = 0;
+              }
             }
           }
         }
@@ -2113,6 +2130,7 @@
           this.frozenTime -= deltaTime;
           return;  // ранний выход — никаких изменений позиции
         }
+        
         // Вычисляем базовую скорость с учётом постоянного апгрейда и временного ускорения
         let effectiveSpeed = this.baseSpeed * permanentUpgrades.speed;
         if (this.activePowerUps.speedBoost.duration > 0) {
@@ -2530,17 +2548,19 @@
       }
       update(deltaTime) {
         // Homing effect: adjust angle toward nearest enemy
-        if(this.homing && enemies.length > 0) {
-          let nearest = null, minDist = Infinity;
-          for(let enemy of enemies) {
-            const dx = enemy.x - this.x, dy = enemy.y - this.y;
-            const d = Math.hypot(dx, dy);
-            if(d < minDist) { minDist = d; nearest = enemy; }
-          }
-          if(nearest) {
-            const desired = Math.atan2(nearest.y - this.y, nearest.x - this.x);
-            this.angle += 0.1 * (desired - this.angle);
-          }
+        if (this.homing && enemies.length > 0) {
+          if(!this.fromBoss || !this.fromEnemy){
+            let nearest = null, minDist = Infinity;
+            for(let enemy of enemies) {
+              const dx = enemy.x - this.x, dy = enemy.y - this.y;
+              const d = Math.hypot(dx, dy);
+              if(d < minDist) { minDist = d; nearest = enemy; }
+            }
+            if(nearest) {
+              const desired = Math.atan2(nearest.y - this.y, nearest.x - this.x);
+              this.angle += 0.1 * (desired - this.angle);
+            }
+          } 
         }
         this.x += Math.cos(this.angle) * this.speed;
         this.y += Math.sin(this.angle) * this.speed;
@@ -3076,14 +3096,18 @@
         }
         // Отрисовка фона полосы
         ctx.fillStyle = "#222";
-        ctx.fillRect(barX, barY * uiScale, barWidth * uiScale, barHeight * uiScale);
+        //ctx.fillRect(barX, barY * uiScale, barWidth * uiScale, barHeight * uiScale);
+        
+        drawRoundedRect(ctx, barX, barY * uiScale, barWidth * uiScale, barHeight * uiScale, 8 * uiScale);
         // Отрисовка заполненной части (с учетом оставшегося здоровья)
         ctx.fillStyle = bossColor;
         const hpWidth = barWidth * (this.hp / this.maxHP);
-        ctx.fillRect(barX, barY * uiScale, hpWidth * uiScale, barHeight * uiScale);
+        //ctx.fillRect(barX, barY * uiScale, hpWidth * uiScale, barHeight * uiScale);
+
+        drawRoundedRect(ctx, barX, barY * uiScale, hpWidth * uiScale, barHeight * uiScale, 8 * uiScale);
         // Рамка полосы
-        ctx.strokeStyle = "#fff";
-        ctx.strokeRect(barX, barY * uiScale, barWidth * uiScale, barHeight * uiScale);
+        //ctx.strokeStyle = "#fff";
+        //ctx.strokeRect(barX, barY * uiScale, barWidth * uiScale, barHeight * uiScale);
         
         /*
         let index = bosses.indexOf(this);
@@ -4013,15 +4037,34 @@
     function resumeGame() {
       playSfx("click");
       if(gameState !== "playing") {
-
         const music = getActiveMusic();
-        if (wasMusicPlaying && soundEnabled) {
+
+        // Останавливаем все треки, кроме активного,
+        // чтобы не сбросить позицию активного трека.
+        calmTracks.forEach(track => {
+          if (track !== music && track.playing()) {
+            track.stop();
+          }
+        });
+        phonkTracks.forEach(track => {
+          if (track !== music && track.playing()) {
+            track.stop();
+          }
+        });
+        customTracks.forEach(track => {
+          if (track !== music && track.playing()) {
+            track.stop();
+          }
+        });
+
+        if (wasMusicPlaying && soundEnabled && activeMusic && !activeMusic.playing()) {
           try {
-            music.play();
+            activeMusic.play();
           } catch (err) {
-            console.warn("Music play error:", err);
+            console.warn("Ошибка при возобновлении музыки:", err);
           }
         }
+        wasMusicPlaying = false;
         gameState = "playing";
         document.getElementById("overlay").classList.add("hidden");
       }
@@ -4067,7 +4110,7 @@
     }
     function showGameOver() {
       gameState = "gameover";
-      getActiveMusic().pause();
+      getActiveMusic().stop();
       const overlay = document.getElementById("overlay");
       overlay.innerHTML = `<h1 class="cyan_color" >Game Over</h1>
         <p>Your Score: ${Math.floor(score)}</p>
@@ -4409,6 +4452,7 @@
                   // Если противников нет, можно задать любое дефолтное направление
                   b.angle = player.angle;
                 }
+                b.reflected = true;
                 playReflectedSound();
               }
             }
@@ -4616,7 +4660,7 @@
             }
           }
         }
-        if(bosses[i].hp <= 0) {
+        if (bosses[i].hp <= 0) {
           playSfx("bossDeath");
           score += 1000;
           bosses.splice(i, 1);
@@ -4743,6 +4787,13 @@
               if(b.piercingCount <= 0) { b.dead = true; }
             } else { b.dead = true; }
             if(enemies[i].hp <= 0) {
+              if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
+                player.reflectedKillCount = (player.reflectedKillCount || 0) + 1;
+                if (player.reflectedKillCount >= 15) {
+                  player.activePowerUps.lightSaber.stacks++;
+                  player.reflectedKillCount = 0; // либо можно сбросить: = 0
+                }
+              }
               if(enemies[i].type === "exploder") {
                 // When an exploder dies, it explodes—damaging nearby enemies.
                 for(let k=0; k<enemies.length; k++){
@@ -4820,6 +4871,15 @@
               }
               for(let blood = 0; blood < 5; blood++){
                 particles.push(new Particle(b.x, b.y, "#800000"));
+              }
+              if (bosses[i].hp <= 0){
+                if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
+                  player.reflectedKillCount += 5;
+                  if (player.reflectedKillCount >= 15) {
+                    player.activePowerUps.lightSaber.stacks++;
+                    player.reflectedKillCount = 0;
+                  }
+                }
               }
               b.dead = true;
               break;
