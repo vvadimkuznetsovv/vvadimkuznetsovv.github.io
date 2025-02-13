@@ -413,6 +413,7 @@
   </div>
   <button id="mobilePauseButton">Pause</button>
 
+  <script src="./assets/libs/howler.min.js"></script>
   <script>
   (function(){
 
@@ -422,26 +423,24 @@
     let sfxVolume = 0.05;              // 0.0 to 1.0
     let currentMusicTrack = "phonk";
 
-    // New arrays for calm/phonk music
-    // (Use as many tracks as you want; here we do 5 each)
     const calmTracks = [
-    new Audio("assets/music/calm/fragments-of-love-by-sascha-ende-from-filmmusic-io.mp3"),
-    new Audio("assets/music/calm/relaxing-lofi-tessera-by-sascha-ende-from-filmmusic-io.mp3"),
-    new Audio("assets/music/calm/childhood-by-sascha-ende-from-filmmusic-io.mp3"),
-    new Audio("assets/music/calm/the-children-of-mh17-by-sascha-ende-from-filmmusic-io.mp3"),
-    //new Audio("assets/music/calm5.mp3"),
+      new Howl({ src: ["assets/music/calm/fragments-of-love-by-sascha-ende-from-filmmusic-io.mp3"], volume: musicVolume, loop: false, html5: false }),
+      new Howl({ src: ["assets/music/calm/relaxing-lofi-tessera-by-sascha-ende-from-filmmusic-io.mp3"], volume: musicVolume, loop: false, html5: false }),
+      new Howl({ src: ["assets/music/calm/childhood-by-sascha-ende-from-filmmusic-io.mp3"], volume: musicVolume, loop: false, html5: false }),
+      new Howl({ src: ["assets/music/calm/the-children-of-mh17-by-sascha-ende-from-filmmusic-io.mp3"], volume: musicVolume, loop: false, html5: false }),
+      // Add more tracks as needed.
     ];
+
     const phonkTracks = [
-    new Audio("assets/music/phonk/phonk (1).mp3"),
-    new Audio("assets/music/phonk/phonk (2).mp3"),
-    new Audio("assets/music/phonk/phonk (3).mp3"),
-    new Audio("assets/music/phonk/phonk (4).mp3"),
-    new Audio("assets/music/phonk/phonk (5).mp3"),
-    new Audio("assets/music/phonk/phonk (6).mp3"),
-    new Audio("assets/music/phonk/phonk (7).mp3"),
-    new Audio("assets/music/phonk/phonk (8).mp3"),
-    new Audio("assets/music/phonk/phonk (9).mp3"),
-    //new Audio("assets/music/phonk5.mp3"),
+      new Howl({ src: ["assets/music/phonk/phonk (1).mp3"], volume: musicVolume, loop: false, html5: false }),
+      new Howl({ src: ["assets/music/phonk/phonk (2).mp3"], volume: musicVolume, loop: false, html5: false }),
+      new Howl({ src: ["assets/music/phonk/phonk (3).mp3"], volume: musicVolume, loop: false, html5: false }),
+      new Howl({ src: ["assets/music/phonk/phonk (4).mp3"], volume: musicVolume, loop: false, html5: false }),
+      new Howl({ src: ["assets/music/phonk/phonk (5).mp3"], volume: musicVolume, loop: false, html5: false }),
+      new Howl({ src: ["assets/music/phonk/phonk (6).mp3"], volume: musicVolume, loop: false, html5: false }),
+      new Howl({ src: ["assets/music/phonk/phonk (7).mp3"], volume: musicVolume, loop: false, html5: false }),
+      new Howl({ src: ["assets/music/phonk/phonk (8).mp3"], volume: musicVolume, loop: false, html5: false }),
+      new Howl({ src: ["assets/music/phonk/phonk (9).mp3"], volume: musicVolume, loop: false, html5: false }),
     ];
 
     const customTracks = []; 
@@ -456,11 +455,11 @@
 
     // Make sure each track’s volume is set (and not set to loop)
     calmTracks.forEach(track => {
-      track.volume = musicVolume;
+      track.volume(musicVolume);
       track.loop = false;  // We'll handle looping ourselves
     });
     phonkTracks.forEach(track => {
-      track.volume = musicVolume;
+      track.volume(musicVolume);
       track.loop = false;
     });
 
@@ -484,6 +483,358 @@
       }
     }
 
+    function getClosestTargetWithoutBullet() {
+      let closest = null;
+      let minDist = Infinity;
+      // Фильтруем пули, выпущенные врагами/боссами:
+      //let enemyBullets = bullets.filter(b => b.fromEnemy || b.fromBoss);
+      // Объединяем массивы врагов и боссов (если оба используются)
+      let targets = enemies.concat(bosses);
+      for (let target of targets) {
+        let d = Math.hypot(target.x - player.x, target.y - player.y);
+        if (d < minDist) {
+          minDist = d;
+          closest = target;
+        }
+      }
+      return closest;
+    }
+
+    // ========== Ninja Spirit Start ============
+    function getClosestTarget() {
+      let closest = null;
+      let minDist = Infinity;
+      // Фильтруем пули, выпущенные врагами/боссами:
+      let enemyBullets = bullets.filter(b => b.fromEnemy || b.fromBoss);
+      // Объединяем массивы врагов и боссов (если оба используются)
+      let targets = enemies.concat(bosses, enemyBullets);
+      for (let target of targets) {
+        let d = Math.hypot(target.x - player.x, target.y - player.y);
+        if (d < minDist) {
+          minDist = d;
+          closest = target;
+        }
+      }
+      return closest;
+    }
+    function computeInterceptAngle(shooter, bulletSpeed, target, targetVelocity) {
+      // Вектор от стрелка к цели:
+      let r = { x: target.x - shooter.x, y: target.y - shooter.y };
+      
+      // Коэффициенты квадратного уравнения:
+      let A = targetVelocity.x * targetVelocity.x + targetVelocity.y * targetVelocity.y - bulletSpeed * bulletSpeed;
+      let B = 2 * (r.x * targetVelocity.x + r.y * targetVelocity.y);
+      let C = r.x * r.x + r.y * r.y;
+      
+      let t = 0;
+      if (Math.abs(A) < 0.001) {
+        // Если A очень маленькое – линейное приближение
+        t = -C / B;
+      } else {
+        let discriminant = B * B - 4 * A * C;
+        if (discriminant < 0) {
+          // Нет действительного решения – просто стреляем по текущей позиции
+          t = 0;
+        } else {
+          let t1 = (-B + Math.sqrt(discriminant)) / (2 * A);
+          let t2 = (-B - Math.sqrt(discriminant)) / (2 * A);
+          // Выбираем минимальное положительное время
+          t = Math.min(t1, t2);
+          if (t < 0) {
+            t = Math.max(t1, t2);
+          }
+          if (t < 0) t = 0;
+        }
+      }
+      
+      // Предсказанная позиция цели:
+      let aimX = target.x + targetVelocity.x * t;
+      let aimY = target.y + targetVelocity.y * t;
+      
+      return Math.atan2(aimY - shooter.y, aimX - shooter.x);
+    }
+    function getTargetVelocity(target) {
+      // Если это пуля (предполагаем, что у объектов класса Bullet есть свойства speed и angle)
+      if (target instanceof Bullet) {
+        return { 
+          x: Math.cos(target.angle) * target.speed, 
+          y: Math.sin(target.angle) * target.speed 
+        };
+      } else {
+        // Для врагов/боссов: можно предположить, что они движутся в направлении игрока
+        let dx = player.x - target.x;
+        let dy = player.y - target.y;
+        let d = Math.hypot(dx, dy);
+        if (d === 0) return { x: 0, y: 0 };
+        return { 
+          x: (dx / d) * target.speed, 
+          y: (dy / d) * target.speed 
+        };
+      }
+    }
+    
+    // ========== Ninja Spirit End ============
+
+
+    /****************************************************
+    * 3) Modify playCurrentMusic() to pause *all* tracks,
+    *    then attach an 'ended' listener that either
+    *    goes to next track or replays the same track.
+    ****************************************************/
+    function playCurrentMusic() {
+      if (!soundEnabled) return;
+
+      // Pause all calm & phonk & custom tracks so only one can play
+      calmTracks.forEach(t => t.pause());
+      phonkTracks.forEach(t => t.pause());
+      customTracks.forEach(t => t.pause());
+
+      const music = getActiveMusic();
+      if (!music) {
+        // If null (e.g. custom is empty), just return
+        console.warn("No track to play (maybe custom list is empty)");
+        return;
+      }
+
+      music.stop();
+      music.volume(musicVolume);
+      music.play();
+
+
+      // Use Howler's event system to detect when the track ends:
+      music.once('end', () => {
+        if (loopSingleTrack) {
+          playCurrentMusic();
+        } else {
+          nextTrack();
+        }
+      });
+    }
+
+
+    /***************************************************
+    * 4) Add helper function: nextTrack() to skip ahead
+    ***************************************************/
+    function nextTrack() {
+      if (currentMusicTrack === "phonk") {
+        phonkIndex = (phonkIndex + 1) % phonkTracks.length;
+      } else if (currentMusicTrack === "custom") {
+        if (customTracks.length > 0) {
+          customIndex = (customIndex + 1) % customTracks.length;
+        }
+      } else {
+        // calm
+        calmIndex = (calmIndex + 1) % calmTracks.length;
+      }
+      playCurrentMusic();
+    }
+
+    // (Assuming you have a global variable `sfxVolume` already defined.)
+    const sfxMap = {
+      shot: new Howl({ src: ["assets/sfx/shot.ogg"], volume: sfxVolume }),
+      freeze: new Howl({ src: ["assets/sfx/freeze.ogg"], volume: sfxVolume }),
+      powerup: new Howl({ src: ["assets/sfx/powerup.ogg"], volume: sfxVolume }),
+      bossDeath: new Howl({ src: ["assets/sfx/boss_death.ogg"], volume: sfxVolume }),
+      click: new Howl({ src: ["assets/sfx/click.ogg"], volume: sfxVolume }),
+      neonoverdrive: new Howl({ src: ["assets/sfx/neonoverdrive.ogg"], volume: sfxVolume }),
+      deadenemy: new Howl({ src: ["assets/sfx/deadenemy.ogg"], volume: sfxVolume })
+    };
+    const reflectedShots = [
+      new Howl({ src: ["assets/sfx/reflectedShot_1.mp3"], volume: sfxVolume }),
+      new Howl({ src: ["assets/sfx/reflectedShot_2.mp3"], volume: sfxVolume }),
+      new Howl({ src: ["assets/sfx/reflectedShot_3.mp3"], volume: sfxVolume }),
+      new Howl({ src: ["assets/sfx/reflectedShot_4.mp3"], volume: sfxVolume }),
+      new Howl({ src: ["assets/sfx/reflectedShot_5.mp3"], volume: sfxVolume })
+    ];
+
+
+    let lastNeonOverdriveTime = 0;
+
+    function playNeonOverdriveSound() {
+      const now = Date.now();
+      if (now - lastNeonOverdriveTime >= 100) {
+        lastNeonOverdriveTime = now;
+        playSfx("neonoverdrive")
+      }
+    }
+    function playReflectedSound() {
+      if (!soundEnabled) return;
+      const index = Math.floor(Math.random() * reflectedShots.length);
+      let minVolume = Math.max(0, sfxVolume - 0.01);
+      let maxVolume = Math.min(1, sfxVolume + 0.01);
+      reflectedShots[index].volume(minVolume + Math.random() * (maxVolume - minVolume));
+      reflectedShots[index].play();
+    }
+
+    let psiBlastWave = null;
+
+    // Ensure SFX volumes are set
+    for (let key in sfxMap) {
+      sfxMap[key].volume(sfxVolume);
+    }
+
+    console.log("Howl type:", typeof Howl);  // Should print "function"
+    console.log("sfxMap.shot:", sfxMap.shot);
+
+    // Helper to play SFX (checks mute, sets volume, etc.)
+    function playSfx(name) {
+      if (!soundEnabled) return;
+      const sfx = sfxMap[name];
+      if (!sfx) return;
+      // Вычисляем допустимый диапазон громкости, не отклоняющийся более чем на 0.02
+      let minVolume = Math.max(0, sfxVolume - 0.01);
+      let maxVolume = Math.min(1, sfxVolume + 0.01);
+      // Howler handles concurrent playback internally.
+      sfx.volume(minVolume + Math.random() * (maxVolume - minVolume)); //// Выбираем случайное значение громкости из допустимого диапазона
+      sfx.play();
+    }    
+
+    // =================== Canvas & Initialization ===================
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+      
+    // Обработчик нажатия клавиш
+    document.addEventListener("keydown", function(e) {
+      // ************************************
+      // **  BUTTONS for Cheats  **
+      // ************************************
+      /**/
+      if(e.key.toLowerCase() === "p") {
+        spawnTwoBosses();
+      }
+      if(e.key.toLowerCase() === "n") {
+        nextLevel();
+      }
+      if(e.key.toLowerCase() === "m") {
+        showPowerUpMenu();
+      }
+      if(e.key.toLowerCase() === "k") {
+        givePlayerMagnetEffect();
+      }
+      // Если нажата клавиша "X" (без учета регистра)
+      if (e.key.toLowerCase() === "x") {
+        revivePlayer()
+      }
+      if (e.key.toLowerCase() === "l") {
+        applyPowerUp("Light Saber",true);
+      }
+    });
+    canvas.addEventListener("click", function(e) {
+      console.log("Canvas click event");
+    
+      if (!player || gameState !== "playing") {
+        console.log("Клик не обрабатывается: player =", player, "gameState =", gameState);
+        return;
+      }
+      
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      console.log("Координаты клика:", clickX, clickY);
+    
+      const barX = 10 * uiScale;
+      const barY = 80 * uiScale;
+      const barWidth = 120 * uiScale;
+      const barHeight = 15 * uiScale;
+      console.log("Область здоровья:", barX, barY, barWidth, barHeight);
+    
+      if (clickX >= barX && clickX <= barX + barWidth &&
+          clickY >= barY && clickY <= barY + barHeight) {
+        console.log("Активирован Ninja Spirit");
+        applyPowerUp("Ninja Spirit");
+      }
+    });
+
+    let cursorVisible = true; // изначально курсор видим
+
+    // ======== Обрезка для портретного режима
+    function getBottomCropHeight() {
+      // Получаем высоту джойстика (например, левый джойстик)
+      const joystick = document.getElementById("leftJoystick");
+      // Если по какой-то причине элемент ещё не измерен, задаём значение по умолчанию
+      const joystickHeight = joystick ? joystick.offsetHeight : 200;
+      const margin = 30; // отступ сверху джойстика (как в CSS: bottom: 20px)
+      return joystickHeight + margin;
+    }
+
+    // We will store width/height in these, but NOT assign them to canvas yet.
+    let width, height;
+    let dpr = window.devicePixelRatio || 1;
+    const isMobile = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
+    if (!isMobile) {
+      canvas.style.cursor = "none";
+    }
+    
+    let cssGridSize = (isMobile) ? (50 * (1 / dpr)) : 50;
+    let cssGridSize2 = (isMobile) ? (60 * (1 / dpr)) : 60;
+    let cssGridSize40 = (isMobile) ? (40 * (1 / dpr)) : 40;
+    let actualGridSize = cssGridSize;
+    let actualGridSize2 = cssGridSize2;
+    let actualGridSize40 = cssGridSize40; 
+
+    let mainCollectibleLifeTime = 40000;
+
+    // Задаём интервалы обновления (в мс)
+    const BIOME_STATIC_UPDATE_INTERVAL = 50; // статическая часть обновляется каждые   
+
+    let lastBiomeStaticUpdate = 0;
+
+    // Создаем два offscreen canvas для статического фона и для моргающего оверлея
+    const cachedBiomeStaticCanvas = document.createElement('canvas');
+    const cachedBiomeStaticCtx = cachedBiomeStaticCanvas.getContext('2d');
+
+    // Не забудьте при ресайзе обновлять размеры этих canvas:
+    // Например, внутри вашей функции onResize:
+    function updateCachedCanvasSizes() {
+      cachedBiomeStaticCanvas.width = width;
+      cachedBiomeStaticCanvas.height = height;
+    }
+    window.addEventListener("resize", () => {
+      onResize();
+      updateCachedCanvasSizes();
+      // Можно также сбросить время обновления, чтобы фон сразу перерисовался
+      lastBiomeStaticUpdate = 0;
+    });
+
+    // Функция обновления кэша биома; вызываем ее в каждом кадре, перед отрисовкой
+    function updateBiomeCache(timestamp) {
+      // Обновляем статический фон, если прошло больше BIOME_STATIC_UPDATE_INTERVAL
+      if (timestamp - lastBiomeStaticUpdate > BIOME_STATIC_UPDATE_INTERVAL) {
+        // Очищаем кэш и отрисовываем текущий биом (используйте вашу функцию, например,     getCurrentBiome().drawBackground)
+        cachedBiomeStaticCtx.clearRect(0, 0, width, height);
+
+        cachedBiomeStaticCtx.fillStyle = "red"; // замените на яркий цвет
+        cachedBiomeStaticCtx.fillRect(0, 0, width, height);
+        const currentBiome = getCurrentBiome();
+        currentBiome.drawBackground(cachedBiomeStaticCtx);
+        lastBiomeStaticUpdate = timestamp;
+      }
+    }
+
+    
+    // ***************************************
+    // ---------------------------------------
+    // =========  Drawing methods ============
+    // ---------------------------------------
+    // ***************************************
+    function drawRoundedRect(ctx, x, y, width, height, radius) {
+        // Если размеры не положительные — не рисуем ничего.
+      if (width <= 0 || height <= 0) return;
+      // Гарантируем, что радиус не превышает половину ширины или высоты.
+      radius = Math.min(radius, width / 2, height / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+      ctx.fill();
+    }
 
     // ========== Scope Drawing Start ============
     function drawMouseIndicator() {
@@ -563,326 +914,12 @@
       ctx.fill();
       ctx.restore();
     }
-    
-    // ========== Scope Drawing End ============
-    function getClosestTargetWithoutBullet() {
-      let closest = null;
-      let minDist = Infinity;
-      // Фильтруем пули, выпущенные врагами/боссами:
-      //let enemyBullets = bullets.filter(b => b.fromEnemy || b.fromBoss);
-      // Объединяем массивы врагов и боссов (если оба используются)
-      let targets = enemies.concat(bosses);
-      for (let target of targets) {
-        let d = Math.hypot(target.x - player.x, target.y - player.y);
-        if (d < minDist) {
-          minDist = d;
-          closest = target;
-        }
-      }
-      return closest;
-    }
-    // ========== Ninja Spirit Start ============
-    function getClosestTarget() {
-      let closest = null;
-      let minDist = Infinity;
-      // Фильтруем пули, выпущенные врагами/боссами:
-      let enemyBullets = bullets.filter(b => b.fromEnemy || b.fromBoss);
-      // Объединяем массивы врагов и боссов (если оба используются)
-      let targets = enemies.concat(bosses, enemyBullets);
-      for (let target of targets) {
-        let d = Math.hypot(target.x - player.x, target.y - player.y);
-        if (d < minDist) {
-          minDist = d;
-          closest = target;
-        }
-      }
-      return closest;
-    }
-    function computeInterceptAngle(shooter, bulletSpeed, target, targetVelocity) {
-      // Вектор от стрелка к цели:
-      let r = { x: target.x - shooter.x, y: target.y - shooter.y };
-      
-      // Коэффициенты квадратного уравнения:
-      let A = targetVelocity.x * targetVelocity.x + targetVelocity.y * targetVelocity.y - bulletSpeed * bulletSpeed;
-      let B = 2 * (r.x * targetVelocity.x + r.y * targetVelocity.y);
-      let C = r.x * r.x + r.y * r.y;
-      
-      let t = 0;
-      if (Math.abs(A) < 0.001) {
-        // Если A очень маленькое – линейное приближение
-        t = -C / B;
-      } else {
-        let discriminant = B * B - 4 * A * C;
-        if (discriminant < 0) {
-          // Нет действительного решения – просто стреляем по текущей позиции
-          t = 0;
-        } else {
-          let t1 = (-B + Math.sqrt(discriminant)) / (2 * A);
-          let t2 = (-B - Math.sqrt(discriminant)) / (2 * A);
-          // Выбираем минимальное положительное время
-          t = Math.min(t1, t2);
-          if (t < 0) {
-            t = Math.max(t1, t2);
-          }
-          if (t < 0) t = 0;
-        }
-      }
-      
-      // Предсказанная позиция цели:
-      let aimX = target.x + targetVelocity.x * t;
-      let aimY = target.y + targetVelocity.y * t;
-      
-      return Math.atan2(aimY - shooter.y, aimX - shooter.x);
-    }
-    function getTargetVelocity(target) {
-      // Если это пуля (предполагаем, что у объектов класса Bullet есть свойства speed и angle)
-      if (target instanceof Bullet) {
-        return { 
-          x: Math.cos(target.angle) * target.speed, 
-          y: Math.sin(target.angle) * target.speed 
-        };
-      } else {
-        // Для врагов/боссов: можно предположить, что они движутся в направлении игрока
-        let dx = player.x - target.x;
-        let dy = player.y - target.y;
-        let d = Math.hypot(dx, dy);
-        if (d === 0) return { x: 0, y: 0 };
-        return { 
-          x: (dx / d) * target.speed, 
-          y: (dy / d) * target.speed 
-        };
-      }
-    }
-    
-    // ========== Ninja Spirit End ============
 
-    /****************************************************
-    * 3) Modify playCurrentMusic() to pause *all* tracks,
-    *    then attach an 'ended' listener that either
-    *    goes to next track or replays the same track.
-    ****************************************************/
-    function playCurrentMusic() {
-      if (!soundEnabled) return;
-
-      // Pause all calm & phonk & custom tracks so only one can play
-      calmTracks.forEach(t => t.pause());
-      phonkTracks.forEach(t => t.pause());
-      customTracks.forEach(t => t.pause());
-
-      const music = getActiveMusic();
-      if (!music) {
-        // If null (e.g. custom is empty), just return
-        console.warn("No track to play (maybe custom list is empty)");
-        return;
-      }
-
-      music.currentTime = 0;
-      music.volume = musicVolume;
-
-      // Remove old 'ended' listeners
-      music.onended = null;
-
-      music.onended = () => {
-        if (loopSingleTrack) {
-          music.currentTime = 0;
-          music.play().catch(err => {});
-        } else {
-          nextTrack();
-        }
-      };
-
-      music.play().catch(err => console.warn("Music play error:", err));
-    }
-
-
-    /***************************************************
-    * 4) Add helper function: nextTrack() to skip ahead
-    ***************************************************/
-    function nextTrack() {
-      if (currentMusicTrack === "phonk") {
-        phonkIndex = (phonkIndex + 1) % phonkTracks.length;
-      } else if (currentMusicTrack === "custom") {
-        if (customTracks.length > 0) {
-          customIndex = (customIndex + 1) % customTracks.length;
-        }
-      } else {
-        // calm
-        calmIndex = (calmIndex + 1) % calmTracks.length;
-      }
-      playCurrentMusic();
-    }
-
-    // Sound effects dictionary
-    const sfxMap = {
-      shot:        new Audio("assets/sfx/shot.ogg"),
-      explosion:   new Audio("assets/sfx/explosion.ogg"),
-      freeze:      new Audio("assets/sfx/freeze.ogg"),
-      powerup:     new Audio("assets/sfx/powerup.ogg"),
-      bossDeath:   new Audio("assets/sfx/boss_death.ogg"),
-      click:       new Audio("assets/sfx/click.ogg"),
-      neonoverdrive:  new Audio("assets/sfx/neonoverdrive.ogg"),
-      deadenemy: new Audio("assets/sfx/deadenemy.ogg"),
-      // ... add more as desired ...
-    };
-
-    let lastNeonOverdriveTime = 0;
-
-    function playNeonOverdriveSound() {
-      const now = Date.now();
-      if (now - lastNeonOverdriveTime >= 100) {
-        lastNeonOverdriveTime = now;
-        playSfx("neonoverdrive")
-      }
-    }
-
-    let psiBlastWave = null;
-
-    // Ensure SFX volumes are set
-    for (let key in sfxMap) {
-      sfxMap[key].volume = sfxVolume;
-    }
-
-    // Helper to play SFX (checks mute, sets volume, etc.)
-    function playSfx(name) {
-      if (!soundEnabled) return;
-      let audio = sfxMap[name];
-      if (!audio) return;
-      
-      // For multiple concurrent plays (e.g., repeated shots), clone the audio
-      // or re-load a new audio instance. Example:
-      let clone = audio.cloneNode();
-
-        // Вычисляем допустимый диапазон громкости, не отклоняющийся более чем на 0.02
-        let minVolume = Math.max(0, sfxVolume - 0.01);
-        let maxVolume = Math.min(1, sfxVolume + 0.01);
-
-        // Выбираем случайное значение громкости из допустимого диапазона
-        clone.volume = minVolume + Math.random() * (maxVolume - minVolume);
-
-      clone.play().catch(err => console.warn("SFX play error:", err));
-    }
-
-    // =================== Canvas & Initialization ===================
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-      
-    // Обработчик нажатия клавиш
-    document.addEventListener("keydown", function(e) {
-      // ************************************
-      // **  BUTTONS for Cheats  **
-      // ************************************
-      /**/
-      if(e.key.toLowerCase() === "p") {
-        spawnTwoBosses();
-      }
-      if(e.key.toLowerCase() === "n") {
-        nextLevel();
-      }
-      if(e.key.toLowerCase() === "m") {
-        showPowerUpMenu();
-      }
-      if(e.key.toLowerCase() === "k") {
-        givePlayerMagnetEffect();
-      }
-      // Если нажата клавиша "X" (без учета регистра)
-      if (e.key.toLowerCase() === "x") {
-        revivePlayer()
-      }
-      if (e.key.toLowerCase() === "l") {
-        applyPowerUp("Light Saber",true);
-      }
-    });
-    canvas.addEventListener("click", function(e) {
-      console.log("Canvas click event");
-    
-      if (!player || gameState !== "playing") {
-        console.log("Клик не обрабатывается: player =", player, "gameState =", gameState);
-        return;
-      }
-      
-      const rect = canvas.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const clickY = e.clientY - rect.top;
-      console.log("Координаты клика:", clickX, clickY);
-    
-      const barX = 10 * uiScale;
-      const barY = 80 * uiScale;
-      const barWidth = 120 * uiScale;
-      const barHeight = 15 * uiScale;
-      console.log("Область здоровья:", barX, barY, barWidth, barHeight);
-    
-      if (clickX >= barX && clickX <= barX + barWidth &&
-          clickY >= barY && clickY <= barY + barHeight) {
-        console.log("Активирован Ninja Spirit");
-        applyPowerUp("Ninja Spirit");
-      }
-    });
-
-    let cursorVisible = true; // изначально курсор видим
-    // ======== Обрезка для портретного режима
-    function getBottomCropHeight() {
-      // Получаем высоту джойстика (например, левый джойстик)
-      const joystick = document.getElementById("leftJoystick");
-      // Если по какой-то причине элемент ещё не измерен, задаём значение по умолчанию
-      const joystickHeight = joystick ? joystick.offsetHeight : 200;
-      const margin = 30; // отступ сверху джойстика (как в CSS: bottom: 20px)
-      return joystickHeight + margin;
-    }
-
-    // We will store width/height in these, but NOT assign them to canvas yet.
-    let width, height;
-    let dpr = window.devicePixelRatio || 1;
-    const isMobile = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
-    if (!isMobile) {
-      canvas.style.cursor = "none";
-    }
-    
-    let cssGridSize = (isMobile) ? (50 * (1 / dpr)) : 50;
-    let cssGridSize2 = (isMobile) ? (60 * (1 / dpr)) : 60;
-    let cssGridSize40 = (isMobile) ? (40 * (1 / dpr)) : 40;
-    let actualGridSize = cssGridSize;
-    let actualGridSize2 = cssGridSize2;
-    let actualGridSize40 = cssGridSize40; 
-
-    let mainCollectibleLifeTime = 40000;
-
-    // Задаём интервалы обновления (в мс)
-    const BIOME_STATIC_UPDATE_INTERVAL = 50; // статическая часть обновляется каждые   
-
-    let lastBiomeStaticUpdate = 0;
-
-    // Создаем два offscreen canvas для статического фона и для моргающего оверлея
-    const cachedBiomeStaticCanvas = document.createElement('canvas');
-    const cachedBiomeStaticCtx = cachedBiomeStaticCanvas.getContext('2d');
-
-    // Не забудьте при ресайзе обновлять размеры этих canvas:
-    // Например, внутри вашей функции onResize:
-    function updateCachedCanvasSizes() {
-      cachedBiomeStaticCanvas.width = width;
-      cachedBiomeStaticCanvas.height = height;
-    }
-    window.addEventListener("resize", () => {
-      onResize();
-      updateCachedCanvasSizes();
-      // Можно также сбросить время обновления, чтобы фон сразу перерисовался
-      lastBiomeStaticUpdate = 0;
-    });
-
-    // Функция обновления кэша биома; вызываем ее в каждом кадре, перед отрисовкой
-    function updateBiomeCache(timestamp) {
-      // Обновляем статический фон, если прошло больше BIOME_STATIC_UPDATE_INTERVAL
-      if (timestamp - lastBiomeStaticUpdate > BIOME_STATIC_UPDATE_INTERVAL) {
-        // Очищаем кэш и отрисовываем текущий биом (используйте вашу функцию, например,     getCurrentBiome().drawBackground)
-        cachedBiomeStaticCtx.clearRect(0, 0, width, height);
-
-        cachedBiomeStaticCtx.fillStyle = "red"; // замените на яркий цвет
-        cachedBiomeStaticCtx.fillRect(0, 0, width, height);
-        const currentBiome = getCurrentBiome();
-        currentBiome.drawBackground(cachedBiomeStaticCtx);
-        lastBiomeStaticUpdate = timestamp;
-      }
-    }
-
+    // ***************************************
+    // ---------------------------------------
+    // =========  Drawing methods end ========
+    // ---------------------------------------
+    // ***************************************
 
     // Глобальная переменная для таймера спавна специальных collectible
     let specialCollectibleSpawnTimer = 0;
@@ -1079,6 +1116,7 @@
     let enemies = [];
     let collectibles = [];
     const particles = [];
+    let bonusDamage = Math.floor((currentLevel - 1) / 3);  //Hard-mode
     // Вместо одиночного босса используем массив
     let bosses = [];
     // --- Новый массив для отображения урона (плавающие красные числа) ---
@@ -1086,7 +1124,7 @@
     // *** NEW: Массив для объектов-друзей (Friend) ***
     let friends = [];
     let acidTrails = [];
-    const randomLightsaberColors = ["#00ff00", "#f00", "#f0f", "#00f", "#FF00DE", "#0ff"];
+    const randomLightsaberColors = ["#00ff00", "#f00", "#9A00FF", "#05f", "#FF00DE", "#0ff"];
     let lightSaberWaveTimer = 0;
     let lightSaberWave = null;
 
@@ -2002,37 +2040,34 @@
         this.angle = 0;
       }
       update(deltaTime) {
-        // Обновление таймеров усилений: уменьшаем время и сбрасываем стеки, когда время истекает
-        const nonDecayingEffects = ["friend", "scoreMagnet", "neonOverdrive", "powerMeterBoost", "damageBoost", "shield", "speedBoost", "ninjaSpirit"];
-        const nonDecayingEffectsLightSaber = ["friend", "scoreMagnet","neonOverdrive", "lightSaber", "powerMeterBoost", "damageBoost", "shield", "speedBoost", "ninjaSpirit"];
-        const nonDecayingEffectsRainAcid = ["friend", "scoreMagnet", "acidRain", "lightSaber", "neonOverdrive", "powerMeterBoost","damageBoost", "shield", "speedBoost", "ninjaSpirit"];
-        const nonDecayingEffects2 = ["doubleShot", "tripleShot", "scatterShot","ninjaSpirit"];
+        const consumedEffectsNeonOverdrive = ["friend", "scoreMagnet", "neonOverdrive", "powerMeterBoost", "damageBoost", "shield", "speedBoost", "ninjaSpirit"];
+        const consumedEffectsLightSaber = ["friend", "scoreMagnet","neonOverdrive", "lightSaber", "powerMeterBoost", "damageBoost", "shield", "speedBoost", "ninjaSpirit"];
+        const consumedEffectsAcidRain = ["friend", "scoreMagnet", "acidRain", "lightSaber", "neonOverdrive", "powerMeterBoost","damageBoost", "shield", "speedBoost", "ninjaSpirit"];
+        const preservedForBulletTimeOnly = ["doubleShot", "tripleShot", "scatterShot","ninjaSpirit"];
+        const consumedEffectsBulletTimeOnly = allPowerUpKeys.filter(key => !preservedForBulletTimeOnly.includes(key));
         for (let key in this.activePowerUps) {
           let pu = this.activePowerUps[key];
           if (pu.duration > 0) {
-            if (
-              (this.activePowerUps.neonOverdrive && this.activePowerUps.neonOverdrive.duration > 0) &&
-              !nonDecayingEffects.includes(key)
-            ){
-
-            } else if(
-              (this.activePowerUps.acidRain && this.activePowerUps.acidRain.duration > 0) &&
-              !nonDecayingEffectsRainAcid.includes(key)
-            ){
-
-            } else if (
-              (this.activePowerUps.lightSaber && this.activePowerUps.lightSaber.duration > 0) &&
-              !nonDecayingEffectsLightSaber.includes(key)
-            ) {
-              // Если LightSaber активен, уменьшаем время для эффектов, которые в nonDecayingEffectsLightSaber
-            }else if (
-              this.activePowerUps.bulletTime &&
-              this.activePowerUps.bulletTime.duration > 0 &&
-              nonDecayingEffects2.includes(key)
-            ){
-
+            if (this.activePowerUps.bulletTime && this.activePowerUps.bulletTime.duration > 0) {
+              // Определяем, какой дополнительный эффект активен – приоритет: Acid Rain > Light Saber > Neon Overdrive
+              let consumedList;
+              if (this.activePowerUps.acidRain && this.activePowerUps.acidRain.duration > 0) {
+                consumedList = consumedEffectsAcidRain;
+              } else if (this.activePowerUps.lightSaber && this.activePowerUps.lightSaber.duration > 0) {
+                consumedList = consumedEffectsLightSaber;
+              } else if (this.activePowerUps.neonOverdrive && this.activePowerUps.neonOverdrive.duration > 0) {
+                consumedList = consumedEffectsNeonOverdrive;
+              } else {
+                consumedList = consumedEffectsBulletTimeOnly;
+              }
+              // Если этот эффект входит в список, то его длительность уменьшаем
+              if (consumedList.includes(key)) {
+                pu.duration -= deltaTime;
+                if (pu.duration < 0) pu.duration = 0;
+              }
+              // Если эффект не входит в список – его время остаётся неизменным
             } else {
-              // Обновляем время действия эффекта
+              // Если BulletTime не активен – уменьшаем время для всех эффектов
               pu.duration -= deltaTime;
               if (pu.duration < 0) pu.duration = 0;
             }
@@ -2428,12 +2463,12 @@
         bullets.forEach(b => {
           // Рассматриваем только пули, выпущенные врагами или боссами
           if (b.fromEnemy || b.fromBoss) {
-              let dist = distancePointToLine(b.x, b.y, this.x, this.y, endPoint.x, endPoint.y);
-              // Если использовать для отрисовки луча lineWidth = 8*scaleFactor, то его "половина" равна 4*scaleFactor.
-              // Добавляем также радиус пули для более корректного расчёта.
-              if (dist < (b.radius + 4 * scaleFactor)) {
-                  b.dead = true;
-              }
+            let dist = distancePointToLine(b.x, b.y, this.x, this.y, endPoint.x, endPoint.y);
+            // Если использовать для отрисовки луча lineWidth = 8*scaleFactor, то его "половина" равна 4*scaleFactor.
+            // Добавляем также радиус пули для более корректного расчёта.
+            if (dist < (b.radius + 4 * scaleFactor)) {
+              b.dead = true;
+            }
           }
         });
       }
@@ -2683,7 +2718,7 @@
               let b = new Bullet(spawnX, spawnY, angle, 1, "enemy");
               b.fromEnemy = true;         // Помечаем как пуля врага
               b.speed = 6 * scaleFactor;
-              b.damage = this.bulletDamage; // Урон берётся из врага
+              b.damage = this.bulletDamage + bonusDamage - permanentUpgrades.damageReduction; // Урон берётся из врага
               bullets.push(b);
               this.shootCooldown = 2000;
             }
@@ -2705,7 +2740,7 @@
               let b = new Bullet(this.x, this.y, angle, 1, "enemy");
               b.empBlast = true;
               b.speed = 4 * scaleFactor;
-              b.damage = this.bulletDamage;
+              b.damage = this.bulletDamage + bonusDamage - permanentUpgrades.damageReduction;
               b.fromEnemy = true;  // Помечаем как пуля врага
               bullets.push(b);
               this.shootCooldown = 2500;
@@ -2731,7 +2766,7 @@
               b.fromEnemy = true;        // Помечаем как пуля врага
               b.radius = 8 * scaleFactor;
               b.speed = 7 * scaleFactor;
-              b.damage = this.bulletDamage;
+              b.damage = this.bulletDamage + bonusDamage - permanentUpgrades.damageReduction;
               bullets.push(b);
               this.shootCooldown = 3000;
             }
@@ -2923,7 +2958,7 @@
                 let b = new Bullet(this.x, this.y, baseAngle + offset, 1, "boss");
                 b.fromBoss = true;
                 b.speed = 5 * scaleFactor;
-                b.damage = 20;
+                b.damage = 20 + bonusDamage - permanentUpgrades.damageReduction;
                 bullets.push(b);
               }
               this.shootCooldown = 3000;
@@ -2933,7 +2968,7 @@
                 let b = new Bullet(this.x, this.y, baseAngle + offset, 1, "boss");
                 b.fromBoss = true;
                 b.speed = 6 * scaleFactor;
-                b.damage = 25;
+                b.damage = 25 + bonusDamage - permanentUpgrades.damageReduction;
                 bullets.push(b);
               }
               this.shootCooldown = 2000;
@@ -2943,7 +2978,7 @@
                 let b = new Bullet(this.x, this.y, baseAngle + offset, 1, "boss");
                 b.fromBoss = true;
                 b.speed = 6 * scaleFactor;
-                b.damage = 30;
+                b.damage = 30 + bonusDamage - permanentUpgrades.damageReduction;
                 b.homing = true;
                 bullets.push(b);
               }
@@ -2954,7 +2989,7 @@
                 let b = new Bullet(this.x, this.y, angle, 1, "boss");
                 b.fromBoss = true;
                 b.speed = 7 * scaleFactor;
-                b.damage = 20;
+                b.damage = 20 + bonusDamage - permanentUpgrades.damageReduction;
                 bullets.push(b);
               }
               this.shootCooldown = 500;
@@ -2964,7 +2999,7 @@
                 let b = new Bullet(this.x, this.y, baseAngle + offset, 1, "boss");
                 b.fromBoss = true;
                 b.speed = 8 * scaleFactor;
-                b.damage = 35;
+                b.damage = 35 + bonusDamage - permanentUpgrades.damageReduction;
                 bullets.push(b);
               }
               this.shootCooldown = 150;
@@ -3427,6 +3462,9 @@
       "Reflective", "Life Steal", "EMP Blast", "Critical Strike", "Overcharge",
       "Scatter Shot", "Health Boost", "Restore Health", "Magnet", "Friend", "Neon Overdrive", "Power Meter Boost", "Bullet Time", "Psi Blast", "Acid Rain", "Ninja Spirit","Light Saber",
     ];
+    const allPowerUpKeys = [
+      "doubleShot", "tripleShot", "rapidFire", "shield", "speedBoost", "damageBoost", "piercing", "homing", "bomb", "freezeBlast", "reflective", "lifeSteal", "empBlast", "criticalStrike", "overcharge", "scatterShot", "healthBoost", "healthRestore", "scoreMagnet", "friend", "neonOverdrive", "powerMeterBoost", "bulletTime", "psiBlast", "acidRain", "ninjaSpirit", "lightSaber"
+    ];
     const powerUpDurations = {
       "Reflective": 10000, // 10 секунд для Reflective
       "Triple Shot": 28000,
@@ -3652,7 +3690,7 @@
               break;
             case "Damage Reduction Up":
               // Например, увеличиваем на 1 единицу
-              permanentUpgrades.damageReduction += 5;
+              permanentUpgrades.damageReduction += 4;
               break;
           }
           version===1? resumeGame(): nextLevel();
@@ -3723,13 +3761,13 @@
                 <div class="slider-container">
                   <label class="slider-label">Music Volume</label>
                   <input type="range" id="musicVolumeSlider" class="slider neon-slider"
-                        min="0" max="1" step="0.01" value="0.05">
+                        min="0" max="1" step="0.01"  value="${ Math.sqrt(musicVolume).toFixed(2) }">
                 </div>
           
                 <div class="slider-container">
                   <label class="slider-label">SFX Volume</label>
                   <input type="range" id="sfxVolumeSlider" class="slider neon-slider"
-                        min="0" max="1" step="0.01" value="0.05">
+                        min="0" max="1" step="0.01" value="${ Math.sqrt(sfxVolume).toFixed(2) }">
                 </div>
           
                 <!-- Music Genre Select -->
@@ -3781,7 +3819,7 @@
 
         // ========== 1) Immediately pause the music  ==========
         const activeMusic = getActiveMusic();
-        if (activeMusic && !activeMusic.paused) {
+        if (activeMusic && activeMusic.playing()) {
           wasMusicPlaying = true;  // it was playing
         }
         // Force music to pause
@@ -3822,7 +3860,12 @@
           } else {
             // was paused in pause → now play it
             // user interaction => allowed
-            music.play().catch(err => console.warn("Music play error:", err));
+            try {
+              music.play();
+            } catch (err) {
+              console.warn("Music play error:", err);
+            }
+
             pauseMusicToggleBtn.innerText = "Music: On";
           }
           // flip the boolean
@@ -3834,21 +3877,27 @@
         muteCheckbox.checked = !soundEnabled;
         muteCheckbox.addEventListener("change", (e) => {
           soundEnabled = !e.target.checked;
+          const activeMusic = getActiveMusic();
           if (!soundEnabled) {
-            getActiveMusic().pause();
+            if (activeMusic && activeMusic.playing()) {
+              activeMusic.pause();
+            }
           } else {
-            getActiveMusic().play().catch(err => {});
+            if (activeMusic && !activeMusic.playing()) {
+              activeMusic.play();
+            }
           }
-        });
-
+        });        
 
         // ========== Music Volume slider ==========
         const musicSlider = document.getElementById("musicVolumeSlider");
         musicSlider.addEventListener("input", (e) => {
-          const sliderVal = parseFloat(e.target.value); // значение от 0 до 1
-          // Применяем квадратичное преобразование (можно экспериментировать со степенью)
+          const sliderVal = parseFloat(e.target.value); // value between 0 and 1
           musicVolume = Math.pow(sliderVal, 2);
-          getActiveMusic().volume = musicVolume;
+          const activeMusic = getActiveMusic();
+          if (activeMusic) {
+            activeMusic.volume(musicVolume);
+          }
         });
     
         // ========== SFX Volume slider ==========
@@ -3857,7 +3906,7 @@
           const sliderVal = parseFloat(e.target.value);
           sfxVolume = Math.pow(sliderVal, 2);
           for (let key in sfxMap) {
-            sfxMap[key].volume = sfxVolume;
+            sfxMap[key].volume(sfxVolume);
           }
         });
     
@@ -3947,10 +3996,7 @@
           if (!file) return;
         
           const objectURL = URL.createObjectURL(file);
-          const audioObj = new Audio(objectURL);
-          audioObj.volume = musicVolume;
-          audioObj.loop = false;
-        
+          const audioObj = new Howl({ src: [objectURL], volume: musicVolume, loop: false, html5: false });
           customTracks.push(audioObj);
         
           // Reset the file input for next time
@@ -3970,7 +4016,11 @@
 
         const music = getActiveMusic();
         if (wasMusicPlaying && soundEnabled) {
-          music.play().catch(err => {});
+          try {
+            music.play();
+          } catch (err) {
+            console.warn("Music play error:", err);
+          }
         }
         gameState = "playing";
         document.getElementById("overlay").classList.add("hidden");
@@ -4005,13 +4055,7 @@
       playSfx("click");
       gameState = "menu";
 
-      soundEnabled = false;
-      if (!soundEnabled) {
-        getActiveMusic().pause();
-      } else {
-        getActiveMusic().play().catch(err => {});
-      }
-      
+      soundEnabled = false;      
       getActiveMusic().pause();
       document.getElementById("overlay").innerHTML = `<h1 class="cyan_color" >Neon Nexus: Ultimate Gauntlet</h1>
       <p id="overlayText">Move with WASD, aim with your mouse (or use on‑screen joysticks on mobile),</br> and auto‑fire is enabled.<br>
@@ -4257,11 +4301,12 @@
         player.activePowerUps.lightSaber.duration > 0 &&
         !(player.activePowerUps.neonOverdrive && player.activePowerUps.neonOverdrive.duration > 0)
       ) {
+        playNeonOverdriveSound();
         let lsStacks = player.activePowerUps.lightSaber.stacks;
         // Параметры меча
         let bladeLength = 220 * scaleFactor; // длина лезвия (подберите по вкусу)
         // Расчет урона меча: базовый урон (например, 10) умноженный на постоянный бонус и количество стэков, затем делим в 2 раза
-        let swordDamage = 1 * permanentUpgrades.damage * player.activePowerUps.lightSaber.stacks;
+        let swordDamage = 3 * permanentUpgrades.damage * player.activePowerUps.lightSaber.stacks;
         // Определяем массив угловых смещений относительно основного направления (player.angle)
         // Здесь задаются различные схемы в зависимости от количества стэков
         let angleOffsets = [];
@@ -4337,7 +4382,7 @@
             bladeStartX, bladeStartY,
             bladeEndX, bladeEndY);
             if (dist < boss.radius) {
-              boss.hp -= swordDamage/6;
+              boss.hp -= swordDamage/12;
               for (let blood = 0; blood < 8; blood++) {
                 particles.push(new Particle(boss.x, boss.y, "#f00"));
               }
@@ -4354,7 +4399,7 @@
                 b.fromEnemy = false;
                 b.fromBoss = false;
                 b.source = "player";
-
+                b.damage = b.damage/2;
                 let target = getClosestTargetWithoutBullet();
                 if (target) {
                   let dx = target.x - b.x;
@@ -4364,6 +4409,7 @@
                   // Если противников нет, можно задать любое дефолтное направление
                   b.angle = player.angle;
                 }
+                playReflectedSound();
               }
             }
           });
@@ -4524,7 +4570,6 @@
             enemies[i].dead = true;
             onEnemyKilled(enemies[i]);
           } else {
-            let bonusDamage = Math.floor((currentLevel - 1) / 3);  //Hard-mode
             let damage = 20;
             if(enemies[i].type === "freeze") { playSfx("freeze"); player.frozenTime = 2000; damage = 10; }
             else if(enemies[i].type === "parasite") { player.shootingDisabled = 2000; damage = 10; }
@@ -4562,7 +4607,6 @@
             damageTexts.push({ x: player.x, y: player.y, damage: "Shield -0.1s", alpha: 1, lifetime: 1000 });
           } else {
             // Если щита нет – наносим обычный урон от босса (30 единиц)
-            let bonusDamage = Math.floor((currentLevel - 1) / 3); //Hard-mode
             let bossDamage = Math.max(0, 30 + bonusDamage - permanentUpgrades.damageReduction);
             player.currentHP -= bossDamage;
             damageTexts.push({ x: player.x, y: player.y, damage: bossDamage, alpha: 1, lifetime: 1000 });
@@ -4708,7 +4752,6 @@
                      enemies[k].hp -= 5;
                   }
                 }
-                playSfx("explosion");
                 for(let k=0; k<20; k++){
                   particles.push(new Particle(enemies[i].x, enemies[i].y, "#fa0"));
                 }
@@ -4840,7 +4883,6 @@
     }
 
     // progress bar
-    // progress bar
     function drawLevelProgressBar() {
       ctx.save();
       if (isMobile) {
@@ -4854,7 +4896,8 @@
           
           // Draw background
           ctx.fillStyle = "#333";
-          ctx.fillRect(x, y, barWidth, barHeight);
+          //ctx.fillRect(x, y, barWidth, barHeight);
+          drawRoundedRect(ctx, x, y, barWidth, barHeight, 8 * uiScale);
           
           if (bosses.length === 0) {
             let progress = (levelDuration - levelTimer) / levelDuration;
@@ -4863,9 +4906,10 @@
             grad.addColorStop(0, "#0f0");
             grad.addColorStop(1, "#ff0");
             ctx.fillStyle = grad;
-            ctx.fillRect(x, y, barWidth * progress, barHeight);
+            //ctx.fillRect(x, y, barWidth * progress, barHeight);
+            drawRoundedRect(ctx, x, y, barWidth * progress, barHeight, 8 * uiScale);
             
-            ctx.fillStyle = "#fff";
+            ctx.fillStyle = "#f00";
             ctx.font = (18 * uiScale) + "px Arial";
             ctx.textAlign = "center";
             ctx.fillText("Boss fight in " + Math.ceil(levelTimer / 1000) + "s!!", 
@@ -4878,9 +4922,9 @@
             ctx.fillText("FIGHT!", x + barWidth / 2, y + barHeight - (5 * uiScale));
           }
           
-          ctx.strokeStyle = "#fff";
-          ctx.lineWidth = 2;
-          ctx.strokeRect(x, y, barWidth, barHeight);
+          //ctx.strokeStyle = "#fff";
+          //ctx.lineWidth = 2;
+          //ctx.strokeRect(x, y, barWidth, barHeight);
         } else {
           // Mobile Portrait → vertical progress bar on the right
           const barWidth = 25 * uiScale;
@@ -4890,7 +4934,8 @@
           
           // Draw background
           ctx.fillStyle = "#333";
-          ctx.fillRect(x, y, barWidth, barHeight);
+          //ctx.fillRect(x, y, barWidth, barHeight);
+          drawRoundedRect(ctx, x, y, barWidth, barHeight, 8 * uiScale);
 
           if (bosses.length === 0) {
             let progress = (levelDuration - levelTimer) / levelDuration;
@@ -4899,9 +4944,10 @@
             grad.addColorStop(0, "#0f0");
             grad.addColorStop(1, "#ff0");
             ctx.fillStyle = grad;
-            ctx.fillRect(x, y + barHeight - (barHeight * progress), barWidth, barHeight * progress);
+            drawRoundedRect(ctx, x, y + barHeight - (barHeight * progress), barWidth, barHeight * progress, 8 * uiScale);
+            //ctx.fillRect(x, y + barHeight - (barHeight * progress), barWidth, barHeight * progress);
             
-            ctx.fillStyle = "#fff";
+            ctx.fillStyle = "#f00";
             ctx.font = (18 * uiScale) + "px Arial";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
@@ -4918,9 +4964,6 @@
             ctx.rotate(-Math.PI / 2);
             ctx.fillText("FIGHT!", 0, 0);
           }          
-          ctx.strokeStyle = "#fff";
-          ctx.lineWidth = 2;
-          ctx.strokeRect(x, y, barWidth, barHeight);
         }
       } else {
         // --- Horizontal Progress Bar for Desktop ---
@@ -4931,7 +4974,8 @@
         
         // Draw background
         ctx.fillStyle = "#333";
-        ctx.fillRect(x, y, barWidth, barHeight);
+        //ctx.fillRect(x, y, barWidth, barHeight);
+        drawRoundedRect(ctx, x, y, barWidth, barHeight, 8 * uiScale);
         
         if (bosses.length === 0) {
           let progress = (levelDuration - levelTimer) / levelDuration;
@@ -4940,9 +4984,10 @@
           grad.addColorStop(0, "#0f0");
           grad.addColorStop(1, "#ff0");
           ctx.fillStyle = grad;
-          ctx.fillRect(x, y, barWidth * progress, barHeight);
+          //ctx.fillRect(x, y, barWidth * progress, barHeight);
+          drawRoundedRect(ctx, x, y, barWidth * progress, barHeight, 8 * uiScale);
           
-          ctx.fillStyle = "#fff";
+          ctx.fillStyle = "#f00";
           ctx.font = (18 * uiScale) + "px Arial";
           ctx.textAlign = "center";
           ctx.fillText("Boss fight in " + Math.ceil(levelTimer / 1000) + "s!!", x + barWidth / 2, y + barHeight - (5 * uiScale));
@@ -4952,10 +4997,6 @@
           ctx.textAlign = "center";
           ctx.fillText("FIGHT!", x + barWidth / 2, y + barHeight - (5 * uiScale));
         }
-        
-        ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, barWidth, barHeight);
       }
       
       ctx.restore();
@@ -5028,22 +5069,30 @@
       ctx.fillText("Level: " + currentLevel, 10, 55 * uiScale);
       // Power Meter Bar
       ctx.fillStyle = "#222";
-      ctx.fillRect(10 * uiScale,65 * uiScale,120 * uiScale,15 * uiScale);
-      ctx.fillStyle = "#0f0";
-      ctx.fillRect(10 * uiScale,65 * uiScale,(120*(powerMeter/getPowerMeterMax())) * uiScale,15 * uiScale);
-      ctx.strokeStyle = "#fff";
-      ctx.strokeRect(10 * uiScale,65 * uiScale,120 * uiScale,15 * uiScale);
+      let xForBars = 10 * uiScale;
+      let heightForBars = 15 * uiScale;
+      let roundedParam = 8 * uiScale;
+      //ctx.fillRect(xForBars,65 * uiScale, 120 * uiScale,heightForBars);
+      drawRoundedRect(ctx, xForBars, 65 * uiScale, 120 * uiScale, heightForBars, roundedParam);
+      ctx.fillStyle = "#ff0";
+      //ctx.fillRect(xForBars,65 * uiScale, (120*(powerMeter/getPowerMeterMax())) * uiScale,heightForBars);
+      let barWidth = (120 * (powerMeter / getPowerMeterMax())) * uiScale;
+      drawRoundedRect(ctx, xForBars, 65 * uiScale, barWidth, heightForBars, roundedParam);
+      //ctx.strokeStyle = "#fff";
+      //ctx.strokeRect(10 * uiScale,65 * uiScale,120 * uiScale,heightForBars);
       // Health Bar
       if(player) {
-        const grad = ctx.createLinearGradient(10 * uiScale,80 * uiScale,130 * uiScale,80 * uiScale);
+        const grad = ctx.createLinearGradient(xForBars,80 * uiScale,130 * uiScale,80 * uiScale);
         grad.addColorStop(0, "#f00");
-        grad.addColorStop(1, "rgba(0,255,0,0.5)");
+        grad.addColorStop(1, "#f00");
         ctx.fillStyle = "#222";
-        ctx.fillRect(10 * uiScale,80 * uiScale,120 * uiScale,15 * uiScale);
+        //ctx.fillRect(xForBars,80 * uiScale,120 * uiScale,heightForBars);
+        drawRoundedRect(ctx, xForBars, 80 * uiScale, 120 * uiScale, heightForBars, roundedParam);
         ctx.fillStyle = grad;
-        ctx.fillRect(10 * uiScale,80 * uiScale,(120*(player.currentHP/player.maxHP)) * uiScale,15 * uiScale);
-        ctx.strokeStyle = "#fff";
-        ctx.strokeRect(10 * uiScale,80 * uiScale,120 * uiScale,15 * uiScale);
+        //ctx.fillRect(xForBars,80 * uiScale,(120*(player.currentHP/player.maxHP)) * uiScale,heightForBars);
+        drawRoundedRect(ctx, xForBars, 80 * uiScale, (120*(player.currentHP/player.maxHP)) * uiScale, heightForBars, roundedParam);
+        //ctx.strokeStyle = "#fff";
+        //ctx.strokeRect(10 * uiScale,80 * uiScale,120 * uiScale,heightForBars);
       }
       
       // Отрисовка перманентных бонусов в правом верхнем углу
@@ -5106,7 +5155,7 @@
         ctx.shadowBlur = 5 * uiScale;
       }
       ctx.fillStyle = comboColor;
-      ctx.font = (24 * uiScale) + "px Arial";
+      ctx.font = (20 * uiScale) + "px Arial";
       // рассчитываем позицию: health bar начинается в 10, ширина 120, добавляем отступ 10
       let comboX = (10 + 120 + 10) * uiScale;
       // вертикальное положение – центр health bar (80 + 15/2)
