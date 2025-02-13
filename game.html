@@ -4532,7 +4532,7 @@
             let resultDamage = Math.max(0, damage + bonusDamage - permanentUpgrades.damageReduction);
             player.currentHP -= resultDamage;
             // --- Добавлено: отображение полученного урона красным цветом ---
-            damageTexts.push({ x: player.x, y: player.y, damage: damage, alpha: 1, lifetime: 1000 });
+            damageTexts.push({ x: player.x, y: player.y, damage: resultDamage, alpha: 1, lifetime: 1000 });
             if(player.currentHP <= 0) { gameState = "gameover"; showGameOver(); }
             enemies[i].dead = true;
             onEnemyKilled(enemies[i]);
