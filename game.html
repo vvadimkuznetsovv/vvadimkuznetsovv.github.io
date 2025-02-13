@@ -4872,7 +4872,7 @@
               for(let blood = 0; blood < 5; blood++){
                 particles.push(new Particle(b.x, b.y, "#800000"));
               }
-              if (bosses[i].hp <= 0){
+              if (bosses[j].hp <= 0){
                 if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
                   player.reflectedKillCount += 5;
                   if (player.reflectedKillCount >= 15) {
