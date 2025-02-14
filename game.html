@@ -499,6 +499,24 @@
       }
       return closest;
     }
+    let baseBombRadius = 0;
+    let bombRadius = 0;
+    function calculateRadiusAndDamageBomb(bullet){
+      // Расчёт радиуса взрыва с учётом количества стэков bomb:
+      baseBombRadius = 110 * scaleFactor;
+      const bombStacks = player.activePowerUps.bomb.stacks || 1;
+      // Например, радиус увеличивается на 20% за каждый дополнительный стэк:
+      bombRadius = baseBombRadius * (1 + (bombStacks - 1) * 0.2);
+      addMiniWave(bullet.x, bullet.y);
+      // Вычисляем множитель от damage boost:
+      const damageBoostMultiplier = (player.activePowerUps.damageBoost.duration > 0
+      ? (1 + player.activePowerUps.damageBoost.stacks)
+      : 1);
+      // Расчет итогового урона взрыва:
+      // Базовое значение урона (1) умножается на постоянный бонус игрока, затем на damage boost и затем увеличивается за счёт bomb стэков.
+      const explosionDamage = 1 * permanentUpgrades.damage * damageBoostMultiplier * (1 + bombStacks);
+      return explosionDamage
+    }
 
     // ========== Ninja Spirit Start ============
     function getClosestTarget() {
@@ -666,8 +684,6 @@
       reflectedShots[index].volume(minVolume + Math.random() * (maxVolume - minVolume));
       reflectedShots[index].play();
     }
-
-    let psiBlastWave = null;
 
     // Ensure SFX volumes are set
     for (let key in sfxMap) {
@@ -1129,6 +1145,34 @@
     let lightSaberWaveTimer = 0;
     let lightSaberWave = null;
 
+    let psiBlastWave = null;
+    let miniWaves = [];
+
+    // Функция для добавления эффекта мини‑волны
+    function addMiniWave(x, y) {
+      miniWaves.push({
+        x: x,
+        y: y,
+        phase1Duration: 300 * (bombRadius / (80 * scaleFactor)),  // длительность фазы 1 в мс (расширение до 80)
+        phase2Duration: 200 * (bombRadius / (80 * scaleFactor)),  // длительность фазы 2 в мс (расширение до 110 и затухание)
+        elapsed: 0,          // прошедшее время эффекта
+        color: randomLightsaberColors[Math.floor(Math.random() * randomLightsaberColors.length)]
+      });
+    }
+    function hexToRgba(hex, alpha) {
+      hex = hex.replace('#', '');
+      let r, g, b;
+      if (hex.length === 3) {
+        r = parseInt(hex.charAt(0) + hex.charAt(0), 16);
+        g = parseInt(hex.charAt(1) + hex.charAt(1), 16);
+        b = parseInt(hex.charAt(2) + hex.charAt(2), 16);
+      } else if (hex.length === 6) {
+        r = parseInt(hex.substring(0,2), 16);
+        g = parseInt(hex.substring(2,4), 16);
+        b = parseInt(hex.substring(4,6), 16);
+      }
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
     // =================== Input Handling ===================
     const keys = {};
     const mouse = { x: width/2, y: height/2, down: false };
@@ -3573,22 +3617,19 @@
           player.activePowerUps.lightSaber.duration += timePerStack;
         }
       } else if (choice === "Health Boost") {
-          // Изменено: теперь Health Boost даёт бонус +50 к maxHP и +50 к текущему здоровью
-          let bonusHealth = 50;
+          // Теперь Health Boost прибавляет бонус, равный 20% от текущего maxHP игрока
+          const bonusHealth = Math.floor(player.maxHP * 0.2);
           const timePerStack = powerUpDurations[choice] || 30000;
           if (player.activePowerUps[key].duration <= 0) {
-            // если эффекта не было
-            player.activePowerUps[key].duration = timePerStack;
-            player.activePowerUps[key].bonus = 50; // например, +50 к макс.хп
+              player.activePowerUps[key].duration = timePerStack;
+              player.activePowerUps[key].bonus = bonusHealth;
           } else {
-            // если эффект активен
-            player.activePowerUps[key].duration += timePerStack;
-            // бонус накапливаем, если хотите, чтобы каждый стэк HealthBoost ещё и +50 HP давал
-            player.activePowerUps[key].bonus += 50; 
+              player.activePowerUps[key].duration += timePerStack;
+              player.activePowerUps[key].bonus += bonusHealth;
           }
-          // сразу же увеличим HP игрока
-          player.maxHP += 50;
-          player.currentHP += 50;
+          // Применяем бонус сразу же
+          player.maxHP += bonusHealth;
+          player.currentHP += bonusHealth;
           if(!comboPowerUp) powerMeter = 0;
           resumeGame();
           return;
@@ -3612,6 +3653,7 @@
           duration: 500,   // эффект длится 500 мс (можно настроить)
           elapsed: 0
         };
+        
         // Можно добавить эффект частиц или проиграть звук (например, playSfx ("psiBlast"))
         resumeGame();
         // Обнуляем powerMeter (если нужно)
@@ -4712,13 +4754,13 @@
           if(b.fromEnemy || b.fromBoss) continue;  // только пули игрока
           if(circleCollision(enemies[i], b)) {
             // Если пуля с бомбой – наносим урон всем врагам в радиусе
-            if(b.bomb) {
-              const bombRadius = 80 * scaleFactor;
+            if (b.bomb) {
+              const explosionDamage = calculateRadiusAndDamageBomb(b);
               for(let k = enemies.length - 1; k >= 0; k--){
                 const dx = enemies[k].x - b.x;
                 const dy = enemies[k].y - b.y;
                 if(Math.hypot(dx,dy) < bombRadius) {
-                  enemies[k].hp -= b.damage + player.activePowerUps.bomb.stacks;
+                  enemies[k].hp -= explosionDamage;
                   const pushStrength = 8;
                   const impactAngle = Math.atan2(enemies[k].y - b.y, enemies[k].x - b.x);
                   enemies[k].x += Math.cos(impactAngle) * pushStrength;
@@ -4747,7 +4789,7 @@
                 }
               }
               for(let k = 0; k < 20; k++){
-                particles.push(new Particle(b.x, b.y, "#f00"));
+                particles.push(new Particle(b.x, b.y, "rgba(141,141,141,1)"));
               }
               b.dead = true;
               continue;
@@ -4857,25 +4899,50 @@
         if (!b.fromBoss) {
           for(let j = bosses.length - 1; j >= 0; j--) {
             if(circleCollision(b, bosses[j])) {
-              bosses[j].hp -= b.damage;
-              // --- Если пуля имеет Freeze Blast, то замедляем босса ---
-              if(b.freezeBlast) {
-                bosses[j].freezeSlow = Math.max(bosses[j].freezeSlow, 3000);
-              }
-              for(let blood = 0; blood < 5; blood++){
-                particles.push(new Particle(b.x, b.y, "#800000"));
-              }
-              if (bosses[j].hp <= 0){
-                if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
-                  player.reflectedKillCount += 5;
-                  if (player.reflectedKillCount >= 15) {
-                    player.activePowerUps.lightSaber.duration += 30000;
-                    player.reflectedKillCount = 0;
+              if (b.bomb) {
+                addMiniWave(b.x, b.y);
+                const explosionDamage = calculateRadiusAndDamageBomb(b);
+                bosses[j].hp  -= explosionDamage;
+                // --- Если пуля имеет Freeze Blast, то замедляем босса ---
+                if(b.freezeBlast) {
+                  bosses[j].freezeSlow = Math.max(bosses[j].freezeSlow, 3000);
+                }
+                for(let blood = 0; blood < 5; blood++){
+                  particles.push(new Particle(b.x, b.y, "#800000"));
+                }
+                if (bosses[j].hp <= 0){
+                  if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
+                    player.reflectedKillCount += 5;
+                    if (player.reflectedKillCount >= 15) {
+                      player.activePowerUps.lightSaber.duration += 30000;
+                      player.reflectedKillCount = 0;
+                    }
                   }
                 }
+                b.dead = true;
+                break;
               }
-              b.dead = true;
-              break;
+              else{
+                bosses[j].hp -= b.damage;
+                // --- Если пуля имеет Freeze Blast, то замедляем босса ---
+                if(b.freezeBlast) {
+                  bosses[j].freezeSlow = Math.max(bosses[j].freezeSlow, 3000);
+                }
+                for(let blood = 0; blood < 5; blood++){
+                  particles.push(new Particle(b.x, b.y, "#800000"));
+                }
+                if (bosses[j].hp <= 0){
+                  if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
+                    player.reflectedKillCount += 5;
+                    if (player.reflectedKillCount >= 15) {
+                      player.activePowerUps.lightSaber.duration += 30000;
+                      player.reflectedKillCount = 0;
+                    }
+                  }
+                }
+                b.dead = true;
+                break;
+              }
             }
           }
         }
@@ -4884,7 +4951,14 @@
         playSfx("powerup");
         showPowerUpMenu();
       }
-
+      // Обновление эффектов мини‑волны
+      for (let i = miniWaves.length - 1; i >= 0; i--) {
+        miniWaves[i].elapsed += deltaTime;
+        const totalDuration = miniWaves[i].phase1Duration + miniWaves[i].phase2Duration;
+        if (miniWaves[i].elapsed >= totalDuration) {
+          miniWaves.splice(i, 1);
+        }
+      } 
       // --- Обновление массива damageTexts (плавающие красные числа урона) ---
       for (let i = damageTexts.length - 1; i >= 0; i--) {
         let dt = damageTexts[i];
@@ -5228,6 +5302,39 @@
         ctx.fillText(text, dt.x, dt.y);
         ctx.restore();
       });
+      // Отрисовка эффектов мини‑волны
+      miniWaves.forEach(wave => {
+        let currentRadius, alpha;
+        // Если у волны уже записан конечный радиус, используем его,
+        // иначе – берем глобальное bombRadius (это может быть актуально для первого взрыва)
+        const finalRadius = (wave.finalRadius !== undefined) ? wave.finalRadius : bombRadius;
+
+        // то есть коэффициент = 80/110 ≈ 0.73.
+        const phase1Final = finalRadius * (80 / 110);
+      
+        if (wave.elapsed < wave.phase1Duration) {
+          // Фаза 1: растём от 0 до phase1Final, альфа = 1
+          currentRadius = (wave.elapsed / wave.phase1Duration) * phase1Final;
+          alpha = 1;
+        } else {
+          // Фаза 2: растём от phase1Final до finalRadius,
+          // а альфа линейно падает от 1 до 0
+          let progress2 = (wave.elapsed - wave.phase1Duration) / wave.phase2Duration;
+          currentRadius = phase1Final + progress2 * (finalRadius - phase1Final);
+          alpha = 1 - progress2;
+        }
+        
+        const waveThickness = 5 * scaleFactor;
+        
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(wave.x, wave.y, currentRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = hexToRgba(wave.color, alpha);
+        ctx.lineWidth = waveThickness;
+        ctx.stroke();
+        ctx.restore();
+      });
+
       if (lightSaberWave) {
         ctx.save();
         let alpha = 1 - (lightSaberWave.elapsed / lightSaberWave.duration);
