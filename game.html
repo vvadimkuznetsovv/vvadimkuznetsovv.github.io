@@ -582,30 +582,31 @@
     *    goes to next track or replays the same track.
     ****************************************************/
     function playCurrentMusic() {
-      if (!soundEnabled) return;
-
-      // Pause all calm & phonk & custom tracks so only one can play
-      calmTracks.forEach(t => t.pause());
-      phonkTracks.forEach(t => t.pause());
-      customTracks.forEach(t => t.pause());
-
       const music = getActiveMusic();
       if (!music) {
         // If null (e.g. custom is empty), just return
         console.warn("No track to play (maybe custom list is empty)");
         return;
       }
+      if (!soundEnabled) return;
+      if (music.playing()) {
+        console.log("Песня уже воспроизводится – не перезапускаем её");
+        return;
+      }
+      
 
+      console.log("Now playing:", music._src);
       music.stop();
       music.volume(musicVolume);
       music.play();
 
-
       // Use Howler's event system to detect when the track ends:
-      music.once('end', () => {
+      music.once('end', function() {
         if (loopSingleTrack) {
+          console.log("✅ Музыка закончилась! Пытаемся переключить трек...");
           playCurrentMusic();
         } else {
+          console.log("Track ended, switching...");
           nextTrack();
         }
       });
@@ -616,6 +617,7 @@
     * 4) Add helper function: nextTrack() to skip ahead
     ***************************************************/
     function nextTrack() {
+      console.log("Switching track...");
       if (currentMusicTrack === "phonk") {
         phonkIndex = (phonkIndex + 1) % phonkTracks.length;
       } else if (currentMusicTrack === "custom") {
@@ -631,13 +633,13 @@
 
     // (Assuming you have a global variable `sfxVolume` already defined.)
     const sfxMap = {
-      shot: new Howl({ src: ["assets/sfx/shot.ogg"], volume: sfxVolume }),
-      freeze: new Howl({ src: ["assets/sfx/freeze.ogg"], volume: sfxVolume }),
+      shot: new Howl({ src: ["assets/sfx/shot.ogg"], volume: sfxVolume, pool: 10 }),
+      freeze: new Howl({ src: ["assets/sfx/freeze.ogg"], volume: sfxVolume, pool: 10 }),
       powerup: new Howl({ src: ["assets/sfx/powerup.ogg"], volume: sfxVolume }),
       bossDeath: new Howl({ src: ["assets/sfx/boss_death.ogg"], volume: sfxVolume }),
       click: new Howl({ src: ["assets/sfx/click.ogg"], volume: sfxVolume }),
-      neonoverdrive: new Howl({ src: ["assets/sfx/neonoverdrive.ogg"], volume: sfxVolume }),
-      deadenemy: new Howl({ src: ["assets/sfx/deadenemy.ogg"], volume: sfxVolume })
+      neonoverdrive: new Howl({ src: ["assets/sfx/neonoverdrive.ogg"], volume: sfxVolume, pool: 10 }),
+      deadenemy: new Howl({ src: ["assets/sfx/deadenemy.ogg"], volume: sfxVolume, pool: 10 })
     };
     const reflectedShots = [
       new Howl({ src: ["assets/sfx/reflectedShot_1.mp3"], volume: sfxVolume }),
@@ -646,7 +648,6 @@
       new Howl({ src: ["assets/sfx/reflectedShot_4.mp3"], volume: sfxVolume }),
       new Howl({ src: ["assets/sfx/reflectedShot_5.mp3"], volume: sfxVolume })
     ];
-
 
     let lastNeonOverdriveTime = 0;
 
@@ -1116,7 +1117,7 @@
     let enemies = [];
     let collectibles = [];
     const particles = [];
-    let bonusDamage = Math.floor((currentLevel - 1) / 3);  //Hard-mode
+    let bonusDamage = Math.floor((currentLevel - 1) / 2);  //Hard-mode
     // Вместо одиночного босса используем массив
     let bosses = [];
     // --- Новый массив для отображения урона (плавающие красные числа) ---
@@ -1124,7 +1125,7 @@
     // *** NEW: Массив для объектов-друзей (Friend) ***
     let friends = [];
     let acidTrails = [];
-    const randomLightsaberColors = ["#00ff00", "#f00", "#9A00FF", "#05f", "#FF00DE", "#0ff"];
+    const randomLightsaberColors = ["#00ff00", "#f00", "#9A00FF", "#05f", "#ff0", "#0ff"];
     let lightSaberWaveTimer = 0;
     let lightSaberWave = null;
 
@@ -1189,7 +1190,7 @@
     mobilePauseButton.addEventListener("click", () => {
       if(gameState === "playing") 
       {
-        applyPowerUp("Light Saber");   //cheat
+        //applyPowerUp("Light Saber");   //cheat
         pauseGame();
         //nextLevel();   //cheat
         
@@ -1970,7 +1971,7 @@
         glitchCtx.stroke();
       }
     }
-
+    
     // =================== Classes ===================
     // --- Player ---
     class Player {
@@ -2041,59 +2042,43 @@
         this.angle = 0;
       }
       update(deltaTime) {
-        const consumedEffectsNeonOverdrive = ["friend", "scoreMagnet", "neonOverdrive", "powerMeterBoost", "damageBoost", "shield", "speedBoost", "ninjaSpirit"];
-        const consumedEffectsLightSaber = ["friend", "scoreMagnet","neonOverdrive", "lightSaber", "powerMeterBoost", "damageBoost", "shield", "speedBoost", "ninjaSpirit"];
-        const consumedEffectsAcidRain = ["friend", "scoreMagnet", "acidRain", "lightSaber", "neonOverdrive", "powerMeterBoost","damageBoost", "shield", "speedBoost", "ninjaSpirit"];
-        const preservedForBulletTimeOnly = ["doubleShot", "tripleShot", "scatterShot","ninjaSpirit"];
-        const consumedEffectsBulletTimeOnly = allPowerUpKeys.filter(key => !preservedForBulletTimeOnly.includes(key));
         for (let key in this.activePowerUps) {
+          const consumedEffectsNeonOverdrive = ["friend", "scoreMagnet", "neonOverdrive", "powerMeterBoost", "damageBoost", "shield", "speedBoost", "ninjaSpirit","homing"];
+          const consumedEffectsLightSaber = ["friend", "scoreMagnet","neonOverdrive", "lightSaber", "powerMeterBoost", "damageBoost", "shield", "speedBoost", "ninjaSpirit","homing"];
+          const consumedEffectsAcidRain = ["friend", "scoreMagnet", "acidRain", "lightSaber", "neonOverdrive", "powerMeterBoost","damageBoost", "shield", "speedBoost", "ninjaSpirit","homing"];
+          const preservedForBulletTimeOnly = ["doubleShot", "tripleShot", "scatterShot","ninjaSpirit"];
+          const consumedEffectsBulletTimeOnly = allPowerUpKeys.filter(key => !preservedForBulletTimeOnly.includes(key));
+          const preservedForEffectsHoming = ["ninjaSpirit"];
+          const consumedEffectsHomingOnly = allPowerUpKeys.filter(key => !preservedForEffectsHoming.includes(key));
+          let consumedList;
           let pu = this.activePowerUps[key];
           if (pu.duration > 0) {
-            if (this.activePowerUps.bulletTime && this.activePowerUps.bulletTime.duration > 0) {
-              // Определяем, какой дополнительный эффект активен – приоритет: Acid Rain > Light Saber > Neon Overdrive
-              let consumedList;
-              if (this.activePowerUps.acidRain && this.activePowerUps.acidRain.duration > 0) {
-                consumedList = consumedEffectsAcidRain;
-              } else if (this.activePowerUps.lightSaber && this.activePowerUps.lightSaber.duration > 0) {
-                consumedList = consumedEffectsLightSaber;
-              } else if (this.activePowerUps.neonOverdrive && this.activePowerUps.neonOverdrive.duration > 0) {
-                consumedList = consumedEffectsNeonOverdrive;
-              } else {
-                consumedList = consumedEffectsBulletTimeOnly;
-              }
-              // Если этот эффект входит в список, то его длительность уменьшаем
-              if (consumedList.includes(key)) {
-                pu.duration -= deltaTime;
-                if (pu.duration < 0) pu.duration = 0;
-              }
-              // Если эффект не входит в список – его время остаётся неизменным
+            // Определяем список, по которому будем расходовать время для данного набора активных эффектов:
+            if (this.activePowerUps.neonOverdrive && this.activePowerUps.neonOverdrive.duration > 0) {
+              consumedList = consumedEffectsNeonOverdrive;
+            } else if (this.activePowerUps.lightSaber && this.activePowerUps.lightSaber.duration > 0) {
+              consumedList = consumedEffectsLightSaber;
+            } else if (this.activePowerUps.acidRain && this.activePowerUps.acidRain.duration > 0) {
+              consumedList = consumedEffectsAcidRain;
+            } else if (this.activePowerUps.bulletTime && this.activePowerUps.bulletTime.duration > 0) {
+              consumedList = consumedEffectsBulletTimeOnly;
+            } else if (this.activePowerUps.homing && this.activePowerUps.homing.duration > 0) {
+              consumedList = consumedEffectsHomingOnly;
             } else {
-              // Определяем, какой дополнительный эффект активен – приоритет: Acid Rain > Light Saber > Neon Overdrive
-              let consumedList;
-              if (this.activePowerUps.acidRain && this.activePowerUps.acidRain.duration > 0) {
-                consumedList = consumedEffectsAcidRain;
-              } else if (this.activePowerUps.lightSaber && this.activePowerUps.lightSaber.duration > 0) {
-                consumedList = consumedEffectsLightSaber;
-              } else if (this.activePowerUps.neonOverdrive && this.activePowerUps.neonOverdrive.duration > 0) {
-                consumedList = consumedEffectsNeonOverdrive;
-              } else {
-                consumedList = consumedEffectsBulletTimeOnly;
-              }
-              // Если этот эффект входит в список, то его длительность уменьшаем
-              if (consumedList.includes(key)) {
-                pu.duration -= deltaTime;
-                if (pu.duration < 0) pu.duration = 0;
-              }
+              consumedList = allPowerUpKeys;
             }
+            
+            // Если текущий эффект входит в список расходуемых – уменьшаем его длительность
+            if (consumedList.includes(key)) {
+              pu.duration -= deltaTime;
+              if (pu.duration < 0) pu.duration = 0;
+            }
+            // Если эффект не входит в список – его время остаётся неизменным
 
             // Сохраняем предыдущее количество стэков, чтобы понять, сколько стэков "упало" за этот кадр
             let previousStacks = pu.stacks || 0;
-            
-            // Получаем отображаемое имя для определения времени одного стэка
             let displayName = getPowerUpDisplayName(key);
             let timePerStack = powerUpDurations[displayName] || 30000;
-            
-            // Используем Math.ceil, чтобы при любом положительном оставшемся времени было минимум 1 стэк
             pu.stacks = pu.duration > 0 ? Math.ceil(pu.duration / timePerStack) : 0;
         
             // Если это Health Boost – снимаем бонус постепенно (по 50 за каждый потерянный стэк)
@@ -3647,7 +3632,7 @@
     function showHTMLMenu(version){
       const overlay = document.getElementById("overlay");
       // Определяем список возможных перманентных улучшений с их весами (относительные вероятности)
-      const upgrades = [
+      let upgrades = [
         { id: "upgDamage", name: "Damage Up", weight: 40 },
         { id: "upgSpeed", name: "Speed Up", weight: 30 },
         { id: "upgFireRate", name: "Fire Rate Up", weight: 20 },
@@ -3908,6 +3893,7 @@
             }
           } else {
             if (activeMusic && !activeMusic.playing()) {
+              playCurrentMusic();
               activeMusic.play();
             }
           }
@@ -4057,9 +4043,9 @@
           }
         });
 
-        if (wasMusicPlaying && soundEnabled && activeMusic && !activeMusic.playing()) {
+        if (wasMusicPlaying && soundEnabled && music && !music.playing()) {
           try {
-            activeMusic.play();
+            music.play();
           } catch (err) {
             console.warn("Ошибка при возобновлении музыки:", err);
           }
@@ -4692,7 +4678,7 @@
             addValue *= 2;
           }
           if (player.activePowerUps.powerMeterBoost && player.activePowerUps.powerMeterBoost.duration > 0) {
-            addValue *= (1+player.activePowerUps.powerMeterBoost.stacks); 
+            addValue *= (1 + player.activePowerUps.powerMeterBoost.stacks); 
           }
           powerMeter = Math.min(getPowerMeterMax(), powerMeter+addValue);
           collectibles.splice(i,1);
@@ -4790,7 +4776,7 @@
               if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
                 player.reflectedKillCount = (player.reflectedKillCount || 0) + 1;
                 if (player.reflectedKillCount >= 15) {
-                  player.activePowerUps.lightSaber.stacks++;
+                  player.activePowerUps.lightSaber.duration += 30000;
                   player.reflectedKillCount = 0; // либо можно сбросить: = 0
                 }
               }
@@ -4876,7 +4862,7 @@
                 if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
                   player.reflectedKillCount += 5;
                   if (player.reflectedKillCount >= 15) {
-                    player.activePowerUps.lightSaber.stacks++;
+                    player.activePowerUps.lightSaber.duration += 30000;
                     player.reflectedKillCount = 0;
                   }
                 }
@@ -5393,6 +5379,7 @@
       player = new Player(width/2, height/2);
       player.maxHP = 100 + permanentUpgrades.health;  // *** NEW: учитываем перманентное здоровье
       player.currentHP = player.maxHP;
+      
       // Start music if enabled
       if (soundEnabled) {
         playCurrentMusic();
@@ -5402,7 +5389,9 @@
     
     mainMenu();
     requestAnimationFrame(gameLoop);
-    
+    window.playCurrentMusic = playCurrentMusic;
+    window.nextTrack = nextTrack;
+    window.getActiveMusic = getActiveMusic;
   })();
   </script>
 </body>
