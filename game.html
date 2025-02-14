@@ -2088,9 +2088,9 @@
       }
       update(deltaTime) {
         for (let key in this.activePowerUps) {
-          const consumedEffectsNeonOverdrive = ["friend", "scoreMagnet", "neonOverdrive", "powerMeterBoost", "damageBoost", "shield", "speedBoost", "ninjaSpirit","homing"];
-          const consumedEffectsLightSaber = ["friend", "scoreMagnet","neonOverdrive", "lightSaber", "powerMeterBoost", "damageBoost", "shield", "speedBoost", "ninjaSpirit","homing"];
-          const consumedEffectsAcidRain = ["friend", "scoreMagnet", "acidRain", "lightSaber", "neonOverdrive", "powerMeterBoost","damageBoost", "shield", "speedBoost", "ninjaSpirit","homing"];
+          const consumedEffectsNeonOverdrive = ["friend", "scoreMagnet", "neonOverdrive", "powerMeterBoost", "damageBoost", "shield", "speedBoost", "ninjaSpirit"];
+          const consumedEffectsLightSaber = ["friend", "scoreMagnet","neonOverdrive", "lightSaber", "powerMeterBoost", "damageBoost", "shield", "speedBoost", "ninjaSpirit"];
+          const consumedEffectsAcidRain = ["friend", "scoreMagnet", "acidRain", "lightSaber", "neonOverdrive", "powerMeterBoost","damageBoost", "shield", "speedBoost", "ninjaSpirit"];
           const preservedForBulletTimeOnly = ["doubleShot", "tripleShot", "scatterShot","ninjaSpirit"];
           const consumedEffectsBulletTimeOnly = allPowerUpKeys.filter(key => !preservedForBulletTimeOnly.includes(key));
           const preservedForEffectsHoming = ["ninjaSpirit"];
@@ -2463,7 +2463,12 @@
         enemies.forEach(enemy => {
           let dist = distancePointToLine(enemy.x, enemy.y, this.x, this.y, endPoint.x, endPoint.y);
           if (dist < enemy.radius) {
-            enemy.hp -= this.damagePerSecond;
+            // Наносим урон: если враг щитован – сначала щит, иначе напрямую HP
+            if (enemy.type === "shielded" && enemy.shield && enemy.shieldHP > 0) {
+              enemy.shieldHP -= this.damagePerSecond;
+            } else {
+              enemy.hp -= this.damagePerSecond;
+            }
             // Эффект попадания
             if(enemy.hp <= 0) {
               if(enemy.type === "exploder") {
@@ -2471,7 +2476,7 @@
                 for(let k=0; k<enemies.length; k++){
                   const dx = enemy.x - enemy.x;
                   const dy = enemy.y - enemy.y;
-                  if(Math.hypot(dx,dy) < 50) {
+                  if(Math.hypot(dx,dy) < 80) {
                     enemy.hp -= 5;
                   }
                 }
@@ -3399,6 +3404,7 @@
       else if(r < 0.60)     type = "freeze";
       else if(r < 0.70)     type = "shooter";
       else if(r < 0.75)     type = "sharpshooter";
+      else if(r < 0.77)     type = "shielded";
       else if(r < 0.80)     type = "parasite";
       else if(r < 0.85)     type = "emp";
       else if(r < 0.92)     type = "exploder";
@@ -4420,7 +4426,12 @@
               bladeEndX, bladeEndY
             );
             if (dist < enemy.radius) {
-              enemy.hp -= swordDamage;
+              // Наносим урон: если враг щитован – сначала щит, иначе напрямую HP
+              if (enemy.type === "shielded" && enemy.shield && enemy.shieldHP > 0) {
+                enemy.shieldHP -= swordDamage;
+              } else {
+                enemy.hp -= swordDamage;
+              }
               // Эффект попадания
               if(enemy.hp <= 0) {
                 if(enemy.type === "exploder") {
@@ -4428,7 +4439,7 @@
                   for(let k=0; k<enemies.length; k++){
                     const dx = enemy.x - enemy.x;
                     const dy = enemy.y - enemy.y;
-                    if(Math.hypot(dx,dy) < 50) {
+                    if(Math.hypot(dx,dy) < 80) {
                       enemy.hp -= 5;
                     }
                   }
@@ -4553,7 +4564,12 @@
         enemies.forEach(enemy => {
             let dist = distancePointToLine(enemy.x, enemy.y, beamStartX, beamStartY, beamEndX, beamEndY);
             if (dist < enemy.radius) {
-                enemy.hp -= beamDamage;
+              // Наносим урон: если враг щитован – сначала щит, иначе напрямую HP
+              if (enemy.type === "shielded" && enemy.shield && enemy.shieldHP > 0) {
+                enemy.shieldHP -= this.beamDamage;
+              } else {
+                enemy.hp -= this.beamDamage;
+              }
                 // Эффект попадания
                 if(enemy.hp <= 0) {
                   if(enemy.type === "exploder") {
@@ -4561,7 +4577,7 @@
                     for(let k=0; k<enemies.length; k++){
                       const dx = enemy.x - enemy.x;
                       const dy = enemy.y - enemy.y;
-                      if(Math.hypot(dx,dy) < 50) {
+                      if(Math.hypot(dx,dy) < 80) {
                         enemy.hp -= 5;
                       }
                     }
@@ -4749,113 +4765,291 @@
       }
       // Обработка столкновений пуль с врагами
       for(let i = enemies.length-1; i>=0; i--) {
-        for(let j = bullets.length-1; j>=0; j--) {
+        for(let j = bullets.length - 1; j>=0; j--) {
           let b = bullets[j];
           if(b.fromEnemy || b.fromBoss) continue;  // только пули игрока
           if(circleCollision(enemies[i], b)) {
-            // Если пуля с бомбой – наносим урон всем врагам в радиусе
             if (b.bomb) {
               const explosionDamage = calculateRadiusAndDamageBomb(b);
-              for(let k = enemies.length - 1; k >= 0; k--){
-                const dx = enemies[k].x - b.x;
-                const dy = enemies[k].y - b.y;
-                if(Math.hypot(dx,dy) < bombRadius) {
-                  enemies[k].hp -= explosionDamage;
-                  const pushStrength = 8;
-                  const impactAngle = Math.atan2(enemies[k].y - b.y, enemies[k].x - b.x);
-                  enemies[k].x += Math.cos(impactAngle) * pushStrength;
-                  enemies[k].y += Math.sin(impactAngle) * pushStrength;
-                  if(enemies[k].hp <= 0) {
-                    if(enemies[k].type === "exploder") {
-                      for(let m = enemies.length - 1; m >= 0; m--){
-                        const dx2 = enemies[m].x - enemies[k].x;
-                        const dy2 = enemies[m].y - enemies[k].y;
-                        if(Math.hypot(dx2,dy2) < 50) {
-                           enemies[m].hp -= 5;
+              for (let p = enemies.length - 1; p >= 0; p--) {
+                const dx = enemies[p].x - b.x;
+                const dy = enemies[p].y - b.y;
+                if (Math.hypot(dx, dy) < bombRadius) {
+                  if (enemies[p].type === "shielded" && enemies[p].shield && enemies[p].shieldHP > 0) {
+                    enemies[p].shieldHP -= b.damage;
+                    enemies[p].hp -= explosionDamage;
+                  } else {
+                    enemies[p].hp -= explosionDamage;
+                  }
+                  // Отталкивание объекта от центра взрыва
+                  const pushStrength = 14;
+                  const impactAngle = Math.atan2(dy, dx);
+                  enemies[p].x += Math.cos(impactAngle) * pushStrength;
+                  enemies[p].y += Math.sin(impactAngle) * pushStrength;
+                  for (let blood = 0; blood < 8; blood++) { // Кровь каждого врага
+                    particles.push(new Particle(b.x, b.y, enemies[p].color));
+                  }
+                  if (b.freezeBlast) {
+                    if (enemies[p].hp > 0) {
+                      enemies[p].frozenTime = Math.max(enemies[p].frozenTime, 3000);
+                      playSfx("freeze");
+                    }
+                  }
+                  if (b.empBlast) {
+                    enemies[p].empTime = Math.max(enemies[p].empTime, 3000 * player.activePowerUps.empBlast.stacks);
+                  }
+                  if (b.lifeSteal) {
+                    player.currentHP = Math.min(player.maxHP, player.currentHP + explosionDamage * player.activePowerUps.lifeSteal.stacks);
+                  }
+                  // Пирсинг должен отключаться когда включён bomb
+    
+                  if (enemies[p].hp <= 0 && !enemies[p].dead) {
+                    if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
+                      player.reflectedKillCount = (player.reflectedKillCount || 0) + 1;
+                      if (player.reflectedKillCount >= 15) {
+                        player.activePowerUps.lightSaber.duration += 30000;
+                        player.reflectedKillCount = 0; // либо можно сбросить: = 0
+                      }
+                    }
+                    if (enemies[p].type === "exploder") {
+                      for (let k = 0; k < enemies.length; k++) {
+                        const dx = enemies[k].x - enemies[p].x;
+                        const dy = enemies[k].y - enemies[p].y;
+                        if (Math.hypot(dx, dy) < 80) {
+                          enemies[k].hp -= 5;
                         }
                       }
-                      for(let m = 0; m < 20; m++){
-                        particles.push(new Particle(enemies[k].x, enemies[k].y, "#fa0"));
+                      for (let k = 0; k < 20; k++) {
+                        particles.push(new Particle(enemies[p].x, enemies[p].y, "#fa0"));
                       }
                     }
-                    if(enemies[k].type === "splitter") {
-                      enemies.push(new Enemy(enemies[k].x, enemies[k].y, "basic"));
-                      enemies.push(new Enemy(enemies[k].x, enemies[k].y, "basic"));
+                    if (enemies[p].type === "splitter") {
+                      enemies.push(new Enemy(enemies[p].x, enemies[p].y, "basic"));
+                      enemies.push(new Enemy(enemies[p].x, enemies[p].y, "basic"));
                     }
-                    spawnCollectible(enemies[k].x, enemies[k].y);
-                    score += (enemies[k].type==="elite")?200:100;
-                    enemies.splice(k,1);
+                    spawnCollectible(enemies[p].x, enemies[p].y);
+                    score += (enemies[p].type === "elite") ? 200 : 100;
+                    enemies[p].dead = true;
+                    onEnemyKilled(enemies[p]);
+                    break;
                   }
                 }
               }
-              for(let k = 0; k < 20; k++){
-                particles.push(new Particle(b.x, b.y, "rgba(141,141,141,1)"));
+              for (let k = 0; k < bosses.length; k++) {
+                const dx = bosses[k].x - b.x;
+                const dy = bosses[k].y - b.y;
+                if (Math.hypot(dx, dy) < bombRadius) {
+                  bosses[k].hp -= explosionDamage;
+                  // --- Если пуля имеет Freeze Blast, то замедляем босса ---
+                  if(b.freezeBlast) {
+                    bosses[k].freezeSlow = Math.max(bosses[k].freezeSlow, 3000);
+                  }
+                  for(let blood = 0; blood < 5; blood++){
+                    particles.push(new Particle(b.x, b.y, "#800000"));
+                  }
+                  if (bosses[k].hp <= 0){
+                    if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
+                      player.reflectedKillCount += 5;
+                      if (player.reflectedKillCount >= 15) {
+                        player.activePowerUps.lightSaber.duration += 30000;
+                        player.reflectedKillCount = 0;
+                      }
+                    }
+                  }
+                  b.dead = true;
+                  break;
+                }
               }
-              b.dead = true;
-              continue;
-            }
-            if(enemies[i].type === "shielded" && enemies[i].shield && enemies[i].shieldHP > 0) {
+            } else {
+              // по защищённым врагам
+              if(enemies[i].type === "shielded" && enemies[i].shield && enemies[i].shieldHP > 0) {
                 // Shielded enemy: subtract damage from shield first.
                 enemies[i].shieldHP -= b.damage;
-            } else {
-                enemies[i].hp -= b.damage;
-            }
-            // Push enemy away from impact
-             let pushStrength = 10; // adjust as needed
-             let impactAngle = Math.atan2(enemies[i].y - b.y, enemies[i].x - b.x);
-             enemies[i].x += Math.cos(impactAngle) * pushStrength;
-             enemies[i].y += Math.sin(impactAngle) * pushStrength;
-             // Spawn blood particles effect for enemy hit
-             for (let blood = 0; blood < 8; blood++) {
-               particles.push(new Particle(b.x, b.y, enemies[i].color));
-             }
-            if(b.freezeBlast) { 
-              if(enemies[i].hp > 0) {  // если враг остался жив после нанесённого урона
-                enemies[i].frozenTime = Math.max(enemies[i].frozenTime, 3000);
-                playSfx("freeze");
+              } else {
+                  enemies[i].hp -= b.damage;
               }
-            }
-            if(b.empBlast) { enemies[i].empTime = Math.max(enemies[i].empTime, 3000 * player.activePowerUps.empBlast.stacks); }
-            if(b.lifeSteal) { player.currentHP = Math.min(player.maxHP, player.currentHP + b.damage * player.activePowerUps.lifeSteal.stacks); }
-            if(b.piercing) {
-              b.piercingCount--;
-              if(b.piercingCount <= 0) { b.dead = true; }
-            } else { b.dead = true; }
-            if(enemies[i].hp <= 0) {
-              if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
-                player.reflectedKillCount = (player.reflectedKillCount || 0) + 1;
-                if (player.reflectedKillCount >= 15) {
-                  player.activePowerUps.lightSaber.duration += 30000;
-                  player.reflectedKillCount = 0; // либо можно сбросить: = 0
+              let pushStrength = 10; //дальность отбрасывания
+              let impactAngle = Math.atan2(enemies[i].y - b.y, enemies[i].x - b.x);
+              enemies[i].x += Math.cos(impactAngle) * pushStrength;
+              enemies[i].y += Math.sin(impactAngle) * pushStrength;
+              // Кровь каждого врага
+              for (let blood = 0; blood < 8; blood++) {
+                particles.push(new Particle(b.x, b.y, enemies[i].color));
+              }
+              if(b.freezeBlast) { // пуля с заморозкой
+                if(enemies[i].hp > 0) {  // если враг остался жив после нанесённого урона
+                  enemies[i].frozenTime = Math.max(enemies[i].frozenTime, 3000);
+                  playSfx("freeze");
                 }
               }
-              if(enemies[i].type === "exploder") {
-                // When an exploder dies, it explodes—damaging nearby enemies.
-                for(let k=0; k<enemies.length; k++){
-                  const dx = enemies[k].x - enemies[i].x;
-                  const dy = enemies[k].y - enemies[i].y;
-                  if(Math.hypot(dx,dy) < 50) {
-                     enemies[k].hp -= 5;
+              // ЭМП
+              if(b.empBlast) { enemies[i].empTime = Math.max(enemies[i].empTime, 3000 * player.activePowerUps.empBlast.stacks); }
+              // кража жизни
+              if(b.lifeSteal) { player.currentHP = Math.min(player.maxHP, player.currentHP + b.damage * player.activePowerUps.lifeSteal.stacks); }
+              if(b.piercing) {  // Обработка Пирсинга
+                b.piercingCount--;
+                if(b.piercingCount <= 0) { b.dead = true; }
+              } else { b.dead = true; }
+              if(enemies[i].hp <= 0) { // Обработка смерти врага
+                if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
+                  player.reflectedKillCount = (player.reflectedKillCount || 0) + 1;
+                  if (player.reflectedKillCount >= 15) {
+                    player.activePowerUps.lightSaber.duration += 30000;
+                    player.reflectedKillCount = 0; // либо можно сбросить: = 0
                   }
                 }
-                for(let k=0; k<20; k++){
-                  particles.push(new Particle(enemies[i].x, enemies[i].y, "#fa0"));
+                if(enemies[i].type === "exploder") {
+                  // When an exploder dies, it explodes—damaging nearby enemies.
+                  for(let k=0; k<enemies.length; k++){
+                    const dx = enemies[k].x - enemies[i].x;
+                    const dy = enemies[k].y - enemies[i].y;
+                    if(Math.hypot(dx,dy) < 80) {
+                      enemies[k].hp -= 5;
+                    }
+                  }
+                  for(let k=0; k<20; k++){
+                    particles.push(new Particle(enemies[i].x, enemies[i].y, "#fa0"));
+                  }
                 }
+                if(enemies[i].type === "splitter") {
+                  // Splitter splits into two basic enemies when killed.
+                  enemies.push(new Enemy(enemies[i].x, enemies[i].y, "basic"));
+                  enemies.push(new Enemy(enemies[i].x, enemies[i].y, "basic"));
+                }
+                spawnCollectible(enemies[i].x, enemies[i].y);
+                score += (enemies[i].type==="elite")?200:100;
+                enemies[i].dead = true;
+                onEnemyKilled(enemies[i]);
+                break;
               }
-              if(enemies[i].type === "splitter") {
-                // Splitter splits into two basic enemies when killed.
-                enemies.push(new Enemy(enemies[i].x, enemies[i].y, "basic"));
-                enemies.push(new Enemy(enemies[i].x, enemies[i].y, "basic"));
-              }
-              spawnCollectible(enemies[i].x, enemies[i].y);
-              score += (enemies[i].type==="elite")?200:100;
-              enemies[i].dead = true;
-              onEnemyKilled(enemies[i]);
-              break;
             }
           }
         }
       }
+      // Столкновение пуль с боссами (не боссовых пуль)
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        let b = bullets[i];
+        if (!b.fromBoss) {
+          for(let j = bosses.length - 1; j >= 0; j--) {
+            if(circleCollision(b, bosses[j])) {
+              if(b.bomb){
+                const explosionDamage = calculateRadiusAndDamageBomb(b);
+                for (let k = 0; k < bosses.length; k++) {
+                  const dx = bosses[k].x - b.x;
+                  const dy = bosses[k].y - b.y;
+                  if (Math.hypot(dx, dy) < bombRadius) {
+                    bosses[k].hp -= explosionDamage;
+                    // --- Если пуля имеет Freeze Blast, то замедляем босса ---
+                    if(b.freezeBlast) {
+                      bosses[k].freezeSlow = Math.max(bosses[k].freezeSlow, 3000);
+                    }
+                    for(let blood = 0; blood < 5; blood++){
+                      particles.push(new Particle(b.x, b.y, "#800000"));
+                    }
+                    if (bosses[k].hp <= 0){
+                      if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
+                        player.reflectedKillCount += 5;
+                        if (player.reflectedKillCount >= 15) {
+                          player.activePowerUps.lightSaber.duration += 30000;
+                          player.reflectedKillCount = 0;
+                        }
+                      }
+                    }
+                    b.dead = true;
+                    break;
+                  }
+                }
+                for (let p = enemies.length - 1; p >= 0; p--) {
+                  const dx = enemies[p].x - b.x;
+                  const dy = enemies[p].y - b.y;
+                  if (Math.hypot(dx, dy) < bombRadius) {
+                    if (enemies[p].type === "shielded" && enemies[p].shield && enemies[p].shieldHP > 0) {
+                      enemies[p].shieldHP -= b.damage;
+                      enemies[p].hp -= explosionDamage;
+                    } else {
+                      enemies[p].hp -= explosionDamage;
+                    }
+                    // Отталкивание объекта от центра взрыва
+                    const pushStrength = 14;
+                    const impactAngle = Math.atan2(dy, dx);
+                    enemies[p].x += Math.cos(impactAngle) * pushStrength;
+                    enemies[p].y += Math.sin(impactAngle) * pushStrength;
+                    for (let blood = 0; blood < 8; blood++) { // Кровь каждого врага
+                      particles.push(new Particle(b.x, b.y, enemies[p].color));
+                    }
+                    if (b.freezeBlast) {
+                      if (enemies[p].hp > 0) {
+                        enemies[p].frozenTime = Math.max(enemies[p].frozenTime, 3000);
+                        playSfx("freeze");
+                      }
+                    }
+                    if (b.empBlast) {
+                      enemies[p].empTime = Math.max(enemies[p].empTime, 3000 * player.activePowerUps.empBlast.stacks);
+                    }
+                    if (b.lifeSteal) {
+                      player.currentHP = Math.min(player.maxHP, player.currentHP + explosionDamage * player.activePowerUps.lifeSteal.stacks);
+                    }
+                    // Пирсинг должен отключаться когда включён bomb
+      
+                    if (enemies[p].hp <= 0 && !enemies[p].dead) {
+                      if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
+                        player.reflectedKillCount = (player.reflectedKillCount || 0) + 1;
+                        if (player.reflectedKillCount >= 15) {
+                          player.activePowerUps.lightSaber.duration += 30000;
+                          player.reflectedKillCount = 0; // либо можно сбросить: = 0
+                        }
+                      }
+                      if (enemies[p].type === "exploder") {
+                        for (let k = 0; k < enemies.length; k++) {
+                          const dx = enemies[k].x - enemies[p].x;
+                          const dy = enemies[k].y - enemies[p].y;
+                          if (Math.hypot(dx, dy) < 80) {
+                            enemies[k].hp -= 5;
+                          }
+                        }
+                        for (let k = 0; k < 20; k++) {
+                          particles.push(new Particle(enemies[p].x, enemies[p].y, "#fa0"));
+                        }
+                      }
+                      if (enemies[p].type === "splitter") {
+                        enemies.push(new Enemy(enemies[p].x, enemies[p].y, "basic"));
+                        enemies.push(new Enemy(enemies[p].x, enemies[p].y, "basic"));
+                      }
+                      spawnCollectible(enemies[p].x, enemies[p].y);
+                      score += (enemies[p].type === "elite") ? 200 : 100;
+                      enemies[p].dead = true;
+                      onEnemyKilled(enemies[p]);
+                      break;
+                    }
+                  }
+                }
+              }
+              else{
+                bosses[j].hp -= b.damage;
+                // --- Если пуля имеет Freeze Blast, то замедляем босса ---
+                if(b.freezeBlast) {
+                  bosses[j].freezeSlow = Math.max(bosses[j].freezeSlow, 3000);
+                }
+                for(let blood = 0; blood < 5; blood++){
+                  particles.push(new Particle(b.x, b.y, "#800000"));
+                }
+                if (bosses[j].hp <= 0){
+                  if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
+                    player.reflectedKillCount += 5;
+                    if (player.reflectedKillCount >= 15) {
+                      player.activePowerUps.lightSaber.duration += 30000;
+                      player.reflectedKillCount = 0;
+                    }
+                  }
+                }
+                b.dead = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+
       // Столкновение пуль боссов с игроком
       for(let i = bullets.length-1; i>=0; i--) {
         let b = bullets[i];
@@ -4893,60 +5087,7 @@
         }
       }
 
-      // Столкновение пуль с боссами (не боссовых пуль)
-      for (let i = bullets.length - 1; i >= 0; i--) {
-        let b = bullets[i];
-        if (!b.fromBoss) {
-          for(let j = bosses.length - 1; j >= 0; j--) {
-            if(circleCollision(b, bosses[j])) {
-              if (b.bomb) {
-                addMiniWave(b.x, b.y);
-                const explosionDamage = calculateRadiusAndDamageBomb(b);
-                bosses[j].hp  -= explosionDamage;
-                // --- Если пуля имеет Freeze Blast, то замедляем босса ---
-                if(b.freezeBlast) {
-                  bosses[j].freezeSlow = Math.max(bosses[j].freezeSlow, 3000);
-                }
-                for(let blood = 0; blood < 5; blood++){
-                  particles.push(new Particle(b.x, b.y, "#800000"));
-                }
-                if (bosses[j].hp <= 0){
-                  if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
-                    player.reflectedKillCount += 5;
-                    if (player.reflectedKillCount >= 15) {
-                      player.activePowerUps.lightSaber.duration += 30000;
-                      player.reflectedKillCount = 0;
-                    }
-                  }
-                }
-                b.dead = true;
-                break;
-              }
-              else{
-                bosses[j].hp -= b.damage;
-                // --- Если пуля имеет Freeze Blast, то замедляем босса ---
-                if(b.freezeBlast) {
-                  bosses[j].freezeSlow = Math.max(bosses[j].freezeSlow, 3000);
-                }
-                for(let blood = 0; blood < 5; blood++){
-                  particles.push(new Particle(b.x, b.y, "#800000"));
-                }
-                if (bosses[j].hp <= 0){
-                  if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
-                    player.reflectedKillCount += 5;
-                    if (player.reflectedKillCount >= 15) {
-                      player.activePowerUps.lightSaber.duration += 30000;
-                      player.reflectedKillCount = 0;
-                    }
-                  }
-                }
-                b.dead = true;
-                break;
-              }
-            }
-          }
-        }
-      }
+
       if(powerMeter >= getPowerMeterMax() && gameState==="playing") {
         playSfx("powerup");
         showPowerUpMenu();
