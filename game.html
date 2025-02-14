@@ -2385,16 +2385,30 @@
         ctx.restore();
       }
     }
-    // =================== Вспомогательные функции ===================
+    // Функция для вычисления расстояния от точки (px,py) до линии, задаваемой двумя точками (x1,y1) и (x2,y2)
     function distancePointToLine(px, py, x1, y1, x2, y2) {
-      let A = px - x1, B = py - y1, C = x2 - x1, D = y2 - y1;
-      let dot = A * C + B * D, len_sq = C * C + D * D;
-      let param = len_sq !== 0 ? dot / len_sq : -1;
+      let A = px - x1;
+      let B = py - y1;
+      let C = x2 - x1;
+      let D = y2 - y1;
+
+      let dot = A * C + B * D;
+      let len_sq = C * C + D * D;
+      let param = (len_sq !== 0) ? (dot / len_sq) : -1;
+
       let xx, yy;
-      if (param < 0) { xx = x1; yy = y1; }
-      else if (param > 1) { xx = x2; yy = y2; }
-      else { xx = x1 + param * C; yy = y1 + param * D; }
-      let dx = px - xx, dy = py - yy;
+      if (param < 0) {
+        xx = x1;
+        yy = y1;
+      } else if (param > 1) {
+        xx = x2;
+        yy = y2;
+      } else {
+        xx = x1 + param * C;
+        yy = y1 + param * D;
+      }
+      let dx = px - xx;
+      let dy = py - yy;
       return Math.sqrt(dx * dx + dy * dy);
     }
 
@@ -3356,32 +3370,6 @@
       const dy = a.y - b.y;
       return Math.hypot(dx, dy) < a.radius + b.radius;
     }
-    // Функция для вычисления расстояния от точки (px,py) до линии, задаваемой двумя точками (x1,y1) и (x2,y2)
-    function distancePointToLine(px, py, x1, y1, x2, y2) {
-      let A = px - x1;
-      let B = py - y1;
-      let C = x2 - x1;
-      let D = y2 - y1;
-
-      let dot = A * C + B * D;
-      let len_sq = C * C + D * D;
-      let param = (len_sq !== 0) ? (dot / len_sq) : -1;
-
-      let xx, yy;
-      if (param < 0) {
-        xx = x1;
-        yy = y1;
-      } else if (param > 1) {
-        xx = x2;
-        yy = y2;
-      } else {
-        xx = x1 + param * C;
-        yy = y1 + param * D;
-      }
-      let dx = px - xx;
-      let dy = py - yy;
-      return Math.sqrt(dx * dx + dy * dy);
-    }
 
 
     // =================== Spawning Functions ===================
@@ -3571,8 +3559,8 @@
         if (choice === "Rapid Fire" && (case_to_much_bullets||case_to_much_bullets2)) return false;
         if (choice === "Power Meter Boost" && case_to_much_powerMeterBoost) return false;
         if (choice === "Neon Overdrive" && case_to_much_neonOverDrive) return false;
-        return true;
         if (choice === "Ninja Spirit" && player.activePowerUps.ninjaSpirit >= 2) return false;
+        return true;
       });
 
       let options = [];
@@ -4567,10 +4555,10 @@
             if (dist < enemy.radius) {
               // Наносим урон: если враг щитован – сначала щит, иначе напрямую HP
               if (enemy.type === "shielded" && enemy.shield && enemy.shieldHP > 0) {
-                enemy.shieldHP -= this.beamDamage;
+                enemy.shieldHP -= beamDamage;
               } else {
-                enemy.hp -= this.beamDamage;
-              }
+                enemy.hp -= beamDamage;
+              }distancePointToLine
                 // Эффект попадания
                 if(enemy.hp <= 0) {
                   if(enemy.type === "exploder") {
@@ -4652,7 +4640,7 @@
             spawnEnemy();
           }
         }
-        enemySpawnInterval = Math.max(500, 1500 - score/10);
+        //enemySpawnInterval = Math.max(500, 1500 - score/10);
       }
       // Обновляем врагов
       for(let i = enemies.length-1; i>=0; i--) {
@@ -4814,10 +4802,12 @@
                     }
                     if (enemies[p].type === "exploder") {
                       for (let k = 0; k < enemies.length; k++) {
-                        const dx = enemies[k].x - enemies[p].x;
-                        const dy = enemies[k].y - enemies[p].y;
-                        if (Math.hypot(dx, dy) < 80) {
-                          enemies[k].hp -= 5;
+                        if (enemies[k] !== enemy) {
+                          const dx = enemies[k].x - enemy.x;
+                          const dy = enemies[k].y - enemy.y;
+                          if (Math.hypot(dx, dy) < 80) {
+                            enemies[k].hp -= 5;
+                          }
                         }
                       }
                       for (let k = 0; k < 20; k++) {
@@ -5002,10 +4992,12 @@
                       }
                       if (enemies[p].type === "exploder") {
                         for (let k = 0; k < enemies.length; k++) {
-                          const dx = enemies[k].x - enemies[p].x;
-                          const dy = enemies[k].y - enemies[p].y;
-                          if (Math.hypot(dx, dy) < 80) {
-                            enemies[k].hp -= 5;
+                          if (enemies[k] !== enemy) {
+                            const dx = enemies[k].x - enemy.x;
+                            const dy = enemies[k].y - enemy.y;
+                            if (Math.hypot(dx, dy) < 80) {
+                              enemies[k].hp -= 5;
+                            }
                           }
                         }
                         for (let k = 0; k < 20; k++) {
