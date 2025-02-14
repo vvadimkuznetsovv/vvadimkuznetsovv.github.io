@@ -2040,6 +2040,7 @@
         this.shootingDisabled = 0;
         this.empSlowed = 0;
         this.angle = 0;
+        
       }
       update(deltaTime) {
         for (let key in this.activePowerUps) {
@@ -3169,12 +3170,18 @@
     
           // Если объект находится в пределах дистанции притяжения, притягиваем его
           if (dist < attractionRange) {
-            let baseAttractSpeed = 1 * scaleFactor; // базовая скорость притяжения
-            // Увеличиваем скорость притяжения пропорционально количеству стэков
-            let attractSpeed = baseAttractSpeed * player.activePowerUps.scoreMagnet.stacks * deltaTime;
+            // Вычисляем эффективную скорость игрока (учитывая power‑up Speed Boost, замедление и прочее)
+            let playerEffectiveSpeed = player.baseSpeed * permanentUpgrades.speed;
+            if (player.activePowerUps.speedBoost.duration > 0) {
+              playerEffectiveSpeed *= 1.8;
+            }
+            // Новая скорость притяжения: на 1 больше, чем скорость игрока, умноженная на deltaTime
+            let attractSpeed = (playerEffectiveSpeed + 1) * deltaTime;
+            
             this.x += (dx / dist) * attractSpeed;
             this.y += (dy / dist) * attractSpeed;
           }
+          
         }
       }
       draw() {
