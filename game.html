@@ -1588,7 +1588,7 @@
           }
         }
       },
-      {
+      { // biome_6
         name: "Cyber Circuit",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -1615,7 +1615,7 @@
           }
         }
       },
-      {
+      { // biome_7
         name: "Digital Dystopia",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -1636,7 +1636,7 @@
           }
         }
       },
-      {
+      { // biome_8
         name: "Holographic Grid",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -1664,7 +1664,7 @@
           }
         }
       },
-      {
+      { // biome_9
         name: "Laser Lair",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -1688,7 +1688,7 @@
           }
         }
       },
-      {
+      { // biome_10
         name: "Virtual Vortex",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -1708,7 +1708,7 @@
           }
         }
       },
-      {
+      { // biome_11
         name: "Cyber Grid",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -1734,7 +1734,7 @@
           }
         }
       },
-      {
+      { // biome_12
         name: "Digital Void",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -1750,7 +1750,7 @@
         }
       },
       // Добавляем новые биомы:
-      {
+      { // biome_13
         name: "Cyber Grid Cyan",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -1776,7 +1776,7 @@
           }
         }
       },
-      {
+      { // biome_14
         name: "Aurora Borealis",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -1802,7 +1802,7 @@
           }
         }
       },
-      {
+      { // biome_15
         name: "Cyber Grid Violet",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -1828,7 +1828,7 @@
           }
         }
       },
-      {
+      {   // biome_16
         name: "Glitch Zone",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -1838,7 +1838,7 @@
           generateGlitchPattern();
         }
       },
-      {
+      {   // biome_17
         name: "Cosmic Rift",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -1867,15 +1867,15 @@
           }
         }
       },
-      {
+      {   // biome_18
         name: "Retro Circuit",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
           // Фон в стиле печатной платы
           context.fillStyle = "#001";
           context.fillRect(0, 0, width, height);
-          context.strokeStyle = "#0f0";
-          context.lineWidth = 2 * scaleFactor;
+          context.strokeStyle = "rgba(0,255,0,0.4)";
+          context.lineWidth = 3 * scaleFactor;
           // Вертикальные линии
           for (let x = 0; x < width; x += actualGridSize40) {
             context.beginPath();
@@ -1896,12 +1896,12 @@
             let y = Math.random() * height;
             context.beginPath();
             context.arc(x, y, 3 * scaleFactor, 0, Math.PI * 2);
-            context.fillStyle = "#0f0";
+            context.fillStyle = "rgba(0,255,0,0.4)";
             context.fill();
           }
         }
       },
-      {
+      {   // biome_19
         name: "Neon Forest",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
