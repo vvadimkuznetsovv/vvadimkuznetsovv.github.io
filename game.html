@@ -1153,8 +1153,8 @@
       miniWaves.push({
         x: x,
         y: y,
-        phase1Duration: 300 * (bombRadius / (80 * scaleFactor)),  // длительность фазы 1 в мс (расширение до 80)
-        phase2Duration: 200 * (bombRadius / (80 * scaleFactor)),  // длительность фазы 2 в мс (расширение до 110 и затухание)
+        phase1Duration: 100 * (bombRadius / (80 * scaleFactor)),  // длительность фазы 1 в мс (расширение до 80)
+        phase2Duration: 50 * (bombRadius / (80 * scaleFactor)),  // длительность фазы 2 в мс (расширение до 110 и затухание)
         elapsed: 0,          // прошедшее время эффекта
         color: randomLightsaberColors[Math.floor(Math.random() * randomLightsaberColors.length)]
       });
@@ -1237,7 +1237,6 @@
         //applyPowerUp("Light Saber");   //cheat
         pauseGame();
         //nextLevel();   //cheat
-        
       }
     });
     document.addEventListener("pointerdown", (e) => {
@@ -1249,7 +1248,6 @@
         startGame();
       }
     });
-    
 
     // =================== Virtual Joysticks (Mobile) ===================
     const leftJoystick = { active: false, startX: 0, startY: 0, dx: 0, dy: 0 };
@@ -1350,7 +1348,6 @@
         }
       });
     }
-    
     
     if(isMobile) {
       setupJoystick(leftJoystickElem, leftJoystick);
@@ -4802,12 +4799,10 @@
                     }
                     if (enemies[p].type === "exploder") {
                       for (let k = 0; k < enemies.length; k++) {
-                        if (enemies[k] !== enemy) {
-                          const dx = enemies[k].x - enemy.x;
-                          const dy = enemies[k].y - enemy.y;
-                          if (Math.hypot(dx, dy) < 80) {
-                            enemies[k].hp -= 5;
-                          }
+                        const dx = enemies[k].x - enemies[p].x;
+                        const dy = enemies[k].y - enemies[p].y;
+                        if (Math.hypot(dx, dy) < 80) {
+                          enemies[k].hp -= 5;
                         }
                       }
                       for (let k = 0; k < 20; k++) {
@@ -4822,7 +4817,6 @@
                     score += (enemies[p].type === "elite") ? 200 : 100;
                     enemies[p].dead = true;
                     onEnemyKilled(enemies[p]);
-                    break;
                   }
                 }
               }
@@ -4848,7 +4842,6 @@
                     }
                   }
                   b.dead = true;
-                  break;
                 }
               }
             } else {
@@ -4947,7 +4940,6 @@
                       }
                     }
                     b.dead = true;
-                    break;
                   }
                 }
                 for (let p = enemies.length - 1; p >= 0; p--) {
@@ -4992,12 +4984,10 @@
                       }
                       if (enemies[p].type === "exploder") {
                         for (let k = 0; k < enemies.length; k++) {
-                          if (enemies[k] !== enemy) {
-                            const dx = enemies[k].x - enemy.x;
-                            const dy = enemies[k].y - enemy.y;
-                            if (Math.hypot(dx, dy) < 80) {
-                              enemies[k].hp -= 5;
-                            }
+                          const dx = enemies[k].x - enemies[p].x;
+                          const dy = enemies[k].y - enemies[p].y;
+                          if (Math.hypot(dx, dy) < 80) {
+                            enemies[k].hp -= 5;
                           }
                         }
                         for (let k = 0; k < 20; k++) {
@@ -5012,7 +5002,6 @@
                       score += (enemies[p].type === "elite") ? 200 : 100;
                       enemies[p].dead = true;
                       onEnemyKilled(enemies[p]);
-                      break;
                     }
                   }
                 }
