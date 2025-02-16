@@ -505,8 +505,8 @@
       // Расчёт радиуса взрыва с учётом количества стэков bomb:
       baseBombRadius = 110 * scaleFactor;
       const bombStacks = player.activePowerUps.bomb.stacks || 1;
-      // Например, радиус увеличивается на 20% за каждый дополнительный стэк:
-      bombRadius = baseBombRadius * (1 + (bombStacks - 1) * 0.2);
+      // Например, радиус увеличивается на 50% за каждый дополнительный стэк:
+      bombRadius = baseBombRadius * (1 + (bombStacks - 1) * 0.5);
       addMiniWave(bullet.x, bullet.y);
       // Вычисляем множитель от damage boost:
       const damageBoostMultiplier = (player.activePowerUps.damageBoost.duration > 0
@@ -651,13 +651,13 @@
 
     // (Assuming you have a global variable `sfxVolume` already defined.)
     const sfxMap = {
-      shot: new Howl({ src: ["assets/sfx/shot.ogg"], volume: sfxVolume, pool: 10 }),
-      freeze: new Howl({ src: ["assets/sfx/freeze.ogg"], volume: sfxVolume, pool: 10 }),
-      powerup: new Howl({ src: ["assets/sfx/powerup.ogg"], volume: sfxVolume }),
-      bossDeath: new Howl({ src: ["assets/sfx/boss_death.ogg"], volume: sfxVolume }),
-      click: new Howl({ src: ["assets/sfx/click.ogg"], volume: sfxVolume }),
-      neonoverdrive: new Howl({ src: ["assets/sfx/neonoverdrive.ogg"], volume: sfxVolume, pool: 10 }),
-      deadenemy: new Howl({ src: ["assets/sfx/deadenemy.ogg"], volume: sfxVolume, pool: 10 })
+      shot: new Howl({ src: ["assets/sfx/shot.mp3"], volume: sfxVolume, pool: 10 }),
+      freeze: new Howl({ src: ["assets/sfx/freeze.mp3"], volume: sfxVolume, pool: 10 }),
+      powerup: new Howl({ src: ["assets/sfx/powerup.mp3"], volume: sfxVolume }),
+      bossDeath: new Howl({ src: ["assets/sfx/boss_death.mp3"], volume: sfxVolume }),
+      click: new Howl({ src: ["assets/sfx/click.mp3"], volume: sfxVolume }),
+      neonoverdrive: new Howl({ src: ["assets/sfx/neonoverdrive.mp3"], volume: sfxVolume, pool: 10 }),
+      deadenemy: new Howl({ src: ["assets/sfx/deadenemy.mp3"], volume: sfxVolume, pool: 10 })
     };
     const reflectedShots = [
       new Howl({ src: ["assets/sfx/reflectedShot_1.mp3"], volume: sfxVolume }),
@@ -4474,7 +4474,6 @@
                 b.fromEnemy = false;
                 b.fromBoss = false;
                 b.source = "player";
-                b.damage = b.damage/2;
                 let target = getClosestTargetWithoutBullet();
                 if (target) {
                   let dx = target.x - b.x;
@@ -4726,7 +4725,11 @@
           }
           // Если собран специальный collectible, даем в 2 раза больше
           if (collectibles[i] instanceof SpecialCollectible) {
-            addValue *= 2;
+            addValue *= 3;
+            // Добавляем бонус здоровья: 15% от максимального здоровья игрока
+            const bonusHealth = Math.floor(player.maxHP * 0.15);
+            // Обновляем текущее здоровье, не превышая максимальное значение
+            player.currentHP = Math.min(player.maxHP, player.currentHP + bonusHealth);
           }
           if (player.activePowerUps.powerMeterBoost && player.activePowerUps.powerMeterBoost.duration > 0) {
             addValue *= (1 + player.activePowerUps.powerMeterBoost.stacks); 
@@ -4768,7 +4771,7 @@
                     enemies[p].hp -= explosionDamage;
                   }
                   // Отталкивание объекта от центра взрыва
-                  const pushStrength = 14;
+                  const pushStrength = 15;
                   const impactAngle = Math.atan2(dy, dx);
                   enemies[p].x += Math.cos(impactAngle) * pushStrength;
                   enemies[p].y += Math.sin(impactAngle) * pushStrength;
@@ -4793,7 +4796,7 @@
                     if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
                       player.reflectedKillCount = (player.reflectedKillCount || 0) + 1;
                       if (player.reflectedKillCount >= 15) {
-                        player.activePowerUps.lightSaber.duration += 30000;
+                        player.activePowerUps.lightSaber.duration += 20000;
                         player.reflectedKillCount = 0; // либо можно сбросить: = 0
                       }
                     }
@@ -4836,7 +4839,7 @@
                     if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
                       player.reflectedKillCount += 5;
                       if (player.reflectedKillCount >= 15) {
-                        player.activePowerUps.lightSaber.duration += 30000;
+                        player.activePowerUps.lightSaber.duration += 20000;
                         player.reflectedKillCount = 0;
                       }
                     }
@@ -4878,7 +4881,7 @@
                 if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
                   player.reflectedKillCount = (player.reflectedKillCount || 0) + 1;
                   if (player.reflectedKillCount >= 15) {
-                    player.activePowerUps.lightSaber.duration += 30000;
+                    player.activePowerUps.lightSaber.duration += 20000;
                     player.reflectedKillCount = 0; // либо можно сбросить: = 0
                   }
                 }
@@ -4934,7 +4937,7 @@
                       if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
                         player.reflectedKillCount += 5;
                         if (player.reflectedKillCount >= 15) {
-                          player.activePowerUps.lightSaber.duration += 30000;
+                          player.activePowerUps.lightSaber.duration += 20000;
                           player.reflectedKillCount = 0;
                         }
                       }
@@ -4978,7 +4981,7 @@
                       if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
                         player.reflectedKillCount = (player.reflectedKillCount || 0) + 1;
                         if (player.reflectedKillCount >= 15) {
-                          player.activePowerUps.lightSaber.duration += 30000;
+                          player.activePowerUps.lightSaber.duration += 20000;
                           player.reflectedKillCount = 0; // либо можно сбросить: = 0
                         }
                       }
@@ -5019,7 +5022,7 @@
                   if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
                     player.reflectedKillCount += 5;
                     if (player.reflectedKillCount >= 15) {
-                      player.activePowerUps.lightSaber.duration += 30000;
+                      player.activePowerUps.lightSaber.duration += 20000;
                       player.reflectedKillCount = 0;
                     }
                   }
