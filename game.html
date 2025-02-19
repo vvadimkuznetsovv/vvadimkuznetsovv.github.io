@@ -2784,7 +2784,7 @@
               let b = new Bullet(spawnX, spawnY, angle, 1, "enemy");
               b.fromEnemy = true;         // Помечаем как пуля врага
               b.speed = 6 * scaleFactor;
-              b.damage = this.bulletDamage + bonusDamage - permanentUpgrades.damageReduction; // Урон берётся из врага
+              b.damage = Math.max(0, this.bulletDamage + bonusDamage - permanentUpgrades.damageReduction); // Урон берётся из врага
               bullets.push(b);
               this.shootCooldown = 2000;
             }
@@ -2806,7 +2806,7 @@
               let b = new Bullet(this.x, this.y, angle, 1, "enemy");
               b.empBlast = true;
               b.speed = 4 * scaleFactor;
-              b.damage = this.bulletDamage + bonusDamage - permanentUpgrades.damageReduction;
+              b.damage = Math.max(0, this.bulletDamage + bonusDamage - permanentUpgrades.damageReduction);
               b.fromEnemy = true;  // Помечаем как пуля врага
               bullets.push(b);
               this.shootCooldown = 2500;
@@ -2832,7 +2832,7 @@
               b.fromEnemy = true;        // Помечаем как пуля врага
               b.radius = 8 * scaleFactor;
               b.speed = 7 * scaleFactor;
-              b.damage = this.bulletDamage + bonusDamage - permanentUpgrades.damageReduction;
+              b.damage = Math.max(0, this.bulletDamage + bonusDamage - permanentUpgrades.damageReduction);
               bullets.push(b);
               this.shootCooldown = 3000;
             }
@@ -3024,7 +3024,7 @@
                 let b = new Bullet(this.x, this.y, baseAngle + offset, 1, "boss");
                 b.fromBoss = true;
                 b.speed = 5 * scaleFactor;
-                b.damage = 20 + bonusDamage - permanentUpgrades.damageReduction;
+                b.damage = Math.max(0, 20 + bonusDamage - permanentUpgrades.damageReduction);
                 bullets.push(b);
               }
               this.shootCooldown = 3000;
@@ -3034,7 +3034,7 @@
                 let b = new Bullet(this.x, this.y, baseAngle + offset, 1, "boss");
                 b.fromBoss = true;
                 b.speed = 6 * scaleFactor;
-                b.damage = 25 + bonusDamage - permanentUpgrades.damageReduction;
+                b.damage = Math.max(0, 25 + bonusDamage - permanentUpgrades.damageReduction);
                 bullets.push(b);
               }
               this.shootCooldown = 2000;
@@ -3044,7 +3044,7 @@
                 let b = new Bullet(this.x, this.y, baseAngle + offset, 1, "boss");
                 b.fromBoss = true;
                 b.speed = 6 * scaleFactor;
-                b.damage = 30 + bonusDamage - permanentUpgrades.damageReduction;
+                b.damage = Math.max(0, 30 + bonusDamage - permanentUpgrades.damageReduction);
                 b.homing = true;
                 bullets.push(b);
               }
@@ -3055,7 +3055,7 @@
                 let b = new Bullet(this.x, this.y, angle, 1, "boss");
                 b.fromBoss = true;
                 b.speed = 7 * scaleFactor;
-                b.damage = 20 + bonusDamage - permanentUpgrades.damageReduction;
+                b.damage = Math.max(0, 20 + bonusDamage - permanentUpgrades.damageReduction);
                 bullets.push(b);
               }
               this.shootCooldown = 500;
@@ -3065,7 +3065,7 @@
                 let b = new Bullet(this.x, this.y, baseAngle + offset, 1, "boss");
                 b.fromBoss = true;
                 b.speed = 8 * scaleFactor;
-                b.damage = 35 + bonusDamage - permanentUpgrades.damageReduction;
+                b.damage = Math.max(0, 35 + bonusDamage - permanentUpgrades.damageReduction);
                 bullets.push(b);
               }
               this.shootCooldown = 150;
@@ -4471,6 +4471,7 @@
               bladeStartX, bladeStartY,
               bladeEndX, bladeEndY);
               if (dist < (b.radius + 4 * scaleFactor)) {
+                b.damage = b.damage + permanentUpgrades.damageReduction;
                 b.fromEnemy = false;
                 b.fromBoss = false;
                 b.source = "player";
@@ -4727,7 +4728,8 @@
           if (collectibles[i] instanceof SpecialCollectible) {
             addValue *= 3;
             // Добавляем бонус здоровья: 15% от максимального здоровья игрока
-            const bonusHealth = Math.floor(player.maxHP * 0.15);
+            const baseMaxHP = 100 + permanentUpgrades.health;
+            const bonusHealth = Math.floor(baseMaxHP * 0.15);
             // Обновляем текущее здоровье, не превышая максимальное значение
             player.currentHP = Math.min(player.maxHP, player.currentHP + bonusHealth);
           }
