@@ -1967,28 +1967,7 @@
           }
         }
       },
-      {   // biome_20
-        name: "Pulsating Dance Floor",
-        drawBackground: function(ctxToUse) {
-          let context = ctxToUse || ctx;
-          const time = performance.now() / 1000;
-          const pulse = Math.sin(time * 2) * 0.3 + 0.7;
-          const grad = context.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height)/2);
-          grad.addColorStop(0, `rgba(138,43,226,${pulse})`);
-          grad.addColorStop(1, "#000");
-          context.fillStyle = grad;
-          context.fillRect(0, 0, width, height);
-          for (let i = 0; i < 20; i++) {
-            let x = Math.random() * width;
-            let y = Math.random() * height;
-            context.beginPath();
-            context.arc(x, y, 10 * scaleFactor, 0, Math.PI * 2);
-            context.fillStyle = `rgba(0,255,255,${pulse})`;
-            context.fill();
-          }
-        }
-      },
-      {    // biome_21 
+      {    // biome_20 
         name: "Mirror Infinity",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -2011,7 +1990,7 @@
           }
         }
       },
-      {     // biome_22
+      {     // biome_21
         name: "Laser Stage",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -2029,11 +2008,14 @@
             context.lineTo(x2, y2);
             context.strokeStyle = "rgba(255,0,0,0.5)";
             context.lineWidth = 4 * scaleFactor;
+            context.shadowColor = "rgba(255,0,0,0.8)";
+            context.shadowBlur = 10;
             context.stroke();
+            context.shadowBlur = 0;
           }
         }
       },
-      {     // biome_23
+      {     // biome_22
         name: "Hexagonal Rhythm",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -2061,7 +2043,7 @@
           }
         }
       },
-      {     // biome_24
+      {     // biome_23
         name: "Low Gravity DISCO",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -2083,7 +2065,7 @@
           }
         }
       },
-      {     // biome_25
+      {     // biome_24
         name: "Light Waves",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -2102,7 +2084,7 @@
           }
         }
       },
-      {   // biome_26  
+      {   // biome_25  
         name: "Retro 80s Disco",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -2133,7 +2115,7 @@
           }
         }
       },
-      {     // biome_27
+      {     // biome_26
         name: "Cyber Future Disco",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -2164,7 +2146,7 @@
           }
         }
       },
-      {     // biome_28
+      {     // biome_27
         name: "Underwater Party",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
@@ -2199,7 +2181,7 @@
           }
         }
       },
-      {     // biome_29
+      {     // biome_28
         name: "Rotating Chaos",
         drawBackground: function(ctxToUse) {
           let context = ctxToUse || ctx;
