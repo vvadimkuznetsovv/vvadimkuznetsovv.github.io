@@ -757,7 +757,6 @@
     
       if (clickX >= barX && clickX <= barX + barWidth &&
           clickY >= barY && clickY <= barY + barHeight) {
-        console.log("Активирован Ninja Spirit");
         applyPowerUp("Ninja Spirit");
       }
     });
@@ -993,12 +992,12 @@
       } else if (comboCounter === 100) {
         applyPowerUp("Friend", true);
       }else if (comboCounter === 150) {
-        applyPowerUp("Restore Health", true);
+        isFV ? applyPowerUp("Restore Health", true) : applyPowerUp("Health Boost", true);
       }else if (comboCounter === 200) {
         applyPowerUp("Neon Overdrive", true);
         applyPowerUp("Shield", true);
       }else if (comboCounter === 300) {
-        applyPowerUp("Psi Blast", true);
+        isFV ? applyPowerUp("Psi Blast", true) : applyPowerUp("EMP Blast", true);
       }else if (comboCounter === 400) {
         showPermanentUpgradeMenu();
         resetCombo();
@@ -1147,6 +1146,8 @@
 
     let psiBlastWave = null;
     let miniWaves = [];
+    
+    let isFV = true;
 
     // Функция для добавления эффекта мини‑волны
     function addMiniWave(x, y) {
@@ -1272,7 +1273,6 @@
           thumb.style.transform = 'translate(0px, 0px)';
         }
       });
-    
       // Touch Move: update the joystick offset and move the thumb visually
       joystickElem.addEventListener("touchmove", (e) => {
         e.preventDefault();
@@ -1904,6 +1904,8 @@
             context.arc(Math.random() * width, Math.random() * height, Math.random() * (100 * scaleFactor),     0, Math.PI * 2);
             context.strokeStyle = "rgba(255, 0, 255, 0.1)";
             context.lineWidth = 5 * scaleFactor;
+            context.shadowColor = "rgba(255, 0, 255, 0.1)";
+            context.shadowBlur = 10;
             context.stroke();
           }
         }
@@ -1964,10 +1966,266 @@
             context.shadowBlur = 0;
           }
         }
+      },
+      {   // biome_20
+        name: "Pulsating Dance Floor",
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          const time = performance.now() / 1000;
+          const pulse = Math.sin(time * 2) * 0.3 + 0.7;
+          const grad = context.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height)/2);
+          grad.addColorStop(0, `rgba(138,43,226,${pulse})`);
+          grad.addColorStop(1, "#000");
+          context.fillStyle = grad;
+          context.fillRect(0, 0, width, height);
+          for (let i = 0; i < 20; i++) {
+            let x = Math.random() * width;
+            let y = Math.random() * height;
+            context.beginPath();
+            context.arc(x, y, 10 * scaleFactor, 0, Math.PI * 2);
+            context.fillStyle = `rgba(0,255,255,${pulse})`;
+            context.fill();
+          }
+        }
+      },
+      {    // biome_21 
+        name: "Mirror Infinity",
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          const grad = context.createLinearGradient(0, 0, width, height);
+          grad.addColorStop(0, "#111");
+          grad.addColorStop(1, "#333");
+          context.fillStyle = grad;
+          context.fillRect(0, 0, width, height);
+          for (let i = 0; i < 50; i++) {
+            let x1 = Math.random() * width;
+            let y1 = Math.random() * height;
+            let x2 = x1 + (Math.random() - 0.5) * 200;
+            let y2 = y1 + (Math.random() - 0.5) * 200;
+            context.beginPath();
+            context.moveTo(x1, y1);
+            context.lineTo(x2, y2);
+            context.strokeStyle = "rgba(0,255,255,0.3)";
+            context.lineWidth = 2 * scaleFactor;
+            context.stroke();
+          }
+        }
+      },
+      {     // biome_22
+        name: "Laser Stage",
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          context.fillStyle = "#000";
+          context.fillRect(0, 0, width, height);
+          const time = performance.now() / 1000;
+          for (let i = 0; i < 8; i++) {
+            let angle = (i / 8) * Math.PI * 2 + time;
+            let x1 = width / 2;
+            let y1 = height / 2;
+            let x2 = x1 + Math.cos(angle) * width;
+            let y2 = y1 + Math.sin(angle) * height;
+            context.beginPath();
+            context.moveTo(x1, y1);
+            context.lineTo(x2, y2);
+            context.strokeStyle = "rgba(255,0,0,0.5)";
+            context.lineWidth = 4 * scaleFactor;
+            context.stroke();
+          }
+        }
+      },
+      {     // biome_23
+        name: "Hexagonal Rhythm",
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          context.fillStyle = "#111";
+          context.fillRect(0, 0, width, height);
+          const hexSize = 30 * scaleFactor;
+          const hexHeight = hexSize * Math.sqrt(3);
+          const alpha = 0.6; // Плавное изменение от 0 до 1
+          for (let row = 0; row < height / hexHeight; row++) {
+            for (let col = 0; col < width / (hexSize * 1.5); col++) {
+              let x = col * hexSize * 1.5;
+              let y = row * hexHeight + (col % 2 === 0 ? 0 : hexHeight / 2);
+              context.beginPath();
+              for (let i = 0; i < 6; i++) {
+                let angle = (i / 6) * Math.PI * 2;
+                let px = x + Math.cos(angle) * hexSize;
+                let py = y + Math.sin(angle) * hexSize;
+                if (i === 0) context.moveTo(px, py);
+                else context.lineTo(px, py);
+              }
+              context.closePath();
+              context.fillStyle = `rgba(0,255,255,${alpha})`;
+              context.fill();
+            }
+          }
+        }
+      },
+      {     // biome_24
+        name: "Low Gravity DISCO",
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          context.fillStyle = "#000";
+          context.fillRect(0, 0, width, height);
+          for (let i = 0; i < 15; i++) {
+            let x = Math.random() * width;
+            let y = Math.random() * height;
+            let w = Math.random() * 100 + 50;
+            let h = Math.random() * 20 + 10;
+            context.beginPath();
+            context.rect(x, y, w, h);
+            context.strokeStyle = "rgba(0,255,255,0.7)";
+            context.lineWidth = 3 * scaleFactor;
+            context.shadowColor = "rgba(0,255,255,0.7)";
+            context.shadowBlur = 10;
+            context.stroke();
+            context.shadowBlur = 0;
+          }
+        }
+      },
+      {     // biome_25
+        name: "Light Waves",
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          context.fillStyle = "#000";
+          context.fillRect(0, 0, width, height);
+          const time = performance.now() / 1000;
+          for (let i = 0; i < 10; i++) {
+            let offset = (time + i * 0.5) % 1;
+            let y = offset * height;
+            context.beginPath();
+            context.moveTo(0, y);
+            context.bezierCurveTo(width * 0.3, y + 50, width * 0.7, y - 50, width, y);
+            context.strokeStyle = "rgba(0,255,255,0.5)";
+            context.lineWidth = 4 * scaleFactor;
+            context.stroke();
+          }
+        }
+      },
+      {   // biome_26  
+        name: "Retro 80s Disco",
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          context.fillStyle = "#111";
+          context.fillRect(0, 0, width, height);
+          for (let i = 0; i < 5; i++) {
+            let x = Math.random() * width;
+            let y = Math.random() * height;
+            let size = Math.random() * 50 + 20;
+            context.beginPath();
+            context.arc(x, y, size, 0, Math.PI * 2);
+            context.fillStyle = "rgba(255,105,180,0.2)";
+            context.shadowColor = "rgba(255,105,180,0.2)";
+            context.shadowBlur = 10;
+            context.fill();
+            context.shadowBlur = 0;
+          }
+          for (let i = 0; i < 10; i++) {
+            let x = Math.random() * width;
+            let y = Math.random() * height;
+            let w = Math.random() * 100 + 50;
+            let h = Math.random() * 20 + 10;
+            context.fillStyle = "rgba(0,255,255,0.3)";
+            context.shadowColor = "rgba(0,255,255,0.3)";
+            context.shadowBlur = 10;
+            context.fillRect(x, y, w, h);
+            context.shadowBlur = 0;
+          }
+        }
+      },
+      {     // biome_27
+        name: "Cyber Future Disco",
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          context.fillStyle = "#001";
+          context.fillRect(0, 0, width, height);
+          const gridSize = 50 * scaleFactor;
+          context.strokeStyle = "rgba(0,255,255,0.2)";
+          context.lineWidth = 1 * scaleFactor;
+          for (let x = 0; x < width; x += gridSize) {
+            context.beginPath();
+            context.moveTo(x, 0);
+            context.lineTo(x, height);
+            context.stroke();
+          }
+          for (let y = 0; y < height; y += gridSize) {
+            context.beginPath();
+            context.moveTo(0, y);
+            context.lineTo(width, y);
+            context.stroke();
+          }
+          for (let i = 0; i < 30; i++) {
+            let x = Math.random() * width;
+            let y = Math.random() * height;
+            context.beginPath();
+            context.arc(x, y, 5 * scaleFactor, 0, Math.PI * 2);
+            context.fillStyle = "rgba(0,255,255,0.8)";
+            context.fill();
+          }
+        }
+      },
+      {     // biome_28
+        name: "Underwater Party",
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          const grad = context.createLinearGradient(0, 0, 0, height);
+          grad.addColorStop(0, "#001a33");
+          grad.addColorStop(1, "#000");
+          context.fillStyle = grad;
+          context.fillRect(0, 0, width, height);
+          for (let i = 0; i < 50; i++) {
+            let x = Math.random() * width;
+            let y = Math.random() * height;
+            let r = Math.random() * 20 + 5;
+            context.beginPath();
+            context.arc(x, y, r, 0, Math.PI * 2);
+            context.strokeStyle = "rgba(0,255,255,0.3)";
+            context.lineWidth = 2 * scaleFactor;
+            context.stroke();
+          }
+          for (let i = 0; i < 5; i++) {
+            let x = Math.random() * width;
+            let y = Math.random() * height;
+            context.beginPath();
+            context.moveTo(x, y);
+            context.lineTo(x + 20, y + 10);
+            context.lineTo(x - 20, y + 10);
+            context.closePath();
+            context.fillStyle = "rgba(255,0,255,0.2)";
+            context.shadowColor = "rgba(255,0,255,0.2)";
+            context.shadowBlur = 10;
+            context.fill();
+            context.shadowBlur = 0;
+          }
+        }
+      },
+      {     // biome_29
+        name: "Rotating Chaos",
+        drawBackground: function(ctxToUse) {
+          let context = ctxToUse || ctx;
+          context.fillStyle = "#000";
+          context.fillRect(0, 0, width, height);
+          const time = performance.now() / 1000;
+          for (let i = 0; i < 20; i++) {
+            let radius = 100 + i * 50;
+            let angle = time * (i + 1);
+            context.beginPath();
+            context.arc(width / 2, height / 2, radius * scaleFactor, angle, angle + Math.PI * 2);
+            const specColor = i % 2 === 0 ? "rgba(0,255,255,0.5)" : "rgba(138,43,226,0.5)"
+            context.strokeStyle = specColor;
+            context.lineWidth = 5 * scaleFactor;
+            context.shadowColor = specColor;
+            context.shadowBlur = 10;
+            context.stroke();
+            context.shadowBlur = 0;
+          }
+        }
       }
     ];
+    const demoBiomes = biomes.slice(0, 8); // Берем первые 5 биомов
     function getCurrentBiome() {
-      return biomes[(currentLevel - 1) % biomes.length];
+      const biomesToUse = isFV ? biomes : demoBiomes;
+      return biomesToUse[(currentLevel - 1) % biomesToUse.length];
     }
 
     // Outside your draw function, create an offscreen canvas & context
@@ -3513,6 +3771,12 @@
       "Reflective", "Life Steal", "EMP Blast", "Critical Strike", "Overcharge",
       "Scatter Shot", "Health Boost", "Restore Health", "Magnet", "Friend", "Neon Overdrive", "Power Meter Boost", "Bullet Time", "Psi Blast", "Acid Rain", "Ninja Spirit","Light Saber",
     ];
+    const demoPowerUpPool = [
+        "Double Shot", "Triple Shot", "Rapid Fire", "Shield", "Speed Boost",
+        "Damage Boost", "Piercing", "Homing", "Bomb", "Freeze Blast",
+        "Reflective", "Life Steal", "EMP Blast", "Critical Strike", "Overcharge",
+        "Scatter Shot", "Health Boost", "Magnet", "Friend", "Neon Overdrive", "Power Meter Boost", "Bullet Time"
+    ];
     const allPowerUpKeys = [
       "doubleShot", "tripleShot", "rapidFire", "shield", "speedBoost", "damageBoost", "piercing", "homing", "bomb", "freezeBlast", "reflective", "lifeSteal", "empBlast", "criticalStrike", "overcharge", "scatterShot", "healthBoost", "healthRestore", "scoreMagnet", "friend", "neonOverdrive", "powerMeterBoost", "bulletTime", "psiBlast", "acidRain", "ninjaSpirit", "lightSaber"
     ];
@@ -3537,6 +3801,7 @@
     function showPowerUpMenu() {
       gameState = "powerup";
       const overlay = document.getElementById("overlay");
+      const pool = isFV ? powerUpPool : demoPowerUpPool;
       const case_to_much_bullets = (player.activePowerUps.tripleShot.stacks >= 2 || player.activePowerUps.doubleShot.stacks >= 3 || player.activePowerUps.scatterShot.stacks >= 3);
       const case_to_much_bullets2 = (player.activePowerUps.tripleShot.stacks >= 1 && player.activePowerUps.doubleShot.stacks >= 1 || player.activePowerUps.scatterShot.stacks >= 1);
       const case_to_much_magnet = (player.activePowerUps.scoreMagnet.stacks >= 3)
@@ -3545,7 +3810,7 @@
       const case_to_much_powerMeterBoost = (player.activePowerUps.powerMeterBoost.stacks >= 4) && currentLevel<30
       const case_to_much_neonOverDrive = (player.activePowerUps.neonOverdrive.stacks >= 2)
       // Фильтруем pool: исключаем усиления, у которых игрок уже достиг максимума стаков
-      const availablePool = powerUpPool.filter(choice => {
+      const availablePool = pool.filter(choice => {
         if (!player) return true; // на всякий случай
         if (choice === "Triple Shot" && case_to_much_bullets) return false;
         if (choice === "Double Shot" && case_to_much_bullets) return false;
@@ -3593,7 +3858,7 @@
       const key = powerUpMap[choice];
       if (choice === "Restore Health") {
           // Пример мгновенного эффекта
-          player.currentHP = Math.min(player.maxHP, player.currentHP + 30);
+          player.currentHP = Math.min(player.maxHP, player.currentHP + (Math.floor(player.maxHP * 0.3)));
           powerMeter = Math.max(0, powerMeter - getPowerMeterMax());
           resumeGame();
           return;
