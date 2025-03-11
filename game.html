@@ -651,20 +651,20 @@
 
     // (Assuming you have a global variable `sfxVolume` already defined.)
     const sfxMap = {
-      shot: new Howl({ src: ["assets/sfx/shot.mp3"], volume: sfxVolume, pool: 10 }),
-      freeze: new Howl({ src: ["assets/sfx/freeze.mp3"], volume: sfxVolume, pool: 10 }),
-      powerup: new Howl({ src: ["assets/sfx/powerup.mp3"], volume: sfxVolume }),
-      bossDeath: new Howl({ src: ["assets/sfx/boss_death.mp3"], volume: sfxVolume }),
-      click: new Howl({ src: ["assets/sfx/click.mp3"], volume: sfxVolume }),
-      neonoverdrive: new Howl({ src: ["assets/sfx/neonoverdrive.mp3"], volume: sfxVolume, pool: 10 }),
-      deadenemy: new Howl({ src: ["assets/sfx/deadenemy.mp3"], volume: sfxVolume, pool: 10 })
+      shot: new Howl({ src: ["assets/sfx/shot.mp3"], volume: sfxVolume, pool: 20 }),
+      freeze: new Howl({ src: ["assets/sfx/freeze.mp3"], volume: sfxVolume, pool: 20 }),
+      powerup: new Howl({ src: ["assets/sfx/powerup.mp3"], volume: sfxVolume, pool: 10 }),
+      bossDeath: new Howl({ src: ["assets/sfx/boss_death.mp3"], volume: sfxVolume, pool: 10 }),
+      click: new Howl({ src: ["assets/sfx/click.mp3"], volume: sfxVolume, pool: 10 }),
+      neonoverdrive: new Howl({ src: ["assets/sfx/neonoverdrive.mp3"], volume: sfxVolume, pool: 20 }),
+      deadenemy: new Howl({ src: ["assets/sfx/deadenemy.mp3"], volume: sfxVolume, pool: 20 })
     };
     const reflectedShots = [
-      new Howl({ src: ["assets/sfx/reflectedShot_1.mp3"], volume: sfxVolume }),
-      new Howl({ src: ["assets/sfx/reflectedShot_2.mp3"], volume: sfxVolume }),
-      new Howl({ src: ["assets/sfx/reflectedShot_3.mp3"], volume: sfxVolume }),
-      new Howl({ src: ["assets/sfx/reflectedShot_4.mp3"], volume: sfxVolume }),
-      new Howl({ src: ["assets/sfx/reflectedShot_5.mp3"], volume: sfxVolume })
+      new Howl({ src: ["assets/sfx/reflectedShot_1.mp3"], volume: sfxVolume, pool: 10 }),
+      new Howl({ src: ["assets/sfx/reflectedShot_2.mp3"], volume: sfxVolume, pool: 10 }),
+      new Howl({ src: ["assets/sfx/reflectedShot_3.mp3"], volume: sfxVolume, pool: 10 }),
+      new Howl({ src: ["assets/sfx/reflectedShot_4.mp3"], volume: sfxVolume, pool: 10 }),
+      new Howl({ src: ["assets/sfx/reflectedShot_5.mp3"], volume: sfxVolume, pool: 10 })
     ];
 
     let lastNeonOverdriveTime = 0;
@@ -973,11 +973,14 @@
       resumeGame();
     }
     
+
+
     //========== Combo переменные и func для комбо-системы
 
-    let comboCounter = 0;
-    let comboTimer = 0;
-    const COMBO_RESET_TIME = 6666; // 7 секунд
+    let comboCounter = 0;           // Для подсчёта убийств
+    let comboTimer = 0;             // Для подсчёта времени  
+    const COMBO_RESET_TIME = 7000;  // Время, за которое надо убить нового врага, чтобы не сбросился счётчик в милисекундах
+    
     // Функция увеличения комбо при убийстве врага
     function increaseCombo() {
       comboCounter++;
@@ -1003,12 +1006,10 @@
         resetCombo();
       }
     }
-    // Функция сброса комбо (например, при получении урона)
     function resetCombo() {
       comboCounter = 0;
       comboTimer = 0;
     }
-    // Функция, вызываемая в update(deltaTime)
     function updateCombo(deltaTime) {
       if (comboTimer > 0) {
         comboTimer -= deltaTime;
@@ -1017,12 +1018,11 @@
         }
       }
     }
-    // В функции, где обрабатывается убийство врага:
+
     function onEnemyKilled(enemy) {
       playSfx("deadenemy");
-      // Добавляем эффекты уничтожения, начисление очков и т.д.
+
       increaseCombo();
-      // Другие действия: spawnCollectible, particles, score += и т.п.
     }
 
     //================== конец Combo functions
@@ -3533,7 +3533,7 @@
     
           // Параметры притяжения: базовая дистанция и прирост дистанции с каждым стэком
           let baseAttractionRange = 200 * scaleFactor; // базовая дистанция притяжения (в пикселях)
-          let additionalRangePerStack = 100 * scaleFactor; // прибавка к дистанции за каждый дополнительный стэк
+          let additionalRangePerStack = 70 * scaleFactor; // прибавка к дистанции за каждый дополнительный стэк
           // Вычисляем общую дистанцию притяжения в зависимости от количества стэков
           let attractionRange =
             baseAttractionRange +
@@ -3791,6 +3791,7 @@
       const case_to_much_bullet_time = (player.activePowerUps.bulletTime.stacks >= 2)
       const case_to_much_powerMeterBoost = (player.activePowerUps.powerMeterBoost.stacks >= 4) && currentLevel<30
       const case_to_much_neonOverDrive = (player.activePowerUps.neonOverdrive.stacks >= 2)
+      const case_no_neon_overdrive = (player.activePowerUps.AcidTrail.stacks > 1 || player.activePowerUps.bulletTime.stacks > 1 || player.activePowerUps.lightSaber.stacks > 1 || case_to_much_bullets)
       // Фильтруем pool: исключаем усиления, у которых игрок уже достиг максимума стаков
       const availablePool = pool.filter(choice => {
         if (!player) return true; // на всякий случай
@@ -3802,7 +3803,7 @@
         if (choice === "Bullet Time" && case_to_much_bullet_time2) return false;
         if (choice === "Rapid Fire" && (case_to_much_bullets||case_to_much_bullets2)) return false;
         if (choice === "Power Meter Boost" && case_to_much_powerMeterBoost) return false;
-        if (choice === "Neon Overdrive" && case_to_much_neonOverDrive) return false;
+        if (choice === "Neon Overdrive" && (case_to_much_neonOverDrive || case_no_neon_overdrive)) return false;
         if (choice === "Ninja Spirit" && player.activePowerUps.ninjaSpirit >= 2) return false;
         return true;
       });
@@ -4690,11 +4691,11 @@
                 enemy.dead = true;
                 onEnemyKilled(enemy);
               }
-              else{
+              /*else{
                 for (let blood = 0; blood < 8; blood++) {
                   particles.push(new Particle(enemy.x, enemy.y, enemy.color));
                 }
-              }
+              }*/
             }
           });
           
@@ -4705,9 +4706,9 @@
             bladeEndX, bladeEndY);
             if (dist < boss.radius) {
               boss.hp -= swordDamage/12;
-              for (let blood = 0; blood < 8; blood++) {
+              /*for (let blood = 0; blood < 8; blood++) {
                 particles.push(new Particle(boss.x, boss.y, "#f00"));
-              }
+              }*/
             }
           });
 
@@ -4974,9 +4975,9 @@
           // Если собран специальный collectible, даем в 2 раза больше
           if (collectibles[i] instanceof SpecialCollectible) {
             addValue *= 3;
-            // Добавляем бонус здоровья: 15% от максимального здоровья игрока
+            // Добавляем бонус здоровья: 10% от максимального здоровья игрока
             const baseMaxHP = 100 + permanentUpgrades.health;
-            const bonusHealth = Math.floor(baseMaxHP * 0.15);
+            const bonusHealth = Math.floor(baseMaxHP * 0.1);
             // Обновляем текущее здоровье, не превышая максимальное значение
             player.currentHP = Math.min(player.maxHP, player.currentHP + bonusHealth);
           }
@@ -5044,10 +5045,11 @@
                   if (enemies[p].hp <= 0 && !enemies[p].dead) {
                     if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
                       player.reflectedKillCount = (player.reflectedKillCount || 0) + 1;
-                      if (player.reflectedKillCount >= 15) {
-                        player.activePowerUps.lightSaber.duration += 20000;
+                      if (player.reflectedKillCount >= 15 && player.activePowerUps.lightSaber.stacks > 6) {
                         player.reflectedKillCount = 0; // либо можно сбросить: = 0
-                      }
+                      } else if (player.reflectedKillCount >= 15 && player.activePowerUps.lightSaber.stacks < 6){
+                        player.activePowerUps.lightSaber.duration += 20000;
+                      };
                     }
                     if (enemies[p].type === "exploder") {
                       for (let k = 0; k < enemies.length; k++) {
@@ -5087,10 +5089,11 @@
                   if (bosses[k].hp <= 0){
                     if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
                       player.reflectedKillCount += 5;
-                      if (player.reflectedKillCount >= 15) {
-                        player.activePowerUps.lightSaber.duration += 20000;
+                      if (player.reflectedKillCount >= 15 && player.activePowerUps.lightSaber.stacks > 6) {
                         player.reflectedKillCount = 0;
-                      }
+                      } else if (player.reflectedKillCount >= 15 && player.activePowerUps.lightSaber.stacks < 6){
+                        player.activePowerUps.lightSaber.duration += 20000;
+                      };
                     }
                   }
                   b.dead = true;
@@ -5129,10 +5132,11 @@
               if(enemies[i].hp <= 0) { // Обработка смерти врага
                 if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
                   player.reflectedKillCount = (player.reflectedKillCount || 0) + 1;
-                  if (player.reflectedKillCount >= 15) {
-                    player.activePowerUps.lightSaber.duration += 20000;
+                  if (player.reflectedKillCount >= 15 && player.activePowerUps.lightSaber.stacks > 6) {
                     player.reflectedKillCount = 0; // либо можно сбросить: = 0
-                  }
+                  } else if (player.reflectedKillCount >= 15 && player.activePowerUps.lightSaber.stacks < 6){
+                    player.activePowerUps.lightSaber.duration += 20000;
+                  };
                 }
                 if(enemies[i].type === "exploder") {
                   // When an exploder dies, it explodes—damaging nearby enemies.
@@ -5185,10 +5189,11 @@
                     if (bosses[k].hp <= 0){
                       if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
                         player.reflectedKillCount += 5;
-                        if (player.reflectedKillCount >= 15) {
-                          player.activePowerUps.lightSaber.duration += 20000;
+                        if (player.reflectedKillCount >= 15 && player.activePowerUps.lightSaber.stacks > 6) {
                           player.reflectedKillCount = 0;
-                        }
+                        } else if (player.reflectedKillCount >= 15 && player.activePowerUps.lightSaber.stacks < 6){
+                          player.activePowerUps.lightSaber.duration += 20000;
+                        };
                       }
                     }
                     b.dead = true;
@@ -5229,10 +5234,11 @@
                     if (enemies[p].hp <= 0 && !enemies[p].dead) {
                       if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
                         player.reflectedKillCount = (player.reflectedKillCount || 0) + 1;
-                        if (player.reflectedKillCount >= 15) {
-                          player.activePowerUps.lightSaber.duration += 20000;
+                        if (player.reflectedKillCount >= 15 && player.activePowerUps.lightSaber.stacks > 6) {
                           player.reflectedKillCount = 0; // либо можно сбросить: = 0
-                        }
+                        } else if (player.reflectedKillCount >= 15 && player.activePowerUps.lightSaber.stacks < 6){
+                          player.activePowerUps.lightSaber.duration += 20000;
+                        };
                       }
                       if (enemies[p].type === "exploder") {
                         for (let k = 0; k < enemies.length; k++) {
@@ -5270,10 +5276,11 @@
                 if (bosses[j].hp <= 0){
                   if (b.reflected && player.activePowerUps.lightSaber.duration > 0) {
                     player.reflectedKillCount += 5;
-                    if (player.reflectedKillCount >= 15) {
-                      player.activePowerUps.lightSaber.duration += 20000;
+                    if (player.reflectedKillCount >= 15 && player.activePowerUps.lightSaber.stacks > 6) {
                       player.reflectedKillCount = 0;
-                    }
+                    } else if (player.reflectedKillCount >= 15 && player.activePowerUps.lightSaber.stacks < 6){
+                      player.activePowerUps.lightSaber.duration += 20000;
+                    };
                   }
                 }
                 b.dead = true;
@@ -5639,6 +5646,7 @@
         }
       }
       ctx.restore(); 
+
       // === Отрисовка комбо-счетчика
       ctx.save();
       if (isMobile) ctx.globalAlpha = 0.7;
@@ -5654,17 +5662,16 @@
       if (comboCounter >= 200) {
         comboColor = "#000";
         ctx.shadowColor= "#fff"
-        ctx.shadowBlur = 5 * uiScale;
+        ctx.shadowBlur = 15 * uiScale;
       }
       ctx.fillStyle = comboColor;
       ctx.font = (20 * uiScale) + "px Arial";
-      // рассчитываем позицию: health bar начинается в 10, ширина 120, добавляем отступ 10
       let comboX = (10 + 120 + 10) * uiScale;
-      // вертикальное положение – центр health bar (80 + 15/2)
       let comboY = 80 * uiScale + (15 * uiScale) / 2;
       ctx.fillText("Kills: " + comboCounter, comboX, comboY);
-      //ctx.fillText("Combo: " + comboCounter, 10 * uiScale, 140 * uiScale);
       ctx.restore();
+
+
 
       // Отрисовка плавающих красных чисел урона
       damageTexts.forEach(dt => {
