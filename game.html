@@ -3791,7 +3791,7 @@
       const case_to_much_bullet_time = (player.activePowerUps.bulletTime.stacks >= 2)
       const case_to_much_powerMeterBoost = (player.activePowerUps.powerMeterBoost.stacks >= 4) && currentLevel<30
       const case_to_much_neonOverDrive = (player.activePowerUps.neonOverdrive.stacks >= 2)
-      const case_no_neon_overdrive = (player.activePowerUps.AcidTrail.stacks > 1 || player.activePowerUps.bulletTime.stacks > 1 || player.activePowerUps.lightSaber.stacks > 1 || case_to_much_bullets)
+      const case_no_neon_overdrive = (player.activePowerUps.acidRain.stacks >= 1 || player.activePowerUps.bulletTime.stacks >= 1 || player.activePowerUps.lightSaber.stacks >= 1 || case_to_much_bullets)
       // Фильтруем pool: исключаем усиления, у которых игрок уже достиг максимума стаков
       const availablePool = pool.filter(choice => {
         if (!player) return true; // на всякий случай
