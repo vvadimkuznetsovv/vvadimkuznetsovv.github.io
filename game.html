@@ -4144,12 +4144,18 @@
 
         // Label the button "Music: Off" initially (since we just paused)
         pauseMusicToggleBtn.innerText = "Music: Off";
-        
+
         // On click, we either play or pause the music
         pauseMusicToggleBtn.addEventListener("click", () => {
           const music = getActiveMusic();
           if (!music) return;
-          
+
+          // Проверяем, не отключены ли все звуки через Mute All
+          if (!soundEnabled) {
+            // Если звуки отключены глобально, сначала нужно включить Mute All
+            return;
+          }
+
           if (pauseMusicPlaying) {
             // was playing in pause → now pause it
             music.pause();
@@ -4176,13 +4182,17 @@
           soundEnabled = !e.target.checked;
           const activeMusic = getActiveMusic();
           if (!soundEnabled) {
+            // Отключаем все звуки
             if (activeMusic && activeMusic.playing()) {
               activeMusic.pause();
+              // Синхронизируем состояние кнопки Music Off/On
+              pauseMusicPlaying = false;
+              pauseMusicToggleBtn.innerText = "Music: Off";
             }
           } else {
-            if (activeMusic && !activeMusic.playing()) {
-              playCurrentMusic();
-              activeMusic.play();
+            // Включаем звуки - запускаем музыку только если она была включена через Music On
+            if (activeMusic && !activeMusic.playing() && pauseMusicPlaying) {
+              playCurrentMusic();  // Убран двойной вызов play()
             }
           }
         });        
@@ -4373,7 +4383,7 @@
       playSfx("click");
       gameState = "menu";
 
-      soundEnabled = false;      
+      // Не меняем soundEnabled - пользователь сам управляет звуком
       getActiveMusic().pause();
       document.getElementById("overlay").innerHTML = `<h1 class="cyan_color" >Neon Nexus: Ultimate Gauntlet</h1>
       <p id="overlayText">Move with WASD, aim with your mouse (or use on‑screen joysticks on mobile),</br> and auto‑fire is enabled.<br>
