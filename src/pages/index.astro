@@ -1,6 +1,5 @@
 ---
 import Shell from "../layouts/Shell.astro";
-import CautionStripe from "../components/CautionStripe.astro";
 import PhotoFrame from "../components/PhotoFrame.astro";
 import ProjectCard from "../components/ProjectCard.astro";
 ---
@@ -8,78 +7,48 @@ import ProjectCard from "../components/ProjectCard.astro";
 <Shell
   title="VADIM KUZNETSOV"
   description="Вадим Кузнецов — full-stack разработчик. Веб, мобильное, игры. Личная база проектов."
-  statusLabel="V.NK://personal_db_v0.1"
+  statusLabel="vvadimkuznetsovv"
 >
-  <div class="fade-in fade-in-1 mt-5">
-    <CautionStripe label="// SYS BOOT OK — WELCOME, NETRUNNER" />
-  </div>
-
   <!-- HERO -->
-  <section class="mt-10 grid grid-cols-1 items-start gap-12 sm:mt-14 md:grid-cols-[300px_minmax(0,1fr)] md:gap-14 lg:grid-cols-[360px_minmax(0,1fr)] lg:gap-20">
+  <section class="mt-16 grid grid-cols-1 items-start gap-12 sm:mt-20 md:grid-cols-[300px_minmax(0,1fr)] md:gap-14 lg:grid-cols-[360px_minmax(0,1fr)] lg:gap-20">
     <div class="fade-in fade-in-2 flex justify-center md:justify-start">
-      <PhotoFrame label="AUTH PHOTO :: N/A" caption="ID-734-VK" />
+      <PhotoFrame label="" caption="" />
     </div>
 
     <div class="flex flex-col gap-7">
-      <div class="fade-in fade-in-2 flex flex-wrap items-center gap-3">
-        <span class="font-hud text-base text-yellow neon-pulse">[REC_ID]</span>
-        <span class="font-hud text-base text-haze">V_KUZNETSOV</span>
-        <span class="font-hud text-base text-cyan/60">/</span>
-        <span class="font-hud text-base text-cyan neon-pulse neon-pulse--cyan">@vvadimkuznetsovv</span>
-      </div>
-
-      <h1 class="fade-in fade-in-3 flex flex-col gap-3 leading-none">
-        <span class="neon-text neon-text--cyan text-[clamp(2.8rem,11vw,6.5rem)]">
-          VADIM
+      <h1 class="fade-in fade-in-3 flex flex-col gap-0 leading-none">
+        <span class="neon-text neon-text--cyan text-[clamp(3.6rem,14vw,8rem)]">
+          Vadim
         </span>
-        <span class="neon-text neon-text--magenta text-[clamp(2.8rem,11vw,6.5rem)]">
-          KUZNETSOV
+        <span class="neon-text neon-text--magenta text-[clamp(3.6rem,14vw,8rem)] -mt-4">
+          Kuznetsov
         </span>
       </h1>
 
-      <dl class="fade-in fade-in-4 grid grid-cols-1 gap-1 font-hud text-lg sm:text-xl">
-        <div class="grid grid-cols-[110px_1fr] gap-3 sm:grid-cols-[140px_1fr]">
-          <dt class="text-dim">&gt; ROLE</dt>
-          <dd class="text-haze">full-stack engineer</dd>
-        </div>
-        <div class="grid grid-cols-[110px_1fr] gap-3 sm:grid-cols-[140px_1fr]">
-          <dt class="text-dim">&gt; STACK</dt>
-          <dd class="text-haze">web · mobile · games</dd>
-        </div>
-        <div class="grid grid-cols-[110px_1fr] gap-3 sm:grid-cols-[140px_1fr]">
-          <dt class="text-dim">&gt; LOCATION</dt>
-          <dd class="text-haze">[REDACTED]</dd>
-        </div>
-        <div class="grid grid-cols-[110px_1fr] gap-3 sm:grid-cols-[140px_1fr]">
-          <dt class="text-dim">&gt; STATUS</dt>
-          <dd class="text-toxic neon-pulse" style="--neon-color: var(--color-toxic);">SHIPPING</dd>
-        </div>
-      </dl>
+      <p class="fade-in fade-in-4 font-ui text-base uppercase tracking-[0.2em] text-dim">
+        full-stack engineer&nbsp;·&nbsp;web&nbsp;·&nbsp;mobile&nbsp;·&nbsp;games
+      </p>
 
-      <p class="fade-in fade-in-5 max-w-xl font-ui text-base text-haze sm:text-lg">
-        строю продукты в вебе, мобильном и играх. ниже&nbsp;— живые проекты,
-        ниже‑ниже&nbsp;— будет полный реестр.
+      <p class="fade-in fade-in-5 max-w-xl font-ui text-base leading-relaxed text-haze sm:text-lg">
+        Строю продукты в вебе, мобильном и играх. Ниже — живые проекты,
+        ниже‑ниже — будет полный реестр.
       </p>
     </div>
   </section>
 
-  <div class="fade-in fade-in-5 mt-16">
-    <CautionStripe label="LIVE PROJECTS // 003 ENTRIES" />
-  </div>
-
   <!-- PROJECTS -->
-  <section class="mt-10">
-    <div class="flex items-baseline justify-between gap-4">
-      <h2 class="font-hud text-2xl uppercase tracking-[0.2em] neon-pulse sm:text-3xl">
-        &gt; LIVE_PROJECTS
+  <section class="mt-24">
+    <div class="flex items-baseline justify-between gap-4 border-b border-rack pb-3">
+      <h2 class="font-ui text-sm font-medium uppercase tracking-[0.3em] text-haze sm:text-base">
+        Live projects
       </h2>
-      <span class="font-hud text-base text-dim">[ idx :: 001-003 ]</span>
+      <span class="font-ui text-xs uppercase tracking-[0.2em] text-dim">003 entries</span>
     </div>
 
     <div class="mt-10 flex flex-col gap-7 sm:gap-8">
       <ProjectCard
         index="001"
-        title="TRAFFIC LAWS"
+        title="Traffic Laws"
         status="WIP"
         statusColor="amber"
         href="/traffic-laws/"
@@ -92,7 +61,7 @@ import ProjectCard from "../components/ProjectCard.astro";
       <ProjectCard
         index="002"
         title="vvadimkuznetsovv.github.io"
-        status="LIVE"
+        status="Live"
         statusColor="toxic"
         href="https://github.com/vvadimkuznetsovv/vvadimkuznetsovv.github.io"
         external
@@ -102,8 +71,8 @@ import ProjectCard from "../components/ProjectCard.astro";
 
       <ProjectCard
         index="003"
-        title="PORTFOLIO_EXTRA"
-        status="LOADING"
+        title="Portfolio extra"
+        status="Loading"
         statusColor="dim"
         disabled
       >
@@ -114,28 +83,20 @@ import ProjectCard from "../components/ProjectCard.astro";
     </div>
   </section>
 
-  <div class="fade-in fade-in-5 mt-16">
-    <CautionStripe />
-  </div>
-
   <!-- FOOTER -->
-  <footer class="mt-10 flex flex-wrap items-center justify-between gap-4 font-hud text-base text-dim">
-    <span class="text-haze">// EOL :: {new Date().getFullYear()}</span>
-    <div class="flex items-center gap-5">
+  <footer class="mt-24 flex flex-wrap items-center justify-between gap-4 border-t border-rack pt-6 font-ui text-xs uppercase tracking-[0.25em] text-dim">
+    <span>{new Date().getFullYear()}</span>
+    <div class="flex items-center gap-6">
       <a
-        class="text-cyan transition-colors hover:text-yellow neon-pulse neon-pulse--cyan"
+        class="text-haze transition-colors hover:text-cyan"
         href="https://github.com/vvadimkuznetsovv"
         rel="noreferrer noopener"
         target="_blank"
       >
-        &gt; github.com/vvadimkuznetsovv
+        github
       </a>
-      <span class="text-magenta">●</span>
-      <a
-        class="text-cyan transition-colors hover:text-yellow"
-        href="/traffic-laws/"
-      >
-        &gt; /traffic-laws
+      <a class="text-haze transition-colors hover:text-cyan" href="/traffic-laws/">
+        /traffic-laws
       </a>
     </div>
   </footer>

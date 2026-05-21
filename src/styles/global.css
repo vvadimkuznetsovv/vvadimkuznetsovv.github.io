@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @import "@fontsource/major-mono-display/400.css";
-@import "@fontsource-variable/tilt-neon";
+@import "@fontsource/mr-dafoe/400.css";
 @import "@fontsource/chakra-petch/500.css";
 @import "@fontsource/chakra-petch/700.css";
 @import "@fontsource/geist-mono/400.css";
@@ -361,12 +361,12 @@
      ============================================================ */
   .neon-text {
     --neon: #ff2bd6;
-    font-family: "Tilt Neon Variable", sans-serif;
+    font-family: "Mr Dafoe", "Pacifico", cursive;
     font-weight: 400;
     color: var(--neon);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    line-height: 1;
+    text-transform: none;
+    letter-spacing: -0.005em;
+    line-height: 1.05;
     text-shadow:
       0 0 1px #fff,
       0 0 4px #fff,
