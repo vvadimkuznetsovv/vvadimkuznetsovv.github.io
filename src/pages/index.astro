@@ -1,0 +1,88 @@
+---
+import Shell from "../layouts/Shell.astro";
+---
+
+<Shell
+  title="VADIM KUZNETSOV"
+  description="Вадим Кузнецов — full-stack разработчик. Проекты, эксперименты, утилиты."
+>
+  <header class="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-[var(--color-ink-dim)]">
+    <span class="font-[family-name:var(--font-hud)] text-base normal-case tracking-normal text-[var(--color-neon-cyan)]">
+      &gt;_ vvadimkuznetsovv
+    </span>
+    <span class="font-[family-name:var(--font-hud)] text-base normal-case tracking-normal">
+      online · v0.1
+    </span>
+  </header>
+
+  <section class="mt-20 sm:mt-28">
+    <p class="font-[family-name:var(--font-hud)] text-lg text-[var(--color-neon-magenta)] sm:text-xl">
+      // identity
+    </p>
+
+    <h1
+      class="mt-3 font-[family-name:var(--font-display)] text-[clamp(2.4rem,9vw,6.5rem)] leading-[0.95] text-[var(--color-ink-bone)] [text-shadow:0_0_30px_rgba(0,240,255,0.25)]"
+    >
+      vadim<br />kuznetsov
+    </h1>
+
+    <p
+      class="mt-6 max-w-xl font-[family-name:var(--font-ui)] text-base text-[var(--color-ink-haze)] sm:text-lg"
+    >
+      full-stack разработчик. строю веб, мобильное, игры. ниже&nbsp;— живые проекты.
+    </p>
+  </section>
+
+  <section class="mt-16 sm:mt-24">
+    <p class="font-[family-name:var(--font-hud)] text-lg text-[var(--color-neon-cyan)]">
+      // запуски
+    </p>
+
+    <div class="mt-6 flex flex-col gap-4">
+      <a
+        href="/traffic-laws/"
+        class="group relative block overflow-hidden border border-[var(--color-neon-cyan)] bg-[var(--color-bg-deck)] p-5 transition-[transform,box-shadow] duration-200 hover:-translate-y-[2px] hover:shadow-[0_0_0_1px_var(--color-neon-cyan),0_0_30px_rgba(0,240,255,0.35)] sm:p-7"
+        style="clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));"
+      >
+        <div class="flex items-baseline justify-between gap-4">
+          <h2 class="font-[family-name:var(--font-ui)] text-xl font-bold uppercase tracking-wider text-[var(--color-ink-bone)] sm:text-2xl">
+            traffic-laws
+          </h2>
+          <span class="font-[family-name:var(--font-hud)] text-base text-[var(--color-neon-amber)]">
+            WIP
+          </span>
+        </div>
+        <p class="mt-2 max-w-2xl text-sm text-[var(--color-ink-haze)] sm:text-base">
+          Уникальный сайт изучения ПДД категории B: подробные объяснения каждого ответа,
+          разбор картинок, киберпанк‑роман с вшитыми правилами.
+        </p>
+        <p class="mt-4 font-[family-name:var(--font-hud)] text-base text-[var(--color-neon-cyan)] transition-transform group-hover:translate-x-1">
+          → open /traffic-laws/
+        </p>
+      </a>
+
+      <div class="border border-dashed border-[var(--color-ink-dim)] bg-[var(--color-bg-deck)]/40 p-5 text-sm text-[var(--color-ink-dim)] sm:p-6">
+        <span class="font-[family-name:var(--font-hud)] text-base text-[var(--color-neon-magenta)]">
+          // soon
+        </span>
+        <p class="mt-2">
+          полное портфолио: <span class="text-[var(--color-ink-haze)]">кондиционеркин23.рф</span>,
+          <span class="text-[var(--color-ink-haze)]">print.kubstu.ru</span>,
+          <span class="text-[var(--color-ink-haze)]">proverka-cheka.online</span>,
+          <span class="text-[var(--color-ink-haze)]">Fearful Obscured Grounds</span>
+          — наполню после релиза traffic-laws.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-24 flex items-center justify-between border-t border-[var(--color-bg-rack)] pt-6 text-xs uppercase tracking-widest text-[var(--color-ink-dim)]">
+    <span>// {new Date().getFullYear()}</span>
+    <a
+      class="text-[var(--color-neon-cyan)] hover:text-[var(--color-ink-bone)]"
+      href="https://github.com/vvadimkuznetsovv"
+      rel="noreferrer noopener"
+      target="_blank">github</a
+    >
+  </footer>
+</Shell>

@@ -1,0 +1,35 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  noindex?: boolean;
+}
+
+const { title, description, noindex } = Astro.props;
+const fullTitle = title === "VADIM KUZNETSOV" ? title : `${title} — vvadimkuznetsovv`;
+---
+
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#04060d" />
+    <title>{fullTitle}</title>
+    {description && <meta name="description" content={description} />}
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    <meta property="og:title" content={fullTitle} />
+    {description && <meta property="og:description" content={description} />}
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={new URL(Astro.url.pathname, Astro.site)} />
+  </head>
+  <body class="relative overflow-x-hidden">
+    <main class="relative z-10 mx-auto w-full max-w-6xl px-5 pb-24 pt-10 sm:px-8 sm:pt-16">
+      <slot />
+    </main>
+  </body>
+</html>

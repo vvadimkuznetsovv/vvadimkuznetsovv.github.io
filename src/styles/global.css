@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+@import "@fontsource/major-mono-display/400.css";
+@import "@fontsource/chakra-petch/500.css";
+@import "@fontsource/chakra-petch/700.css";
+@import "@fontsource/geist-mono/400.css";
+@import "@fontsource/geist-mono/500.css";
+@import "@fontsource/vt323/400.css";
+
+@theme {
+  --color-bg-void: #04060d;
+  --color-bg-deck: #0a0e1c;
+  --color-bg-rack: #11162a;
+  --color-ink-haze: #c8d0e7;
+  --color-ink-bone: #f1f4ff;
+  --color-ink-dim: #5b6486;
+  --color-neon-cyan: #00f0ff;
+  --color-neon-magenta: #ff2bd6;
+  --color-neon-amber: #ff8a00;
+  --color-neon-acid: #d8ff00;
+
+  --font-display: "Major Mono Display", monospace;
+  --font-ui: "Chakra Petch", system-ui, sans-serif;
+  --font-body: "Geist Mono", "JetBrains Mono", monospace;
+  --font-hud: "VT323", monospace;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    background: var(--color-bg-void);
+    color: var(--color-ink-haze);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-image:
+      linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+    background-size: 32px 32px;
+    background-attachment: fixed;
+    background-position: -1px -1px;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(0, 240, 255, 0.12), transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(255, 43, 214, 0.10), transparent 55%);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.02) 0,
+      rgba(255, 255, 255, 0.02) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+    mix-blend-mode: overlay;
+    z-index: 0;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-ui);
+    color: var(--color-ink-bone);
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background: var(--color-neon-cyan);
+    color: var(--color-bg-void);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body::after { display: none; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility neon-frame {
+  box-shadow:
+    0 0 0 1px var(--color-neon-cyan),
+    0 0 24px rgba(0, 240, 255, 0.25),
+    inset 0 0 0 1px rgba(0, 240, 255, 0.4);
+}
+
+@utility neon-frame-magenta {
+  box-shadow:
+    0 0 0 1px var(--color-neon-magenta),
+    0 0 24px rgba(255, 43, 214, 0.25);
+}
