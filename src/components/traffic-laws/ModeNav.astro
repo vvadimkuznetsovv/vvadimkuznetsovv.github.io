@@ -1,0 +1,70 @@
+---
+import HudFrame from "../ui/HudFrame.astro";
+
+const path = Astro.url.pathname;
+
+const modes = [
+  { icon: "▤", label: "Темы",     sub: "learn",    href: "/traffic-laws/learn/",    enabled: true },
+  { icon: "▦", label: "Билеты",   sub: "practice", href: "/traffic-laws/practice/", enabled: true },
+  { icon: "⏱", label: "Экзамен",  sub: "exam",     href: "/traffic-laws/exam/",     enabled: true },
+  { icon: "◇", label: "Знаки",    sub: "signs",    href: "/traffic-laws/signs/",    enabled: true },
+  { icon: "❉", label: "Роман",    sub: "queued",   href: "/traffic-laws/novel/",    enabled: false },
+] as const;
+
+function isActive(href: string): boolean {
+  return path === href || path.startsWith(href);
+}
+---
+
+<nav class="mode-nav" aria-label="Разделы traffic-laws">
+  {
+    modes.map((m) => {
+      const active = m.enabled && isActive(m.href);
+      const color = active ? "cyan" : m.enabled ? "cyan" : "dim";
+      return (
+        <HudFrame
+          as={m.enabled ? "a" : "div"}
+          href={m.enabled ? m.href : undefined}
+          variant="tab"
+          color={color}
+          active={active}
+          class={!m.enabled ? "mode-nav__item--disabled" : ""}
+          ariaLabel={`Раздел: ${m.label}`}
+        >
+          <span class="hud-tab-icon" aria-hidden="true">{m.icon}</span>
+          <span class="hud-tab-body">
+            <span>{m.label}</span>
+            <span class="hud-tab-sub">{m.sub}</span>
+          </span>
+        </HudFrame>
+      );
+    })
+  }
+</nav>
+
+<style>
+  .mode-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  /* На мобиле — 2 ряда (3+2) */
+  @media (max-width: 720px) {
+    .mode-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  }
+
+  .mode-nav :global(.mode-nav__item--disabled) {
+    opacity: 0.55;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* На мобиле — скрыть sub-label, иконку поменьше */
+  @media (max-width: 720px) {
+    .mode-nav :global(.hud-tab-sub) { display: none; }
+    .mode-nav :global(.hud-tab-icon) { width: 38px; font-size: 1.1rem; }
+    .mode-nav :global(.hud-tab-body) { font-size: 0.85rem; letter-spacing: 0.1em; }
+  }
+</style>

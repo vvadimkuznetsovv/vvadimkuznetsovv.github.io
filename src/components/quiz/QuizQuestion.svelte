@@ -49,8 +49,17 @@
   );
 </script>
 
-<article class="qq" data-revealed={revealed}>
-  <span class="qq__edge" aria-hidden="true"></span>
+<article class="qq hud-frame hud-frame--cyber" data-revealed={revealed}>
+  <span class="hud-c hud-c-tl" aria-hidden="true"></span>
+  <span class="hud-c hud-c-tr" aria-hidden="true"></span>
+  <span class="hud-c hud-c-bl" aria-hidden="true"></span>
+  <span class="hud-c hud-c-br" aria-hidden="true"></span>
+  <span class="hud-ribs" aria-hidden="true">
+    <span></span>
+    <span></span>
+    <span></span>
+  </span>
+  <span class="hud-notch-tr" aria-hidden="true"></span>
 
   <header class="qq__head">
     <span class="qq__meta">
@@ -121,36 +130,14 @@
 
 <style>
   .qq {
-    position: relative;
-    background: var(--color-deck);
-    border: 1px solid var(--color-rack);
-    padding: 20px 22px;
-    overflow: hidden;
-  }
-
-  @media (min-width: 640px) {
-    .qq { padding: 28px 30px; }
+    /* hud-frame base provides background + padding + corners */
+    /* additional state styling: */
+    transition: box-shadow 0.2s;
   }
 
   .qq[data-revealed="true"] {
-    border-color: color-mix(in srgb, var(--color-cyan) 30%, var(--color-rack));
+    box-shadow: inset 0 0 24px rgba(0, 240, 255, 0.08);
   }
-
-  .qq__edge {
-    position: absolute;
-    left: 0;
-    top: 24px;
-    bottom: 24px;
-    width: 2px;
-    background: var(--color-cyan);
-    box-shadow:
-      0 0 8px var(--color-cyan),
-      0 0 16px var(--color-cyan);
-    opacity: 0.5;
-    transition: opacity 0.2s;
-  }
-
-  .qq[data-revealed="true"] .qq__edge { opacity: 1; }
 
   .qq__head {
     display: flex;

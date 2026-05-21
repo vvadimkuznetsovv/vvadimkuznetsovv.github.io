@@ -1,5 +1,6 @@
 ---
 import Shell from "../../../../layouts/Shell.astro";
+import ModeNav from "../../../../components/traffic-laws/ModeNav.astro";
 import QuizSession from "../../../../components/quiz/QuizSession.svelte";
 import { getAllTicketNumbers, getTicket } from "../../../../data/pdd";
 
@@ -21,7 +22,9 @@ if (!questions) {
   description={`Экзаменационный билет ${num} ПДД категории B: 20 вопросов с подробным разбором.`}
   statusLabel={`traffic-laws/practice/${num}`}
 >
-  <nav class="mt-5 flex flex-wrap items-center gap-4 font-ui text-xs uppercase tracking-[0.25em] text-dim">
+  <ModeNav />
+
+  <nav class="mt-8 flex flex-wrap items-center gap-4 font-ui text-xs uppercase tracking-[0.25em] text-dim">
     <a href="/traffic-laws/" class="transition-colors hover:text-cyan">← traffic-laws</a>
     <span class="text-dim/50">/</span>
     <a href="/traffic-laws/practice/" class="transition-colors hover:text-cyan">practice</a>

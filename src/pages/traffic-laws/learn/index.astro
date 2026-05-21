@@ -1,5 +1,6 @@
 ---
 import Shell from "../../../layouts/Shell.astro";
+import ModeNav from "../../../components/traffic-laws/ModeNav.astro";
 import { getAllTopics, getTopicSummary, topicSlug } from "../../../data/pdd";
 
 const topics = getAllTopics().map(getTopicSummary);
@@ -11,13 +12,9 @@ const totalQuestions = topics.reduce((sum, t) => sum + t.questionCount, 0);
   description={`Изучение ПДД по ${topics.length} темам: ${totalQuestions} вопросов, сгруппированы по разделам правил.`}
   statusLabel="traffic-laws/learn"
 >
-  <nav class="mt-5 flex flex-wrap items-center gap-4 font-ui text-xs uppercase tracking-[0.25em] text-dim">
-    <a href="/traffic-laws/" class="transition-colors hover:text-cyan">← traffic-laws</a>
-    <span class="text-dim/50">/</span>
-    <span class="text-haze">learn</span>
-  </nav>
+  <ModeNav />
 
-  <header class="fade-in fade-in-2 mt-16 sm:mt-20">
+  <header class="fade-in fade-in-2 mt-14 sm:mt-20">
     <h1 class="flex flex-col gap-2 leading-none">
       <span class="neon-text neon-text--cyan text-[clamp(2.2rem,8vw,4.5rem)]">LEARN</span>
     </h1>

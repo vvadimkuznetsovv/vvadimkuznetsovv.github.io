@@ -207,8 +207,16 @@
     <span class="exam-bar__timer">⏱ {timeDisplay}</span>
   </div>
 
-  <article class="exam-q">
-    <span class="exam-q__edge" aria-hidden="true"></span>
+  <article class="exam-q hud-frame hud-frame--cyber">
+    <span class="hud-c hud-c-tl" aria-hidden="true"></span>
+    <span class="hud-c hud-c-tr" aria-hidden="true"></span>
+    <span class="hud-c hud-c-bl" aria-hidden="true"></span>
+    <span class="hud-c hud-c-br" aria-hidden="true"></span>
+    <span class="hud-ribs" aria-hidden="true">
+      <span></span>
+      <span></span>
+      <span></span>
+    </span>
 
     <header class="exam-q__topic">{current.topic.join(" · ")}</header>
 
@@ -439,21 +447,7 @@
 
   /* ---------- single question ---------- */
   .exam-q {
-    position: relative;
-    background: var(--color-deck);
-    border: 1px solid var(--color-rack);
-    padding: 24px 26px;
-    overflow: hidden;
-  }
-  @media (min-width: 640px) { .exam-q { padding: 32px 36px; } }
-  .exam-q__edge {
-    position: absolute;
-    left: 0;
-    top: 24px;
-    bottom: 24px;
-    width: 2px;
-    background: var(--color-cyan);
-    box-shadow: 0 0 8px var(--color-cyan), 0 0 18px var(--color-cyan);
+    /* hud-frame--cyber base provides background + padding + corners + ribs */
   }
   .exam-q__topic {
     font-family: var(--font-ui);

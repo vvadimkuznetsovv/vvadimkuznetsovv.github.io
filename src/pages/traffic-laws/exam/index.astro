@@ -1,5 +1,6 @@
 ---
 import Shell from "../../../layouts/Shell.astro";
+import ModeNav from "../../../components/traffic-laws/ModeNav.astro";
 import Exam from "../../../components/quiz/Exam.svelte";
 import { getAllQuestionsFlat } from "../../../data/pdd";
 
@@ -11,13 +12,9 @@ const pool = getAllQuestionsFlat();
   description="Экзамен ПДД по правилам ГИБДД: 20 вопросов из случайного билета, 20 минут, ≤2 ошибки. Дополнительные вопросы за каждую ошибку."
   statusLabel="traffic-laws/exam"
 >
-  <nav class="mt-5 flex flex-wrap items-center gap-4 font-ui text-xs uppercase tracking-[0.25em] text-dim">
-    <a href="/traffic-laws/" class="transition-colors hover:text-cyan">← traffic-laws</a>
-    <span class="text-dim/50">/</span>
-    <span class="text-haze">exam</span>
-  </nav>
+  <ModeNav />
 
-  <header class="fade-in fade-in-2 mt-16 sm:mt-20">
+  <header class="fade-in fade-in-2 mt-14 sm:mt-20">
     <h1 class="flex flex-col gap-2 leading-none">
       <span class="neon-text neon-text--magenta text-[clamp(2.2rem,8vw,4.5rem)]">
         EXAM

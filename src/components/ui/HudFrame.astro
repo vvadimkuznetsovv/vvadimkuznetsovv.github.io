@@ -1,0 +1,70 @@
+---
+type Variant = "simple" | "cyber" | "data" | "tab";
+type Color = "cyan" | "magenta" | "yellow" | "toxic" | "dim";
+
+interface Props {
+  variant?: Variant;
+  color?: Color;
+  label?: string;
+  meta?: string;
+  ribs?: boolean;
+  edge?: boolean;
+  notch?: boolean;
+  active?: boolean;
+  href?: string;
+  as?: "div" | "a" | "li" | "article" | "section" | "button";
+  class?: string;
+  ariaLabel?: string;
+}
+
+const {
+  variant = "simple",
+  color = "cyan",
+  label,
+  meta,
+  ribs = false,
+  edge = false,
+  notch = false,
+  active = false,
+  href,
+  as,
+  class: className = "",
+  ariaLabel,
+} = Astro.props;
+
+const Tag = (as ?? (href ? "a" : "div")) as any;
+
+const classes = [
+  "hud-frame",
+  `hud-frame--${variant}`,
+  `hud-frame--${color}`,
+  active && "hud-frame--active",
+  className,
+]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<Tag class={classes} href={href} aria-label={ariaLabel}>
+  <span class="hud-c hud-c-tl" aria-hidden="true"></span>
+  <span class="hud-c hud-c-tr" aria-hidden="true"></span>
+  <span class="hud-c hud-c-bl" aria-hidden="true"></span>
+  <span class="hud-c hud-c-br" aria-hidden="true"></span>
+
+  {ribs && (
+    <span class="hud-ribs" aria-hidden="true">
+      <span></span>
+      <span></span>
+      <span></span>
+    </span>
+  )}
+
+  {edge && <span class="hud-edge-left" aria-hidden="true"></span>}
+
+  {notch && <span class="hud-notch-tr" aria-hidden="true"></span>}
+
+  {label && <span class="hud-label">{label}</span>}
+  {meta && <span class="hud-meta">{meta}</span>}
+
+  <slot />
+</Tag>
