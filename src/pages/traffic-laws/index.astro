@@ -1,7 +1,7 @@
 ---
 import Shell from "../../layouts/Shell.astro";
 import CautionStripe from "../../components/CautionStripe.astro";
-import GlitchText from "../../components/GlitchText.astro";
+import NeonSign from "../../components/NeonSign.astro";
 
 const modes = [
   {
@@ -53,13 +53,9 @@ const modes = [
     <p class="font-hud text-lg neon-pulse sm:text-xl">
       &gt; build #001 :: skeleton phase
     </p>
-    <h1 class="mt-4 font-display text-[clamp(2.2rem,10vw,6rem)] leading-[0.88]">
-      <span class="block neon-glow neon-glow--cyan">
-        <GlitchText text="traffic" decrypt />
-      </span>
-      <span class="block neon-glow neon-glow--magenta">
-        <GlitchText text="laws" decrypt />
-      </span>
+    <h1 class="mt-4 flex flex-col gap-1 leading-none">
+      <NeonSign text="TRAFFIC" color="cyan" size="lg" decrypt />
+      <NeonSign text="LAWS" color="magenta" size="lg" decrypt />
     </h1>
     <p class="mt-6 max-w-2xl font-ui text-base text-haze sm:text-lg">
       Изучение правил дорожного движения категории B в формате in‑world терминала.

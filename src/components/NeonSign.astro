@@ -1,0 +1,87 @@
+---
+interface Props {
+  text: string;
+  color?: "cyan" | "magenta" | "yellow" | "pink" | "toxic";
+  size?: "lg" | "xl" | "2xl";
+  decrypt?: boolean;
+  class?: string;
+  flicker?: boolean;
+}
+
+const {
+  text,
+  color = "cyan",
+  size = "xl",
+  decrypt = false,
+  class: className = "",
+  flicker = true,
+} = Astro.props;
+
+const colorMap = {
+  cyan: "var(--color-cyan)",
+  magenta: "var(--color-magenta)",
+  yellow: "var(--color-yellow)",
+  pink: "var(--color-pink)",
+  toxic: "var(--color-toxic)",
+};
+
+const sizeMap = {
+  lg: "clamp(2.2rem, 8vw, 4.5rem)",
+  xl: "clamp(2.6rem, 11vw, 6.5rem)",
+  "2xl": "clamp(3rem, 13vw, 8rem)",
+};
+---
+
+<span
+  class:list={[
+    "neon-sign",
+    flicker && "neon-sign--flicker",
+    className,
+  ]}
+  style={`--neon-color: ${colorMap[color]}; --neon-size: ${sizeMap[size]};`}
+  data-decrypt-target={decrypt ? text : undefined}
+  data-text={text}
+>
+  {text}
+</span>
+
+<style>
+  .neon-sign {
+    display: inline-block;
+    font-family: "Monoton", "Major Mono Display", monospace;
+    font-weight: 400;
+    font-size: var(--neon-size);
+    line-height: 0.95;
+    letter-spacing: 0.04em;
+    color: #fff;
+    /* White-hot glass core + colored gas halo — the real neon tube look */
+    text-shadow:
+      0 0 2px #fff,
+      0 0 5px #fff,
+      0 0 12px var(--neon-color),
+      0 0 24px var(--neon-color),
+      0 0 42px var(--neon-color),
+      0 0 72px color-mix(in srgb, var(--neon-color) 55%, transparent);
+  }
+
+  /* Rare, real-neon-like flicker — single brief drop every ~12s */
+  .neon-sign--flicker {
+    animation: tube-flicker 13s infinite steps(1, end);
+  }
+
+  @keyframes tube-flicker {
+    0%, 84%, 86.2%, 87.5%, 89%, 100% {
+      opacity: 1;
+    }
+    /* 3-step blip ~89% — looks like real "trying to light up" stutter */
+    85%   { opacity: 0.25; }
+    85.6% { opacity: 1; }
+    86%   { opacity: 0.35; }
+    86.8% { opacity: 0.85; }
+    88.4% { opacity: 0.5; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .neon-sign--flicker { animation: none; }
+  }
+</style>

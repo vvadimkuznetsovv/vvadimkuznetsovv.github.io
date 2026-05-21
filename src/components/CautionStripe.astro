@@ -3,21 +3,19 @@ interface Props {
   class?: string;
   label?: string;
   height?: string;
-  speed?: string;
 }
 
 const {
   class: className = "",
   label,
   height = "20px",
-  speed = "5s",
 } = Astro.props;
 ---
 
 <div
   class:list={["caution-stripe", className]}
   role="presentation"
-  style={`--stripe-h: ${height}; --stripe-speed: ${speed};`}
+  style={`--stripe-h: ${height};`}
 >
   {label && <span class="caution-stripe__label">{label}</span>}
 </div>
@@ -26,20 +24,14 @@ const {
   .caution-stripe {
     position: relative;
     height: var(--stripe-h);
+    /* static diagonal stripes — no animation */
     background-image: repeating-linear-gradient(
       -45deg,
       var(--color-yellow) 0 14px,
       var(--color-void) 14px 28px
     );
-    background-size: 80px 80px;
     border-block: 1px solid color-mix(in srgb, var(--color-yellow) 35%, black);
     overflow: hidden;
-    animation: stripe-drift var(--stripe-speed) linear infinite;
-  }
-
-  @keyframes stripe-drift {
-    from { background-position: 0 0; }
-    to   { background-position: 80px 0; }
   }
 
   .caution-stripe__label {
@@ -57,9 +49,5 @@ const {
     border: 1px solid color-mix(in srgb, var(--color-yellow) 60%, transparent);
     white-space: nowrap;
     z-index: 1;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .caution-stripe { animation: none; }
   }
 </style>

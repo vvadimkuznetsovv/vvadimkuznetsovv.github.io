@@ -2,7 +2,7 @@
 import Shell from "../layouts/Shell.astro";
 import CautionStripe from "../components/CautionStripe.astro";
 import PhotoFrame from "../components/PhotoFrame.astro";
-import GlitchText from "../components/GlitchText.astro";
+import NeonSign from "../components/NeonSign.astro";
 import ProjectCard from "../components/ProjectCard.astro";
 ---
 
@@ -29,13 +29,9 @@ import ProjectCard from "../components/ProjectCard.astro";
         <span class="font-hud text-base text-cyan neon-pulse neon-pulse--cyan">@vvadimkuznetsovv</span>
       </div>
 
-      <h1 class="fade-in fade-in-3 font-display text-[clamp(2.6rem,11vw,7rem)] leading-[0.88]">
-        <span class="block neon-glow neon-glow--cyan">
-          <GlitchText text="vadim" decrypt />
-        </span>
-        <span class="block neon-glow neon-glow--magenta">
-          <GlitchText text="kuznetsov" decrypt />
-        </span>
+      <h1 class="fade-in fade-in-3 flex flex-col gap-1 leading-none">
+        <NeonSign text="VADIM" color="cyan" size="xl" decrypt />
+        <NeonSign text="KUZNETSOV" color="cyan" size="xl" decrypt />
       </h1>
 
       <dl class="fade-in fade-in-4 grid grid-cols-1 gap-1 font-hud text-lg sm:text-xl">

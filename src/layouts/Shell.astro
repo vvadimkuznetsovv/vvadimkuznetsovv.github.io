@@ -82,7 +82,7 @@ const fullTitle = title === "VADIM KUZNETSOV"
         }
 
         function run() {
-          var nodes = document.querySelectorAll(".glitch--decrypt");
+          var nodes = document.querySelectorAll("[data-decrypt-target]");
           nodes.forEach(function (el) {
             decryptText(el);
           });
