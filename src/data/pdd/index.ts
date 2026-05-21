@@ -25,6 +25,12 @@ export function getTicket(num: number): Question[] | undefined {
   return tickets.get(num);
 }
 
+export function getAllQuestionsFlat(): Question[] {
+  const out: Question[] = [];
+  for (const qs of tickets.values()) out.push(...qs);
+  return out;
+}
+
 export function getTicketSummary(num: number) {
   const questions = tickets.get(num) ?? [];
   const topics = new Set<string>();
