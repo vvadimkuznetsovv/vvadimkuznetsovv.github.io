@@ -1,4 +1,4 @@
-import type { Question, SignsByCategory } from "./types";
+import type { Question, Sign, SignsByCategory } from "./types";
 import signsData from "./signs.json";
 
 const ticketModules = import.meta.glob<{ default: Question[] }>(
@@ -38,18 +38,39 @@ export function getTicketSummary(num: number) {
 
 export const signs = signsData as unknown as SignsByCategory;
 
-export function getAllSignsFlat(): Sign[] {
-  const out: Sign[] = [];
-  for (const group of Object.values(signs)) {
+export function getSignGroups(): string[] {
+  return Object.keys(signs);
+}
+
+export function getSignsByCategory(): { category: string; items: Sign[] }[] {
+  return Object.entries(signs).map(([category, group]) => ({
+    category,
+    items: Object.values(group),
+  }));
+}
+
+export function getAllSignsFlat(): { category: string; sign: Sign }[] {
+  const out: { category: string; sign: Sign }[] = [];
+  for (const [category, group] of Object.entries(signs)) {
     for (const sign of Object.values(group)) {
-      out.push(sign);
+      out.push({ category, sign });
     }
   }
   return out;
 }
 
-export function getSignGroups(): string[] {
-  return Object.keys(signs);
+export function signSlug(number: string): string {
+  return number.replace(/\./g, "-");
 }
 
-type Sign = SignsByCategory[string][string];
+export function signFromSlug(slug: string): string {
+  return slug.replace(/-/g, ".");
+}
+
+export function getSignByNumber(num: string): { category: string; sign: Sign } | undefined {
+  for (const [category, group] of Object.entries(signs)) {
+    const sign = group[num];
+    if (sign) return { category, sign };
+  }
+  return undefined;
+}

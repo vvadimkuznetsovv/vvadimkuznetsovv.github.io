@@ -1,0 +1,68 @@
+---
+import Shell from "../../../layouts/Shell.astro";
+import { getSignsByCategory, signSlug } from "../../../data/pdd";
+
+const categories = getSignsByCategory();
+const total = categories.reduce((sum, c) => sum + c.items.length, 0);
+---
+
+<Shell
+  title="Знаки — TRAFFIC LAWS"
+  description={`Справочник дорожных знаков (${total} знаков, ${categories.length} категорий) с подробным описанием и штрафами.`}
+  statusLabel="traffic-laws/signs"
+>
+  <nav class="mt-5 flex flex-wrap items-center gap-4 font-ui text-xs uppercase tracking-[0.25em] text-dim">
+    <a href="/traffic-laws/" class="transition-colors hover:text-cyan">← traffic-laws</a>
+    <span class="text-dim/50">/</span>
+    <span class="text-haze">signs</span>
+  </nav>
+
+  <header class="fade-in fade-in-2 mt-16 sm:mt-20">
+    <h1 class="flex flex-col gap-2 leading-none">
+      <span class="neon-text neon-text--cyan text-[clamp(2.2rem,8vw,4.5rem)]">SIGNS</span>
+    </h1>
+    <p class="mt-8 max-w-2xl font-ui text-base leading-relaxed text-haze sm:text-lg">
+      {total} дорожных знаков, {categories.length} категорий. Полное описание каждого
+      знака с указанием действия и штрафами по КоАП РФ.
+    </p>
+  </header>
+
+  <section class="mt-16 flex flex-col gap-14">
+    {
+      categories.map(({ category, items }) => (
+        <div>
+          <div class="flex items-baseline justify-between gap-4 border-b border-rack pb-3">
+            <h2 class="font-ui text-sm font-medium uppercase tracking-[0.3em] text-haze sm:text-base">
+              {category}
+            </h2>
+            <span class="font-ui text-xs uppercase tracking-[0.2em] text-dim">
+              {items.length.toString().padStart(3, "0")}
+            </span>
+          </div>
+
+          <ul class="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-4 sm:gap-4 md:grid-cols-6 lg:grid-cols-8">
+            {items.map((sign) => (
+              <li>
+                <a
+                  href={`/traffic-laws/signs/${signSlug(sign.number)}/`}
+                  class="sign-tile group relative flex aspect-square flex-col items-center justify-center gap-2 border border-rack bg-deck/60 p-3 transition-all hover:border-cyan/70 hover:bg-deck"
+                  title={`${sign.number} ${sign.title}`}
+                >
+                  <img
+                    src={sign.image}
+                    alt={sign.title}
+                    loading="lazy"
+                    class="h-14 w-14 object-contain sm:h-16 sm:w-16"
+                  />
+                  <span class="font-hud text-sm leading-none text-cyan transition-colors group-hover:text-yellow">
+                    {sign.number}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </section>
+</Shell>
