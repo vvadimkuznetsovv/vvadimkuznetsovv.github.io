@@ -31,6 +31,61 @@ export function getAllQuestionsFlat(): Question[] {
   return out;
 }
 
+let _topicMap: Map<string, Question[]> | null = null;
+function buildTopicMap(): Map<string, Question[]> {
+  if (_topicMap) return _topicMap;
+  const m = new Map<string, Question[]>();
+  for (const qs of tickets.values()) {
+    for (const q of qs) {
+      for (const t of q.topic) {
+        if (!m.has(t)) m.set(t, []);
+        m.get(t)!.push(q);
+      }
+    }
+  }
+  _topicMap = m;
+  return m;
+}
+
+export function getAllTopics(): string[] {
+  return [...buildTopicMap().keys()].sort((a, b) => a.localeCompare(b, "ru"));
+}
+
+export function getTopicQuestions(topic: string): Question[] {
+  return buildTopicMap().get(topic) ?? [];
+}
+
+export function getTopicSummary(topic: string) {
+  const questions = getTopicQuestions(topic);
+  const tickets = new Set(questions.map((q) => q.ticket_number));
+  return {
+    topic,
+    questionCount: questions.length,
+    ticketCount: tickets.size,
+  };
+}
+
+const cyrToLat: Record<string, string> = {
+  а:"a", б:"b", в:"v", г:"g", д:"d", е:"e", ё:"yo", ж:"zh", з:"z",
+  и:"i", й:"y", к:"k", л:"l", м:"m", н:"n", о:"o", п:"p", р:"r",
+  с:"s", т:"t", у:"u", ф:"f", х:"h", ц:"ts", ч:"ch", ш:"sh", щ:"sch",
+  ъ:"", ы:"y", ь:"", э:"e", ю:"yu", я:"ya",
+};
+
+export function topicSlug(t: string): string {
+  const lower = t.toLowerCase().replace(/[«»"']/g, "");
+  let out = "";
+  for (const ch of lower) out += cyrToLat[ch] ?? ch;
+  return out.replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+export function getTopicBySlug(slug: string): string | undefined {
+  for (const topic of getAllTopics()) {
+    if (topicSlug(topic) === slug) return topic;
+  }
+  return undefined;
+}
+
 export function getTicketSummary(num: number) {
   const questions = tickets.get(num) ?? [];
   const topics = new Set<string>();

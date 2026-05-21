@@ -1,0 +1,90 @@
+---
+import Shell from "../../../../layouts/Shell.astro";
+import QuizSession from "../../../../components/quiz/QuizSession.svelte";
+import {
+  getAllTopics,
+  getTopicQuestions,
+  getTopicBySlug,
+  topicSlug,
+} from "../../../../data/pdd";
+
+export function getStaticPaths() {
+  return getAllTopics().map((topic) => ({
+    params: { topic: topicSlug(topic) },
+    props: { topic },
+  }));
+}
+
+const { topic } = Astro.props as { topic: string };
+const resolvedTopic = getTopicBySlug(topicSlug(topic)) ?? topic;
+const questions = getTopicQuestions(resolvedTopic);
+
+// Cross-page nav between topics
+const allTopics = getAllTopics();
+const idx = allTopics.indexOf(resolvedTopic);
+const prev = idx > 0 ? allTopics[idx - 1] : null;
+const next = idx < allTopics.length - 1 ? allTopics[idx + 1] : null;
+---
+
+<Shell
+  title={`${resolvedTopic} — TRAFFIC LAWS`}
+  description={`${resolvedTopic}: ${questions.length} вопросов с подробным разбором.`}
+  statusLabel={`traffic-laws/learn/${topicSlug(resolvedTopic)}`}
+>
+  <nav class="mt-5 flex flex-wrap items-center gap-4 font-ui text-xs uppercase tracking-[0.25em] text-dim">
+    <a href="/traffic-laws/" class="transition-colors hover:text-cyan">← traffic-laws</a>
+    <span class="text-dim/50">/</span>
+    <a href="/traffic-laws/learn/" class="transition-colors hover:text-cyan">learn</a>
+    <span class="text-dim/50">/</span>
+    <span class="text-haze max-w-[60ch] truncate">{resolvedTopic}</span>
+  </nav>
+
+  <header class="fade-in fade-in-2 mt-12 sm:mt-16">
+    <p class="font-hud text-base uppercase tracking-[0.25em] text-yellow">
+      // тема {(idx + 1).toString().padStart(2, "0")} / {allTopics.length}
+    </p>
+    <h1 class="mt-4 font-ui text-2xl font-medium leading-tight text-bone sm:text-3xl md:text-4xl">
+      {resolvedTopic}
+    </h1>
+    <p class="mt-4 font-ui text-sm text-dim">
+      {questions.length} вопросов
+    </p>
+  </header>
+
+  <section class="mt-12">
+    <QuizSession questions={questions} client:load />
+  </section>
+
+  <footer class="mt-20 flex flex-wrap items-center justify-between gap-6 border-t border-rack pt-6 font-ui text-xs uppercase tracking-[0.25em]">
+    {
+      prev ? (
+        <a
+          href={`/traffic-laws/learn/${topicSlug(prev)}/`}
+          class="flex items-center gap-3 text-haze transition-colors hover:text-cyan"
+        >
+          <span class="text-dim">←</span>
+          <span>{prev}</span>
+        </a>
+      ) : (
+        <a
+          href="/traffic-laws/learn/"
+          class="flex items-center gap-3 text-haze transition-colors hover:text-cyan"
+        >
+          <span class="text-dim">←</span>
+          <span>все темы</span>
+        </a>
+      )
+    }
+    {
+      next && (
+        <a
+          href={`/traffic-laws/learn/${topicSlug(next)}/`}
+          class="ml-auto flex items-center gap-3 text-haze transition-colors hover:text-cyan"
+        >
+          <span>{next}</span>
+          <span class="text-dim">→</span>
+        </a>
+      )
+    }
+  </footer>
+</Shell>

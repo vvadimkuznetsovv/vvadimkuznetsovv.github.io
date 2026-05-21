@@ -1,0 +1,63 @@
+---
+import Shell from "../../../layouts/Shell.astro";
+import { getAllTopics, getTopicSummary, topicSlug } from "../../../data/pdd";
+
+const topics = getAllTopics().map(getTopicSummary);
+const totalQuestions = topics.reduce((sum, t) => sum + t.questionCount, 0);
+---
+
+<Shell
+  title="Темы — TRAFFIC LAWS"
+  description={`Изучение ПДД по ${topics.length} темам: ${totalQuestions} вопросов, сгруппированы по разделам правил.`}
+  statusLabel="traffic-laws/learn"
+>
+  <nav class="mt-5 flex flex-wrap items-center gap-4 font-ui text-xs uppercase tracking-[0.25em] text-dim">
+    <a href="/traffic-laws/" class="transition-colors hover:text-cyan">← traffic-laws</a>
+    <span class="text-dim/50">/</span>
+    <span class="text-haze">learn</span>
+  </nav>
+
+  <header class="fade-in fade-in-2 mt-16 sm:mt-20">
+    <h1 class="flex flex-col gap-2 leading-none">
+      <span class="neon-text neon-text--cyan text-[clamp(2.2rem,8vw,4.5rem)]">LEARN</span>
+    </h1>
+    <p class="mt-8 max-w-2xl font-ui text-base leading-relaxed text-haze sm:text-lg">
+      {topics.length} тем · {totalQuestions} вопросов. Каждая тема — отдельный раздел
+      правил с тестовыми вопросами в нём.
+    </p>
+  </header>
+
+  <section class="mt-14">
+    <ul class="flex flex-col gap-3 sm:gap-4">
+      {
+        topics.map((t, i) => (
+          <li>
+            <a
+              href={`/traffic-laws/learn/${topicSlug(t.topic)}/`}
+              class="topic-row group relative flex items-center gap-5 border border-rack bg-deck px-5 py-5 transition-all hover:border-cyan/70 hover:bg-deck/80 sm:px-7 sm:py-6"
+            >
+              <span
+                class="absolute left-0 top-5 bottom-5 w-px bg-cyan/30 transition-colors group-hover:bg-cyan"
+                aria-hidden="true"
+              />
+              <span class="font-hud text-xl text-yellow drop-shadow-[0_0_8px_var(--color-yellow)] min-w-[3ch] sm:text-2xl">
+                {(i + 1).toString().padStart(2, "0")}
+              </span>
+              <span class="flex-1 min-w-0">
+                <span class="block font-ui text-base font-medium text-bone sm:text-lg">
+                  {t.topic}
+                </span>
+                <span class="mt-1 block font-ui text-xs uppercase tracking-[0.2em] text-dim">
+                  {t.questionCount} вопросов · {t.ticketCount} билетов
+                </span>
+              </span>
+              <span class="font-hud text-base text-cyan transition-transform group-hover:translate-x-1">
+                →
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Shell>
