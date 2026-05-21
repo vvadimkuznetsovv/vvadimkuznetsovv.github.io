@@ -367,7 +367,15 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
     line-height: 1;
-    /* No glow — clean colored text only. Glow adds back when user asks. */
+    text-shadow:
+      0 0 1px #fff,
+      0 0 4px #fff,
+      0 0 9px var(--neon),
+      0 0 18px var(--neon),
+      0 0 36px var(--neon),
+      0 0 70px var(--neon),
+      0 0 110px color-mix(in srgb, var(--neon) 55%, transparent);
+    animation: neon-text-flicker 13s infinite steps(1, end);
   }
   .neon-text--cyan    { --neon: #00f0ff; }
   .neon-text--magenta { --neon: #ff2bd6; }
