@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @import "@fontsource/major-mono-display/400.css";
-@import "@fontsource/monoton/400.css";
+@import "@fontsource/permanent-marker/400.css";
 @import "@fontsource/chakra-petch/500.css";
 @import "@fontsource/chakra-petch/700.css";
 @import "@fontsource/geist-mono/400.css";
@@ -354,6 +354,22 @@
   /* On small mobile, hide ticker to save paint cycles */
   @media (max-width: 480px) {
     .ticker { display: none; }
+  }
+
+  /* ============================================================
+     HERO NAME — Permanent Marker, big, subtle glow (not full neon)
+     ============================================================ */
+  .hero-name {
+    font-family: "Permanent Marker", "Chakra Petch", system-ui, sans-serif;
+    font-weight: 400;
+    font-size: clamp(2.2rem, 7vw, 4.2rem);
+    line-height: 1.05;
+    letter-spacing: 0.02em;
+    color: var(--color-bone);
+    text-transform: lowercase;
+    text-shadow:
+      0 0 6px rgba(0, 240, 255, 0.45),
+      0 0 14px rgba(0, 240, 255, 0.22);
   }
 
   /* ============================================================

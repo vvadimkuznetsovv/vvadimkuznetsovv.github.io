@@ -1,0 +1,247 @@
+---
+type Color = "cyan" | "magenta" | "yellow" | "pink";
+type Shape = "VK" | "TL";
+
+interface Props {
+  shape?: Shape;
+  color?: Color;
+  class?: string;
+  flicker?: boolean;
+}
+
+const {
+  shape = "VK",
+  color = "cyan",
+  class: className = "",
+  flicker = true,
+} = Astro.props;
+
+const colorMap: Record<Color, string> = {
+  cyan: "#00f0ff",
+  magenta: "#ff2bd6",
+  yellow: "#fcee0a",
+  pink: "#ff1f5a",
+};
+const colorHex = colorMap[color];
+
+// Unique filter IDs to avoid collisions when multiple instances render
+const id = Math.random().toString(36).slice(2, 8);
+
+interface Segment { x1: number; y1: number; x2: number; y2: number; }
+interface Point { x: number; y: number; }
+interface Wire { d: string; }
+interface ShapeDef {
+  viewW: number;
+  viewH: number;
+  tubes: Segment[];
+  endpoints: Point[];
+  wires: Wire[];
+}
+
+const shapes: Record<Shape, ShapeDef> = {
+  VK: {
+    viewW: 640,
+    viewH: 360,
+    tubes: [
+      // V — two diagonals meeting at bottom
+      { x1: 80,  y1: 70,  x2: 220, y2: 300 },
+      { x1: 360, y1: 70,  x2: 220, y2: 300 },
+      // K — vertical bar
+      { x1: 450, y1: 70,  x2: 450, y2: 300 },
+      // K — upper diagonal branching from middle
+      { x1: 450, y1: 185, x2: 580, y2: 70 },
+      // K — lower diagonal
+      { x1: 450, y1: 185, x2: 580, y2: 300 },
+    ],
+    endpoints: [
+      { x: 80,  y: 70 },
+      { x: 360, y: 70 },
+      { x: 220, y: 300 },
+      { x: 450, y: 70 },
+      { x: 450, y: 300 },
+      { x: 580, y: 70 },
+      { x: 580, y: 300 },
+    ],
+    wires: [
+      // Wire from top edge to top-left V endpoint, with a slight sag
+      { d: "M 80 -90 C 60 -50 70 -20 80 70" },
+      // Wire from top edge to K-upper-diagonal top endpoint
+      { d: "M 580 -90 C 600 -50 590 -20 580 70" },
+    ],
+  },
+  TL: {
+    viewW: 600,
+    viewH: 360,
+    tubes: [
+      // T — horizontal bar
+      { x1: 70,  y1: 70,  x2: 290, y2: 70 },
+      // T — vertical stem
+      { x1: 180, y1: 70,  x2: 180, y2: 300 },
+      // L — vertical bar
+      { x1: 380, y1: 70,  x2: 380, y2: 300 },
+      // L — horizontal foot
+      { x1: 380, y1: 300, x2: 540, y2: 300 },
+    ],
+    endpoints: [
+      { x: 70,  y: 70 },
+      { x: 290, y: 70 },
+      { x: 180, y: 300 },
+      { x: 380, y: 70 },
+      { x: 540, y: 300 },
+    ],
+    wires: [
+      { d: "M 180 -90 C 160 -50 170 -20 180 70" },
+      { d: "M 380 -90 C 400 -50 390 -20 380 70" },
+    ],
+  },
+};
+
+const { viewW, viewH, tubes, endpoints, wires } = shapes[shape];
+
+// ViewBox includes extra space for wires (top) and cast light (bottom)
+const padX = 50;
+const padTop = 110;
+const padBottom = 80;
+const vbX = -padX;
+const vbY = -padTop;
+const vbW = viewW + padX * 2;
+const vbH = viewH + padTop + padBottom;
+
+const ariaLabel = shape === "VK" ? "VK monogram in neon tubes" : "TL monogram in neon tubes";
+---
+
+<svg
+  class:list={["neon-tubes", flicker && "neon-tubes--flicker", className]}
+  viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`}
+  preserveAspectRatio="xMidYMid meet"
+  role="img"
+  aria-label={ariaLabel}
+>
+  <defs>
+    <filter id={`halo-${id}`} x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="18"></feGaussianBlur>
+    </filter>
+    <filter id={`mid-${id}`} x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6"></feGaussianBlur>
+    </filter>
+    <filter id={`tight-${id}`} x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur stdDeviation="1.8"></feGaussianBlur>
+    </filter>
+    <filter id={`cast-${id}`} x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="26"></feGaussianBlur>
+    </filter>
+  </defs>
+
+  <!-- 1. Cast light splash on the imaginary wall below the sign -->
+  <ellipse
+    cx={viewW / 2}
+    cy={viewH + 28}
+    rx={viewW / 2.4}
+    ry="22"
+    fill={colorHex}
+    filter={`url(#cast-${id})`}
+    opacity="0.45"
+  ></ellipse>
+
+  <!-- 2. Power wires — drawn behind everything else -->
+  <g class="neon-tubes__wires" aria-hidden="true">
+    {wires.map((wire) => (
+      <g>
+        <path d={wire.d} fill="none" stroke="#000000" stroke-width="6" stroke-linecap="round"></path>
+        <path d={wire.d} fill="none" stroke="#1c1c30" stroke-width="3" stroke-linecap="round"></path>
+      </g>
+    ))}
+  </g>
+
+  <!-- 3. Outer halo (large Gaussian blur) -->
+  <g class="neon-tubes__layer neon-tubes__layer--halo" filter={`url(#halo-${id})`}>
+    {tubes.map((t) => (
+      <line
+        x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
+        stroke={colorHex} stroke-width="9" stroke-linecap="round"
+      ></line>
+    ))}
+  </g>
+
+  <!-- 4. Mid halo -->
+  <g class="neon-tubes__layer neon-tubes__layer--mid" filter={`url(#mid-${id})`}>
+    {tubes.map((t) => (
+      <line
+        x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
+        stroke={colorHex} stroke-width="7" stroke-linecap="round"
+      ></line>
+    ))}
+  </g>
+
+  <!-- 5. Tight glow around the tube -->
+  <g class="neon-tubes__layer neon-tubes__layer--tight" filter={`url(#tight-${id})`}>
+    {tubes.map((t) => (
+      <line
+        x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
+        stroke={colorHex} stroke-width="6" stroke-linecap="round"
+      ></line>
+    ))}
+  </g>
+
+  <!-- 6. White-hot glass core (the gas glowing inside) -->
+  <g class="neon-tubes__layer neon-tubes__layer--core">
+    {tubes.map((t) => (
+      <line
+        x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
+        stroke="#ffffff" stroke-width="2.4" stroke-linecap="round"
+      ></line>
+    ))}
+  </g>
+
+  <!-- 7. Electrodes at each tube terminal — physical contacts -->
+  <g class="neon-tubes__electrodes">
+    {endpoints.map((p) => (
+      <g>
+        <circle cx={p.x} cy={p.y} r="11" fill="#0a0a18" stroke="#22253a" stroke-width="1.5"></circle>
+        <circle cx={p.x} cy={p.y} r="4" fill={colorHex} opacity="0.95"></circle>
+      </g>
+    ))}
+  </g>
+</svg>
+
+<style>
+  .neon-tubes {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 560px;
+    overflow: visible;
+  }
+
+  /* Realistic "trying to ignite" flicker every ~14s */
+  .neon-tubes--flicker .neon-tubes__layer {
+    animation: tube-flicker 14s infinite steps(1, end);
+  }
+
+  @keyframes tube-flicker {
+    0%, 84%, 85.5%, 86.5%, 87.5%, 88.8%, 100% { opacity: 1; }
+    85%   { opacity: 0.2; }
+    86%   { opacity: 0.85; }
+    87%   { opacity: 0.28; }
+    88%   { opacity: 0.7; }
+  }
+
+  /* Halo layer breathes (gas alive feeling) */
+  .neon-tubes__layer--halo {
+    animation: halo-breathe 3.4s ease-in-out infinite alternate;
+  }
+  .neon-tubes--flicker .neon-tubes__layer--halo {
+    animation:
+      halo-breathe 3.4s ease-in-out infinite alternate,
+      tube-flicker 14s infinite steps(1, end);
+  }
+
+  @keyframes halo-breathe {
+    from { opacity: 0.7; }
+    to   { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .neon-tubes__layer { animation: none !important; }
+  }
+</style>
