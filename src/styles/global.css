@@ -363,20 +363,11 @@
     --neon: #ff2bd6;
     font-family: "Tilt Neon Variable", sans-serif;
     font-weight: 400;
-    color: #fff;
+    color: var(--neon);
     text-transform: uppercase;
     letter-spacing: 0.04em;
     line-height: 1;
-    /* Classic CSS Tricks neon recipe — proven, clean */
-    text-shadow:
-      0 0 5px #fff,
-      0 0 10px #fff,
-      0 0 20px var(--neon),
-      0 0 30px var(--neon),
-      0 0 40px var(--neon),
-      0 0 55px var(--neon),
-      0 0 75px var(--neon);
-    animation: neon-text-flicker 13s infinite steps(1, end);
+    /* No glow — clean colored text only. Glow adds back when user asks. */
   }
   .neon-text--cyan    { --neon: #00f0ff; }
   .neon-text--magenta { --neon: #ff2bd6; }
