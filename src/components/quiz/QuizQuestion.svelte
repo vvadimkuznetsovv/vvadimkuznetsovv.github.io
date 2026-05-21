@@ -19,24 +19,30 @@
     question: Question;
     index: number;
     total: number;
+    showAnswers?: boolean;
     showExplanations?: boolean;
   }
 
-  let { question, index, total, showExplanations = true }: Props = $props();
+  let {
+    question,
+    index,
+    total,
+    showAnswers = false,
+    showExplanations = false,
+  }: Props = $props();
 
   let selected: number | null = $state(null);
-  let revealed: boolean = $state(false);
 
   function pick(i: number) {
-    if (revealed) return;
     selected = i;
-    revealed = true;
   }
 
   function reset() {
     selected = null;
-    revealed = false;
   }
+
+  // Reveal answers if: user picked one OR the "Ответы" toggle is on
+  const revealed = $derived(selected !== null || showAnswers);
 
   const isCorrect = $derived(
     selected !== null && question.answers[selected]?.is_correct === true,
@@ -79,13 +85,12 @@
           class:qq__a--correct={showCorrect}
           class:qq__a--wrong={showWrong}
           class:qq__a--dim={revealed && !a.is_correct && !isSelected}
-          disabled={revealed}
           onclick={() => pick(ai)}
         >
           <span class="qq__a-letter">{String.fromCharCode(65 + ai)}.</span>
           <span class="qq__a-text">{a.answer_text}</span>
           {#if showCorrect}
-            <span class="qq__a-mark" aria-label="правильный ответ">✓</span>
+            <span class="qq__a-mark" aria-label="правильный">✓</span>
           {/if}
           {#if showWrong}
             <span class="qq__a-mark qq__a-mark--wrong" aria-label="неправильно">✗</span>
@@ -95,26 +100,21 @@
     {/each}
   </ol>
 
-  {#if revealed}
-    <div class="qq__verdict" class:qq__verdict--ok={isCorrect}>
+  {#if selected !== null}
+    <div class="qq__verdict">
       {#if isCorrect}
         <span class="qq__verdict-tag">✓ Верно</span>
       {:else}
         <span class="qq__verdict-tag qq__verdict-tag--wrong">✗ Неверно</span>
       {/if}
+      <button type="button" class="qq__retry" onclick={reset}>↻ Сбросить</button>
     </div>
+  {/if}
 
-    {#if showExplanations}
-      <div class="qq__explain">
-        <p class="qq__explain-label">// объяснение</p>
-        <p class="qq__explain-text">{question.answer_tip}</p>
-      </div>
-    {/if}
-
-    <div class="qq__actions">
-      <button type="button" class="qq__retry" onclick={reset}>
-        ↻ Попробовать заново
-      </button>
+  {#if showExplanations || (selected !== null && !isCorrect)}
+    <div class="qq__explain">
+      <p class="qq__explain-label">// объяснение</p>
+      <p class="qq__explain-text">{question.answer_tip}</p>
     </div>
   {/if}
 </article>
@@ -224,26 +224,18 @@
     line-height: 1.5;
     text-align: left;
     cursor: pointer;
-    transition:
-      background 0.18s,
-      border-color 0.18s,
-      color 0.18s,
-      transform 0.1s;
+    transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.1s;
   }
   @media (min-width: 640px) {
     .qq__a { padding: 16px 20px; font-size: 1rem; }
   }
-  .qq__a:hover:not(:disabled) {
+  .qq__a:hover {
     border-color: color-mix(in srgb, var(--color-cyan) 60%, transparent);
     background: rgba(0, 240, 255, 0.05);
     color: var(--color-bone);
   }
-  .qq__a:active:not(:disabled) {
-    transform: translateY(1px);
-  }
-  .qq__a:disabled {
-    cursor: default;
-  }
+  .qq__a:active { transform: translateY(1px); }
+
   .qq__a-letter {
     font-family: var(--font-hud);
     font-size: 1.05rem;
@@ -290,6 +282,8 @@
     margin-top: 22px;
     display: flex;
     align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
   }
   .qq__verdict-tag {
     padding: 6px 16px;
@@ -306,6 +300,23 @@
     color: var(--color-magenta);
     border-color: var(--color-magenta);
     background: rgba(255, 43, 214, 0.08);
+  }
+  .qq__retry {
+    padding: 6px 14px;
+    border: 1px solid color-mix(in srgb, var(--color-cyan) 50%, transparent);
+    background: transparent;
+    color: var(--color-cyan);
+    font-family: "Rajdhani", sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s;
+  }
+  .qq__retry:hover {
+    background: rgba(0, 240, 255, 0.08);
+    border-color: var(--color-cyan);
   }
 
   .qq__explain {
@@ -331,29 +342,5 @@
   }
   @media (min-width: 640px) {
     .qq__explain-text { font-size: 1rem; }
-  }
-
-  .qq__actions {
-    margin-top: 18px;
-    display: flex;
-    gap: 12px;
-  }
-
-  .qq__retry {
-    padding: 10px 18px;
-    border: 1px solid color-mix(in srgb, var(--color-cyan) 50%, transparent);
-    background: transparent;
-    color: var(--color-cyan);
-    font-family: "Rajdhani", sans-serif;
-    font-weight: 600;
-    font-size: 0.92rem;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    cursor: pointer;
-    transition: background 0.18s, border-color 0.18s;
-  }
-  .qq__retry:hover {
-    background: rgba(0, 240, 255, 0.08);
-    border-color: var(--color-cyan);
   }
 </style>

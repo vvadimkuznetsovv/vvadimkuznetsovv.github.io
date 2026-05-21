@@ -18,7 +18,8 @@
 
   let { questions }: Props = $props();
 
-  let showExplanations = $state(true);
+  let showAnswers = $state(false);
+  let showExplanations = $state(false);
   let timerEnabled = $state(false);
   let elapsed = $state(0);
 
@@ -37,7 +38,8 @@
   }
 
   onMount(() => {
-    showExplanations = loadBool("quiz.showExplanations", true);
+    showAnswers = loadBool("quiz.showAnswers", false);
+    showExplanations = loadBool("quiz.showExplanations", false);
     timerEnabled = loadBool("quiz.timerEnabled", false);
   });
 
@@ -45,9 +47,8 @@
     if (timerHandle) clearInterval(timerHandle);
   });
 
-  $effect(() => {
-    saveBool("quiz.showExplanations", showExplanations);
-  });
+  $effect(() => { saveBool("quiz.showAnswers", showAnswers); });
+  $effect(() => { saveBool("quiz.showExplanations", showExplanations); });
 
   $effect(() => {
     saveBool("quiz.timerEnabled", timerEnabled);
@@ -57,23 +58,27 @@
     }
     if (timerEnabled) {
       elapsed = 0;
-      timerHandle = setInterval(() => {
-        elapsed += 1;
-      }, 1000);
+      timerHandle = setInterval(() => { elapsed += 1; }, 1000);
     } else {
       elapsed = 0;
     }
   });
 
   const timerDisplay = $derived(
-    `${Math.floor(elapsed / 60)
-      .toString()
-      .padStart(2, "0")}:${(elapsed % 60).toString().padStart(2, "0")}`,
+    `${Math.floor(elapsed / 60).toString().padStart(2, "0")}:${(elapsed % 60).toString().padStart(2, "0")}`,
   );
 </script>
 
 <div class="qs">
   <div class="qs__bar">
+    <label class="qs__toggle">
+      <input type="checkbox" bind:checked={showAnswers} />
+      <span class="qs__toggle-track">
+        <span class="qs__toggle-thumb"></span>
+      </span>
+      <span class="qs__toggle-label">Ответы</span>
+    </label>
+
     <label class="qs__toggle">
       <input type="checkbox" bind:checked={showExplanations} />
       <span class="qs__toggle-track">
@@ -97,7 +102,13 @@
 
   <div class="qs__list">
     {#each questions as q, i (q.id)}
-      <QuizQuestion question={q} index={i} total={questions.length} {showExplanations} />
+      <QuizQuestion
+        question={q}
+        index={i}
+        total={questions.length}
+        {showAnswers}
+        {showExplanations}
+      />
     {/each}
   </div>
 </div>
