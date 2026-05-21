@@ -361,11 +361,11 @@
      ============================================================ */
   .neon-text {
     --neon: #ff2bd6;
-    font-family: "Chakra Petch", system-ui, sans-serif;
-    font-weight: 500;
+    font-family: "Iceland", "Major Mono Display", sans-serif;
+    font-weight: 400;
     color: var(--neon);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
     line-height: 1;
     text-shadow:
       0 0 1px #fff,
