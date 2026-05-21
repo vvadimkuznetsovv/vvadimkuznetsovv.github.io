@@ -371,9 +371,9 @@
      NEON TEXT — Monoton font, strong layered halo (matches reference)
      ============================================================ */
   /* Klaxons-style neon — white text in front, layered color halo behind */
+  /* RGB-split chromatic aberration (anaglyph 3D) + neon halo */
   .neon-text {
     --neon: #ff2bd6;
-    --neon-deep: color-mix(in srgb, var(--neon) 35%, black);
     position: relative;
     display: inline-block;
     font-family: "Rajdhani", sans-serif;
@@ -384,20 +384,13 @@
     line-height: 1;
     z-index: 1;
     text-shadow:
-      /* 3D extrusion — stacked offsets going down-right in darker color */
-      1px 1px 0 var(--neon-deep),
-      2px 2px 0 var(--neon-deep),
-      3px 3px 0 var(--neon-deep),
-      4px 4px 0 var(--neon-deep),
-      5px 5px 0 var(--neon-deep),
-      6px 6px 0 var(--neon-deep),
-      7px 7px 0 var(--neon-deep),
-      8px 8px 0 var(--neon-deep),
-      /* neon glow halo */
+      /* RGB-split: red left + cyan right (classic 3D anaglyph) */
+      -3px 0 0 #ff003c,
+      3px 0 0 #00f0ff,
+      /* neon glow halo behind */
       0 0 18px var(--neon),
       0 0 40px var(--neon),
-      0 0 80px var(--neon),
-      0 0 140px color-mix(in srgb, var(--neon) 55%, transparent);
+      0 0 90px color-mix(in srgb, var(--neon) 60%, transparent);
   }
   .neon-text--cyan    { --neon: #00f0ff; }
   .neon-text--magenta { --neon: #ff2bd6; }

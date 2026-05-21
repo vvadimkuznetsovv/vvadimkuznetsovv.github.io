@@ -39,20 +39,74 @@ const modes = [
   </nav>
 
   <!-- HERO -->
-  <header class="fade-in fade-in-2 mt-20 sm:mt-24">
-    <h1 class="flex flex-col gap-2 leading-none">
-      <span class="neon-text neon-text--cyan text-[clamp(2.6rem,10vw,6rem)]">
-        TRAFFIC
-      </span>
-      <span class="neon-text neon-text--magenta text-[clamp(2.6rem,10vw,6rem)]">
-        LAWS
-      </span>
-    </h1>
-    <p class="mt-8 max-w-2xl font-ui text-base leading-relaxed text-haze sm:text-lg">
-      Изучение правил дорожного движения категории B в формате in‑world терминала.
-      Подробные объяснения, разбор картинок билетов, киберпанк‑роман со всеми
-      правилами, вшитыми в нарратив.
-    </p>
+  <header class="fade-in fade-in-2 mt-20 grid grid-cols-1 items-center gap-12 sm:mt-24 md:grid-cols-[minmax(0,1fr)_220px] md:gap-16 lg:grid-cols-[minmax(0,1fr)_260px]">
+    <div>
+      <h1 class="flex flex-col gap-2 leading-none">
+        <span class="neon-text neon-text--cyan text-[clamp(2.6rem,10vw,6rem)]">
+          TRAFFIC
+        </span>
+        <span class="neon-text neon-text--magenta text-[clamp(2.6rem,10vw,6rem)]">
+          LAWS
+        </span>
+      </h1>
+      <p class="mt-8 max-w-2xl font-ui text-base leading-relaxed text-haze sm:text-lg">
+        Изучение правил дорожного движения категории B в формате in‑world терминала.
+        Подробные объяснения, разбор картинок билетов, киберпанк‑роман со всеми
+        правилами, вшитыми в нарратив.
+      </p>
+    </div>
+
+    <!-- Decorative neon traffic light -->
+    <div class="mx-auto md:mx-0 md:ml-auto">
+      <svg
+        viewBox="0 0 120 320"
+        class="traffic-light h-[260px] w-auto md:h-[300px]"
+        role="img"
+        aria-label="Cyberpunk traffic light"
+      >
+        <defs>
+          <filter id="tl-glow-r" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="6"/>
+          </filter>
+          <filter id="tl-glow-a" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="6"/>
+          </filter>
+          <filter id="tl-glow-g" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="6"/>
+          </filter>
+        </defs>
+        <!-- Housing -->
+        <rect
+          x="10" y="0" width="100" height="320" rx="14"
+          fill="#0a0a18" stroke="#1c1c30" stroke-width="2"
+        />
+        <rect
+          x="15" y="5" width="90" height="310" rx="10"
+          fill="none" stroke="#22253a" stroke-width="1"
+        />
+        <!-- Red lamp -->
+        <g class="traffic-light__lamp traffic-light__lamp--red">
+          <circle cx="60" cy="60" r="36" fill="#ff003c" opacity="0.6" filter="url(#tl-glow-r)"/>
+          <circle cx="60" cy="60" r="28" fill="#ff003c"/>
+          <circle cx="60" cy="60" r="20" fill="#ff5777"/>
+          <circle cx="60" cy="60" r="10" fill="#ffd0db"/>
+        </g>
+        <!-- Amber lamp (dim by default) -->
+        <g class="traffic-light__lamp traffic-light__lamp--amber" opacity="0.3">
+          <circle cx="60" cy="160" r="36" fill="#ff8a00" opacity="0.6" filter="url(#tl-glow-a)"/>
+          <circle cx="60" cy="160" r="28" fill="#ff8a00"/>
+          <circle cx="60" cy="160" r="20" fill="#ffb142"/>
+          <circle cx="60" cy="160" r="10" fill="#ffe4be"/>
+        </g>
+        <!-- Green lamp (bright) -->
+        <g class="traffic-light__lamp traffic-light__lamp--green">
+          <circle cx="60" cy="260" r="36" fill="#00ff9c" opacity="0.6" filter="url(#tl-glow-g)"/>
+          <circle cx="60" cy="260" r="28" fill="#00ff9c"/>
+          <circle cx="60" cy="260" r="20" fill="#74ffc4"/>
+          <circle cx="60" cy="260" r="10" fill="#d4ffec"/>
+        </g>
+      </svg>
+    </div>
   </header>
 
   <!-- MODES -->
