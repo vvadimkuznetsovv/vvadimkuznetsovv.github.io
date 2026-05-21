@@ -51,6 +51,12 @@
       linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
     background-size: 40px 40px;
     background-attachment: fixed;
+    animation: grid-drift 80s linear infinite;
+  }
+
+  @keyframes grid-drift {
+    from { background-position: 0 0, 0 0; }
+    to { background-position: 40px 40px, 40px 40px; }
   }
 
   body::before {
@@ -63,6 +69,12 @@
       radial-gradient(ellipse 55% 45% at 50% 110%, rgba(255, 43, 214, 0.12), transparent 55%);
     pointer-events: none;
     z-index: -1;
+    animation: glow-pulse 9s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow-pulse {
+    from { opacity: 0.85; transform: scale(1); }
+    to   { opacity: 1;    transform: scale(1.05); }
   }
 
   body::after {
@@ -93,14 +105,14 @@
     color: var(--color-void);
   }
 
-  /* Mobile-friendly focus ring */
   :focus-visible {
     outline: 2px solid var(--color-cyan);
     outline-offset: 3px;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    body::after { display: none; }
+    body { animation: none; }
+    body::before, body::after { animation: none; }
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
@@ -110,27 +122,129 @@
 }
 
 @layer components {
-  /* Stagger fade-in for hero content */
+  /* ---------- BOOT SCAN ---------- */
+  /* A one-shot CRT power-on overlay played on every page load */
+  .boot-scan {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: var(--color-void);
+    pointer-events: none;
+    animation: boot-fade 1.3s ease-out forwards;
+  }
+
+  .boot-scan::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--color-cyan) 40%, var(--color-yellow) 50%, var(--color-cyan) 60%, transparent);
+    box-shadow:
+      0 0 20px var(--color-cyan),
+      0 0 60px var(--color-cyan);
+    animation: boot-scan-line 0.9s cubic-bezier(0.16, 0.84, 0.44, 1) forwards;
+  }
+
+  .boot-scan::after {
+    content: "BREACH_PROTOCOL // boot_seq_v0.1 // SYS_OK";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-hud);
+    font-size: 16px;
+    letter-spacing: 0.2em;
+    color: var(--color-yellow);
+    text-shadow: 0 0 12px var(--color-yellow);
+    animation: boot-label 1.2s ease-out forwards;
+  }
+
+  @keyframes boot-fade {
+    0%, 55% { opacity: 1; }
+    100%    { opacity: 0; visibility: hidden; }
+  }
+
+  @keyframes boot-scan-line {
+    from { top: 0;    opacity: 1; }
+    to   { top: 100%; opacity: 0; }
+  }
+
+  @keyframes boot-label {
+    0%   { opacity: 0; letter-spacing: 0.5em; }
+    20%  { opacity: 1; letter-spacing: 0.2em; }
+    70%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .boot-scan { animation-duration: 0.2s; }
+    .boot-scan::before, .boot-scan::after { display: none; }
+  }
+
+  /* ---------- TICKER ---------- */
+  .ticker {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(180deg, transparent, var(--color-void) 30%);
+    border-top: 1px solid color-mix(in srgb, var(--color-cyan) 28%, transparent);
+    overflow: hidden;
+    z-index: 50;
+    backdrop-filter: blur(6px);
+  }
+
+  .ticker__track {
+    display: flex;
+    gap: 36px;
+    white-space: nowrap;
+    align-items: center;
+    height: 100%;
+    padding: 0 16px;
+    font-family: var(--font-hud);
+    font-size: 16px;
+    letter-spacing: 0.1em;
+    color: var(--color-cyan);
+    animation: ticker-scroll 42s linear infinite;
+    will-change: transform;
+  }
+
+  .ticker__track > span > strong {
+    color: var(--color-yellow);
+    font-weight: 400;
+    margin-right: 6px;
+  }
+
+  .ticker__track > span > em {
+    color: var(--color-toxic);
+    font-style: normal;
+  }
+
+  @keyframes ticker-scroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ticker__track { animation-duration: 600s; }
+  }
+
+  /* ---------- STAGGER FADE-IN ---------- */
   .fade-in {
     opacity: 0;
     animation: hero-in 0.7s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+    animation-delay: 0.6s; /* wait until boot-scan completes */
   }
-  .fade-in-1 { animation-delay: 0.05s; }
-  .fade-in-2 { animation-delay: 0.20s; }
-  .fade-in-3 { animation-delay: 0.35s; }
-  .fade-in-4 { animation-delay: 0.50s; }
-  .fade-in-5 { animation-delay: 0.65s; }
+  .fade-in-1 { animation-delay: 0.65s; }
+  .fade-in-2 { animation-delay: 0.80s; }
+  .fade-in-3 { animation-delay: 0.95s; }
+  .fade-in-4 { animation-delay: 1.10s; }
+  .fade-in-5 { animation-delay: 1.25s; }
 
   @keyframes hero-in {
-    from {
-      opacity: 0;
-      transform: translateY(14px);
-      filter: blur(2px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-      filter: none;
-    }
+    from { opacity: 0; transform: translateY(14px); filter: blur(2px); }
+    to   { opacity: 1; transform: translateY(0);    filter: none; }
   }
 }

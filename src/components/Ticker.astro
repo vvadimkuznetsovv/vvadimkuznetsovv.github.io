@@ -1,0 +1,41 @@
+---
+interface Item {
+  tag: string;
+  text: string;
+  state?: "ok" | "warn" | "info";
+}
+
+interface Props {
+  items?: Item[];
+}
+
+const defaultItems: Item[] = [
+  { tag: "SYS",    text: "router=stable :: throughput=4.2mb/s :: lat=72ms", state: "ok" },
+  { tag: "NET",    text: "vvadimkuznetsovv :: connected :: tls=v1.3", state: "ok" },
+  { tag: "REL",    text: "branch=main :: deploy=auto :: integrity=ok", state: "ok" },
+  { tag: "SCAN",   text: "asset_pipeline=clean :: cache=warm", state: "info" },
+  { tag: "MODULE", text: "traffic_laws :: phase=1.2 :: status=building", state: "warn" },
+  { tag: "AUTH",   text: "photo=N/A :: subject=V_KUZNETSOV :: id=0x734", state: "info" },
+];
+
+const { items = defaultItems } = Astro.props;
+// Duplicate for seamless loop
+const loop = [...items, ...items];
+---
+
+<aside class="ticker" aria-hidden="true">
+  <div class="ticker__track">
+    {
+      loop.map((item) => (
+        <span>
+          <strong>[{item.tag}]</strong>
+          <span>{item.text}</span>
+          {item.state === "ok" && <em>&nbsp;:: ok</em>}
+          {item.state === "warn" && <em style="color: var(--color-amber)">&nbsp;:: warn</em>}
+          {item.state === "info" && <em style="color: var(--color-magenta)">&nbsp;:: info</em>}
+          <span style="color: var(--color-dim)">&nbsp;//</span>
+        </span>
+      ))
+    }
+  </div>
+</aside>

@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import StatusBar from "../components/StatusBar.astro";
+import Ticker from "../components/Ticker.astro";
 
 interface Props {
   title: string;
@@ -38,11 +39,61 @@ const fullTitle = title === "VADIM KUZNETSOV"
     <meta property="og:url" content={new URL(Astro.url.pathname, Astro.site)} />
   </head>
   <body class="relative overflow-x-hidden">
-    <main class="relative z-10 mx-auto w-full max-w-6xl px-4 pb-24 pt-5 sm:px-8 sm:pt-8">
+    <div class="boot-scan" aria-hidden="true"></div>
+
+    <main class="relative z-10 mx-auto w-full max-w-6xl px-4 pb-20 pt-5 sm:px-8 sm:pt-8">
       <div class="fade-in">
         <StatusBar label={statusLabel} />
       </div>
       <slot />
     </main>
+
+    <Ticker />
+
+    <script is:inline>
+      (function () {
+        function decryptText(el) {
+          const target = el.getAttribute("data-decrypt-target") || el.textContent;
+          if (!target) return;
+          const chars = "▓▒░█▄▀!?#@$%&*+=-/<>{}[]|01ΣΞΩΦ";
+          const len = target.length;
+          let frame = 0;
+          const total = Math.min(22, len + 6);
+          function tick() {
+            let out = "";
+            const settled = Math.floor((frame / total) * len);
+            for (let i = 0; i < len; i++) {
+              const c = target[i];
+              if (i < settled || c === " " || c === "\n" || c === "\t") {
+                out += c;
+              } else {
+                out += chars[Math.floor(Math.random() * chars.length)];
+              }
+            }
+            el.textContent = out;
+            frame++;
+            if (frame <= total) {
+              setTimeout(tick, 38);
+            } else {
+              el.textContent = target;
+            }
+          }
+          tick();
+        }
+
+        function run() {
+          var nodes = document.querySelectorAll(".glitch--decrypt");
+          nodes.forEach(function (el) {
+            decryptText(el);
+          });
+        }
+
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", run);
+        } else {
+          run();
+        }
+      })();
+    </script>
   </body>
 </html>

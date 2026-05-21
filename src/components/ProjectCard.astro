@@ -47,11 +47,12 @@ const Tag = disabled ? "div" : "a";
   ]}
 >
   <span class="project-card__chevrons" aria-hidden="true"></span>
+  <span class="project-card__sweep" aria-hidden="true"></span>
 
   <div class="relative flex items-start justify-between gap-4">
     <div class="flex items-baseline gap-3">
       <span class="font-hud text-xl text-yellow">[{index}]</span>
-      <h3 class="font-ui text-lg font-bold uppercase tracking-[0.08em] text-bone sm:text-2xl">
+      <h3 class="project-card__title font-ui text-lg font-bold uppercase tracking-[0.08em] text-bone sm:text-2xl">
         {title}
       </h3>
     </div>
@@ -75,8 +76,8 @@ const Tag = disabled ? "div" : "a";
 </Tag>
 
 <style>
-  .project-card:not([href]):not(div) {
-    pointer-events: none;
+  .project-card {
+    isolation: isolate;
   }
 
   .project-card:hover {
@@ -86,7 +87,7 @@ const Tag = disabled ? "div" : "a";
       inset 0 0 0 1px rgba(0, 240, 255, 0.18);
   }
 
-  /* Tiny chevron stripe at the top-right corner (CP2077 detail) */
+  /* Chevron stripe top-right (CP2077 detail) */
   .project-card__chevrons {
     position: absolute;
     top: 0;
@@ -98,7 +99,59 @@ const Tag = disabled ? "div" : "a";
       var(--color-yellow) 0 6px,
       var(--color-void) 6px 12px
     );
+    background-size: 36px 36px;
     opacity: 0.85;
     pointer-events: none;
+    animation: chevron-drift 4s linear infinite;
+  }
+
+  @keyframes chevron-drift {
+    from { background-position: 0 0; }
+    to   { background-position: 36px 0; }
+  }
+
+  /* Hover sweep — bright cyan diagonal pass over the card */
+  .project-card__sweep {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 30%,
+      rgba(0, 240, 255, 0.18) 50%,
+      transparent 70%
+    );
+    transform: translateX(-110%);
+    transition: transform 0.6s ease-out;
+    pointer-events: none;
+  }
+
+  .project-card:hover .project-card__sweep {
+    transform: translateX(110%);
+  }
+
+  /* Title RGB-split on hover */
+  .project-card:hover .project-card__title {
+    text-shadow:
+      2px 0 var(--color-magenta),
+      -2px 0 var(--color-cyan);
+    animation: card-title-glitch 0.45s steps(5);
+  }
+
+  @keyframes card-title-glitch {
+    0%   { transform: translate(0, 0); }
+    20%  { transform: translate(-1px, 1px); }
+    40%  { transform: translate(2px, -1px); }
+    60%  { transform: translate(-1px, -1px); }
+    80%  { transform: translate(1px, 1px); }
+    100% { transform: translate(0, 0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .project-card__chevrons,
+    .project-card__sweep,
+    .project-card:hover .project-card__title {
+      animation: none !important;
+      transition: none !important;
+    }
   }
 </style>
