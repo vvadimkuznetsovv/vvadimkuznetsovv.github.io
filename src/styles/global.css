@@ -56,16 +56,15 @@
   body {
     min-height: 100dvh;
     background-color: var(--color-void);
-    /* static grid — no animation */
+    /* visible cyan grid (was too faint before) */
     background-image:
-      linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
-    background-size: 40px 40px;
+      linear-gradient(rgba(0, 240, 255, 0.085) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 240, 255, 0.085) 1px, transparent 1px);
+    background-size: 44px 44px;
     background-attachment: fixed;
   }
 
-  /* Synthwave background lives in a dedicated <div class="cyber-bg"> inside body
-     (body pseudos with negative z-index were hidden behind body's bg-color). */
+  /* Atmospheric mesh + drift + horizontal scan beam over the grid */
   .cyber-bg {
     position: fixed;
     inset: 0;
@@ -74,49 +73,58 @@
     overflow: hidden;
   }
 
-  .cyber-bg__sun {
+  .cyber-bg__base {
     position: absolute;
-    left: 50%;
-    bottom: 28vh;
-    width: min(900px, 100vw);
-    height: min(900px, 100vw);
-    transform: translateX(-50%);
-    background: radial-gradient(
-      circle at 50% 50%,
-      rgba(255, 138, 0, 0.6) 0%,
-      rgba(255, 43, 214, 0.5) 22%,
-      rgba(155, 28, 255, 0.28) 42%,
-      transparent 62%
-    );
-    border-radius: 50%;
-    filter: blur(6px);
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 60% at 22% 28%, rgba(0, 240, 255, 0.28) 0%, transparent 55%),
+      radial-gradient(ellipse 80% 65% at 78% 72%, rgba(255, 43, 214, 0.30) 0%, transparent 58%),
+      radial-gradient(ellipse 50% 45% at 100% 5%, rgba(0, 255, 156, 0.14) 0%, transparent 55%);
   }
 
-  .cyber-bg__grid {
+  .cyber-bg__drift {
     position: absolute;
-    left: -50%;
-    right: -50%;
-    bottom: 0;
-    height: 55vh;
+    inset: -15%;
     background:
-      repeating-linear-gradient(
-        180deg,
-        transparent 0,
-        transparent 47px,
-        rgba(0, 240, 255, 0.6) 47px,
-        rgba(0, 240, 255, 0.6) 48px
-      ),
-      repeating-linear-gradient(
-        90deg,
-        transparent 0,
-        transparent 47px,
-        rgba(0, 240, 255, 0.6) 47px,
-        rgba(0, 240, 255, 0.6) 48px
-      );
-    transform: perspective(450px) rotateX(58deg);
-    transform-origin: 50% 100%;
-    mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, transparent 80%);
-    -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, transparent 80%);
+      radial-gradient(circle 30% at 30% 50%, rgba(0, 240, 255, 0.25), transparent 35%),
+      radial-gradient(circle 30% at 70% 50%, rgba(255, 43, 214, 0.25), transparent 35%);
+    filter: blur(80px);
+    animation: atmosphere-drift 22s ease-in-out infinite alternate;
+    mix-blend-mode: screen;
+  }
+
+  /* Horizontal scan beam — vertical neon line sweeping left → right every 9s */
+  .cyber-bg__scan {
+    position: absolute;
+    top: -10%;
+    bottom: -10%;
+    width: 3px;
+    background: linear-gradient(180deg, transparent, var(--color-cyan), var(--color-yellow), var(--color-cyan), transparent);
+    box-shadow:
+      0 0 16px var(--color-cyan),
+      0 0 48px var(--color-cyan),
+      0 0 100px rgba(0, 240, 255, 0.6);
+    animation: scan-sweep 9s linear infinite;
+    will-change: transform, opacity;
+  }
+
+  @keyframes atmosphere-drift {
+    0%   { transform: translate(-4%, -2%) scale(1); }
+    50%  { transform: translate(3%, 4%) scale(1.06); }
+    100% { transform: translate(-2%, -4%) scale(0.97); }
+  }
+
+  @keyframes scan-sweep {
+    0%   { left: -3%; opacity: 0; }
+    8%   { opacity: 0.9; }
+    92%  { opacity: 0.9; }
+    100% { left: 103%; opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cyber-bg__drift,
+    .cyber-bg__scan { animation: none; }
+    .cyber-bg__scan { display: none; }
   }
 
   /* body::after (animated scanlines + mix-blend-mode) removed — too expensive */
