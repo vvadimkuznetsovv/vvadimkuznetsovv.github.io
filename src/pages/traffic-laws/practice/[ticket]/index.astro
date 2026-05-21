@@ -1,0 +1,132 @@
+---
+import Shell from "../../../../layouts/Shell.astro";
+import { getAllTicketNumbers, getTicket } from "../../../../data/pdd";
+
+export function getStaticPaths() {
+  return getAllTicketNumbers().map((n) => ({ params: { ticket: String(n) } }));
+}
+
+const { ticket } = Astro.params;
+const num = Number.parseInt(ticket ?? "0", 10);
+const questions = getTicket(num);
+
+if (!questions) {
+  return Astro.redirect("/traffic-laws/practice/");
+}
+---
+
+<Shell
+  title={`Билет ${num} — TRAFFIC LAWS`}
+  description={`Экзаменационный билет ${num} ПДД категории B: 20 вопросов с подробным разбором.`}
+  statusLabel={`traffic-laws/practice/${num}`}
+>
+  <nav class="mt-5 flex flex-wrap items-center gap-4 font-ui text-xs uppercase tracking-[0.25em] text-dim">
+    <a href="/traffic-laws/" class="transition-colors hover:text-cyan">← traffic-laws</a>
+    <span class="text-dim/50">/</span>
+    <a href="/traffic-laws/practice/" class="transition-colors hover:text-cyan">practice</a>
+    <span class="text-dim/50">/</span>
+    <span class="text-haze">билет {num}</span>
+  </nav>
+
+  <header class="fade-in fade-in-2 mt-16 flex flex-col items-baseline gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <h1 class="flex items-baseline gap-4 leading-none">
+      <span class="font-hud text-2xl uppercase tracking-[0.2em] text-cyan">
+        Билет
+      </span>
+      <span class="neon-text neon-text--cyan text-[clamp(2.8rem,8vw,5rem)]">
+        {num.toString().padStart(2, "0")}
+      </span>
+    </h1>
+    <p class="font-ui text-sm text-dim">
+      {questions.length} вопросов · категория AB
+    </p>
+  </header>
+
+  <section class="mt-16 flex flex-col gap-8">
+    {
+      questions.map((q, idx) => (
+        <article class="relative border border-rack bg-deck p-5 sm:p-7">
+          <span
+            class="absolute left-0 top-6 bottom-6 w-px bg-cyan/40"
+            aria-hidden="true"
+          />
+
+          <div class="flex flex-wrap items-baseline justify-between gap-3">
+            <span class="font-hud text-base uppercase tracking-[0.25em] text-yellow">
+              Вопрос {idx + 1} / {questions.length}
+            </span>
+            <span class="font-ui text-xs uppercase tracking-[0.2em] text-dim">
+              {q.topic.join(" · ")}
+            </span>
+          </div>
+
+          {q.image && (
+            <div class="mt-5 overflow-hidden border border-rack bg-void/60">
+              <img
+                src={q.image}
+                alt={`Иллюстрация к вопросу ${idx + 1}`}
+                loading="lazy"
+                class="block h-auto w-full max-w-2xl"
+              />
+            </div>
+          )}
+
+          <h2 class="mt-5 font-ui text-lg leading-snug text-bone sm:text-xl">
+            {q.question}
+          </h2>
+
+          <ol class="mt-5 flex flex-col gap-2">
+            {q.answers.map((a, ai) => (
+              <li
+                class:list={[
+                  "flex items-start gap-3 border px-4 py-3 font-ui text-sm leading-relaxed sm:text-base",
+                  a.is_correct
+                    ? "border-toxic/50 bg-toxic/5 text-bone"
+                    : "border-rack bg-void/40 text-haze",
+                ]}
+              >
+                <span
+                  class:list={[
+                    "shrink-0 font-hud text-base",
+                    a.is_correct ? "text-toxic" : "text-dim",
+                  ]}
+                >
+                  {String.fromCharCode(65 + ai)}.
+                </span>
+                <span>{a.answer_text}</span>
+                {a.is_correct && (
+                  <span class="ml-auto shrink-0 font-hud text-base text-toxic">
+                    ✓
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+
+          <div class="mt-5 border-l-2 border-cyan/60 bg-cyan/5 px-4 py-3">
+            <p class="font-hud text-base uppercase tracking-[0.2em] text-cyan">
+              // объяснение
+            </p>
+            <p class="mt-2 font-ui text-sm leading-relaxed text-haze sm:text-base">
+              {q.answer_tip}
+            </p>
+          </div>
+        </article>
+      ))
+    }
+  </section>
+
+  <footer class="mt-20 flex flex-wrap items-center justify-between gap-4 border-t border-rack pt-6 font-ui text-xs uppercase tracking-[0.25em] text-dim">
+    <a href="/traffic-laws/practice/" class="text-haze transition-colors hover:text-cyan">
+      ← все билеты
+    </a>
+    {num < 40 && (
+      <a
+        href={`/traffic-laws/practice/${num + 1}/`}
+        class="text-haze transition-colors hover:text-cyan"
+      >
+        билет {num + 1} →
+      </a>
+    )}
+  </footer>
+</Shell>
