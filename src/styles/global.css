@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @import "@fontsource/major-mono-display/400.css";
-@import "@fontsource/monoton/400.css";
+@import "@fontsource/tilt-neon/400.css";
 @import "@fontsource/chakra-petch/500.css";
 @import "@fontsource/chakra-petch/700.css";
 @import "@fontsource/geist-mono/400.css";
@@ -361,12 +361,13 @@
      ============================================================ */
   .neon-text {
     --neon: #ff2bd6;
-    font-family: "Monoton", "Major Mono Display", monospace;
+    font-family: "Tilt Neon", "Major Mono Display", sans-serif;
     font-weight: 400;
     color: var(--neon);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     line-height: 1;
+    font-feature-settings: "BTSH" 0, "EHLT" 4, "VRTL" 0;
     text-shadow:
       /* white-hot sparkle in the tube */
       0 0 1px #fff,
