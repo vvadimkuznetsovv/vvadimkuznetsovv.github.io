@@ -1,113 +1,168 @@
 ---
 import Shell from "../../layouts/Shell.astro";
+import CautionStripe from "../../components/CautionStripe.astro";
+import GlitchText from "../../components/GlitchText.astro";
+
+const modes = [
+  {
+    code: "M01",
+    title: "ИЗУЧЕНИЕ ПО ТЕМАМ",
+    body: "Чтение правил с интерактивными примерами и связанными знаками.",
+    state: "QUEUED",
+    color: "text-dim",
+  },
+  {
+    code: "M02",
+    title: "ТРЕНИРОВКА ПО БИЛЕТАМ",
+    body: "20 вопросов с объяснением каждого правильного и неправильного ответа.",
+    state: "QUEUED",
+    color: "text-dim",
+  },
+  {
+    code: "M03",
+    title: "ЭКЗАМЕН НА ВРЕМЯ",
+    body: "Правила ГИБДД: 20 вопросов, 20 минут, ≤ 2 ошибки.",
+    state: "QUEUED",
+    color: "text-dim",
+  },
+  {
+    code: "M04",
+    title: "СПРАВОЧНИК ЗНАКОВ",
+    body: "Поиск, фильтр по группам, типичные ошибки восприятия.",
+    state: "QUEUED",
+    color: "text-dim",
+  },
+] as const;
 ---
 
 <Shell
-  title="ПДД — traffic-laws"
-  description="Уникальный сайт изучения ПДД категории B: подробные объяснения, киберпанк-роман с вшитыми правилами."
+  title="ПДД :: traffic-laws"
+  description="Уникальный сайт изучения ПДД категории B: подробные объяснения, разбор картинок, киберпанк-роман со всеми правилами."
+  statusLabel="V.NK://traffic_laws_v0.1"
 >
-  <nav class="mb-12 flex items-center gap-4 text-xs uppercase tracking-[0.3em] text-[var(--color-ink-dim)]">
+  <nav class="mt-5 flex items-center gap-4 font-hud text-base">
     <a
       href="/"
-      class="font-[family-name:var(--font-hud)] text-base normal-case tracking-normal text-[var(--color-neon-cyan)] hover:text-[var(--color-ink-bone)]"
+      class="text-cyan transition-colors hover:text-yellow"
       >&lt;- back to vvadimkuznetsovv</a
     >
   </nav>
 
-  <header>
-    <p class="font-[family-name:var(--font-hud)] text-lg text-[var(--color-neon-magenta)] sm:text-xl">
-      // build #001
+  <div class="fade-in fade-in-1 mt-6">
+    <CautionStripe label="// MODULE :: TRAFFIC_LAWS_RU // CATEGORY :: B" />
+  </div>
+
+  <!-- HERO -->
+  <header class="fade-in fade-in-2 mt-12 sm:mt-16">
+    <p class="font-hud text-lg text-yellow sm:text-xl">
+      &gt; build #001 :: skeleton phase
     </p>
-    <h1
-      class="mt-3 font-[family-name:var(--font-display)] text-[clamp(2rem,8vw,5rem)] leading-[0.95] text-[var(--color-ink-bone)] [text-shadow:0_0_30px_rgba(0,240,255,0.25)]"
-    >
-      traffic<br />laws
+    <h1 class="mt-4 font-display text-[clamp(2.2rem,10vw,6rem)] leading-[0.88] text-bone [text-shadow:0_0_32px_rgba(0,240,255,0.3)]">
+      <GlitchText text="traffic" />
+      <br />
+      <GlitchText text="laws" />
     </h1>
-    <p class="mt-6 max-w-2xl font-[family-name:var(--font-ui)] text-base text-[var(--color-ink-haze)] sm:text-lg">
+    <p class="mt-6 max-w-2xl font-ui text-base text-haze sm:text-lg">
       Изучение правил дорожного движения категории B в формате in‑world терминала.
-      Подробные объяснения, разбор картинок билетов, киберпанк‑роман с вшитыми правилами.
+      Подробные объяснения, разбор картинок билетов, киберпанк‑роман со всеми
+      правилами, вшитыми в нарратив.
     </p>
   </header>
 
-  <section class="mt-16">
-    <p class="font-[family-name:var(--font-hud)] text-lg text-[var(--color-neon-cyan)]">
-      // modes
-    </p>
+  <div class="fade-in fade-in-3 mt-16">
+    <CautionStripe label="MODES // 005 ENTRIES" />
+  </div>
 
-    <ul class="mt-6 grid gap-4 sm:grid-cols-2">
-      <li class="border border-[var(--color-bg-rack)] bg-[var(--color-bg-deck)] p-5">
-        <h2 class="font-[family-name:var(--font-ui)] text-lg font-bold uppercase tracking-wider text-[var(--color-ink-bone)]">
-          изучение по темам
-        </h2>
-        <p class="mt-2 text-sm text-[var(--color-ink-haze)]">
-          чтение правил с интерактивными примерами и связанными знаками.
-        </p>
-        <p class="mt-3 font-[family-name:var(--font-hud)] text-base text-[var(--color-ink-dim)]">
-          coming soon
-        </p>
-      </li>
+  <!-- MODES -->
+  <section class="mt-10">
+    <div class="flex items-baseline justify-between gap-4">
+      <h2 class="font-hud text-2xl uppercase tracking-[0.2em] text-yellow sm:text-3xl">
+        &gt; MODES
+      </h2>
+      <span class="font-hud text-base text-dim">[ idx :: M01-M05 ]</span>
+    </div>
 
-      <li class="border border-[var(--color-bg-rack)] bg-[var(--color-bg-deck)] p-5">
-        <h2 class="font-[family-name:var(--font-ui)] text-lg font-bold uppercase tracking-wider text-[var(--color-ink-bone)]">
-          тренировка по билетам
-        </h2>
-        <p class="mt-2 text-sm text-[var(--color-ink-haze)]">
-          20 вопросов с объяснением каждого правильного и неправильного ответа.
-        </p>
-        <p class="mt-3 font-[family-name:var(--font-hud)] text-base text-[var(--color-ink-dim)]">
-          coming soon
-        </p>
-      </li>
+    <ul class="mt-8 grid gap-5 sm:grid-cols-2">
+      {
+        modes.map((mode) => (
+          <li class="relative overflow-hidden border border-rack bg-deck p-5 sm:p-6">
+            <span class="absolute right-0 top-0 h-1 w-20 bg-[repeating-linear-gradient(-45deg,var(--color-yellow)_0_6px,var(--color-void)_6px_12px)] opacity-80" aria-hidden="true" />
 
-      <li class="border border-[var(--color-bg-rack)] bg-[var(--color-bg-deck)] p-5">
-        <h2 class="font-[family-name:var(--font-ui)] text-lg font-bold uppercase tracking-wider text-[var(--color-ink-bone)]">
-          экзамен на время
-        </h2>
-        <p class="mt-2 text-sm text-[var(--color-ink-haze)]">
-          правила ГИБДД: 20 вопросов, 20 минут, ≤ 2 ошибки.
-        </p>
-        <p class="mt-3 font-[family-name:var(--font-hud)] text-base text-[var(--color-ink-dim)]">
-          coming soon
-        </p>
-      </li>
+            <div class="flex items-center justify-between gap-3">
+              <span class="font-hud text-base text-yellow">[ {mode.code} ]</span>
+              <span class:list={["font-hud text-base", mode.color]}>
+                [ {mode.state} ]
+              </span>
+            </div>
 
-      <li class="border border-[var(--color-bg-rack)] bg-[var(--color-bg-deck)] p-5">
-        <h2 class="font-[family-name:var(--font-ui)] text-lg font-bold uppercase tracking-wider text-[var(--color-ink-bone)]">
-          справочник знаков
-        </h2>
-        <p class="mt-2 text-sm text-[var(--color-ink-haze)]">
-          поиск, фильтр по группам, типичные ошибки восприятия.
-        </p>
-        <p class="mt-3 font-[family-name:var(--font-hud)] text-base text-[var(--color-ink-dim)]">
-          coming soon
-        </p>
-      </li>
+            <h3 class="mt-2 font-ui text-base font-bold uppercase tracking-[0.08em] text-bone sm:text-lg">
+              {mode.title}
+            </h3>
 
-      <li class="border border-[var(--color-neon-magenta)] bg-[var(--color-bg-deck)] p-5 sm:col-span-2">
-        <p class="font-[family-name:var(--font-hud)] text-base text-[var(--color-neon-magenta)]">
-          // signature mode
-        </p>
-        <h2 class="mt-1 font-[family-name:var(--font-ui)] text-lg font-bold uppercase tracking-wider text-[var(--color-ink-bone)] sm:text-xl">
-          киберпанк-роман
-        </h2>
-        <p class="mt-2 text-sm text-[var(--color-ink-haze)] sm:text-base">
-          интерактивный роман со всеми правилами ПДД, вшитыми в нарратив через мысли
-          героев, выборы и анимированные сцены дорожных ситуаций.
-        </p>
-        <p class="mt-3 font-[family-name:var(--font-hud)] text-base text-[var(--color-ink-dim)]">
-          coming soon
+            <p class="mt-2 font-ui text-sm leading-relaxed text-haze sm:text-base">
+              {mode.body}
+            </p>
+          </li>
+        ))
+      }
+
+      <!-- Signature mode: cyberpunk novel -->
+      <li class="relative overflow-hidden border-2 border-magenta bg-gradient-to-br from-deck via-deck to-[color-mix(in_srgb,var(--color-magenta)_10%,var(--color-deck))] p-5 sm:col-span-2 sm:p-7">
+        <span class="absolute inset-x-0 top-0 h-1 bg-[repeating-linear-gradient(-45deg,var(--color-magenta)_0_8px,var(--color-void)_8px_16px)] opacity-95" aria-hidden="true" />
+
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span class="font-hud text-base text-magenta">[ M05 :: SIGNATURE_MODE ]</span>
+          <span class="font-hud text-base text-pink">[ QUEUED ]</span>
+        </div>
+
+        <h3 class="mt-2 font-ui text-xl font-bold uppercase tracking-[0.08em] text-bone sm:text-2xl">
+          киберпанк‑роман
+        </h3>
+
+        <p class="mt-3 max-w-3xl font-ui text-sm leading-relaxed text-haze sm:text-base">
+          Интерактивный роман со всеми правилами ПДД, вшитыми в нарратив через мысли
+          героев, выборы и анимированные SVG‑сцены дорожных ситуаций. Главная фишка
+          проекта — никаких сухих формулировок, всё через сюжет.
         </p>
       </li>
     </ul>
   </section>
 
-  <section class="mt-16 border-t border-[var(--color-bg-rack)] pt-8">
-    <p class="font-[family-name:var(--font-hud)] text-lg text-[var(--color-neon-amber)]">
-      // status
-    </p>
-    <p class="mt-3 max-w-2xl text-sm text-[var(--color-ink-haze)] sm:text-base">
-      Это скелет проекта. Дизайн‑система, данные ПДД, квиз с детальными объяснениями,
-      экзамен‑режим, справочник знаков и POC романа подключаются по фазам плана.
-    </p>
+  <div class="fade-in fade-in-3 mt-16">
+    <CautionStripe />
+  </div>
+
+  <!-- STATUS -->
+  <section class="mt-10 grid gap-6 sm:grid-cols-2">
+    <div class="border border-rack bg-deck p-5 sm:p-6">
+      <p class="font-hud text-base text-cyan">// build_status</p>
+      <p class="mt-2 font-ui text-base text-haze">
+        Phase 0: <span class="text-toxic">DONE</span> · скелет проекта в проде.
+      </p>
+      <p class="mt-1 font-ui text-base text-haze">
+        Phase 1.1: <span class="text-toxic">DONE</span> · Astro+Svelte+Tailwind+MDX.
+      </p>
+      <p class="mt-1 font-ui text-base text-haze">
+        Phase 1.2: <span class="text-amber">NEXT</span> · design system + компоненты.
+      </p>
+    </div>
+
+    <div class="border border-rack bg-deck p-5 sm:p-6">
+      <p class="font-hud text-base text-yellow">// up_next</p>
+      <ul class="mt-2 space-y-1 font-ui text-base text-haze">
+        <li>· импорт open dataset вопросов</li>
+        <li>· каталог знаков (SVG, Wikimedia)</li>
+        <li>· quiz UX с разбором каждого ответа</li>
+        <li>· экзамен‑режим с таймером</li>
+        <li>· POC главы романа</li>
+      </ul>
+    </div>
   </section>
+
+  <footer class="mt-16 flex flex-wrap items-center justify-between gap-4 font-hud text-base text-dim">
+    <span class="text-haze">// MODULE_END</span>
+    <a class="text-cyan transition-colors hover:text-yellow" href="/">
+      &lt;- back to root
+    </a>
+  </footer>
 </Shell>

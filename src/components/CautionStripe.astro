@@ -1,0 +1,43 @@
+---
+interface Props {
+  class?: string;
+  label?: string;
+  height?: string;
+}
+
+const { class: className = "", label, height = "18px" } = Astro.props;
+---
+
+<div class:list={["caution-stripe", className]} role="presentation" style={`--stripe-h: ${height};`}>
+  {label && <span class="caution-stripe__label">{label}</span>}
+</div>
+
+<style>
+  .caution-stripe {
+    position: relative;
+    height: var(--stripe-h);
+    background-image: repeating-linear-gradient(
+      -45deg,
+      var(--color-yellow) 0 14px,
+      var(--color-void) 14px 28px
+    );
+    border-block: 1px solid color-mix(in srgb, var(--color-yellow) 35%, black);
+    overflow: hidden;
+  }
+
+  .caution-stripe__label {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--color-void);
+    padding: 2px 14px;
+    font-family: var(--font-hud);
+    font-size: 14px;
+    color: var(--color-yellow);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    border: 1px solid color-mix(in srgb, var(--color-yellow) 60%, transparent);
+    white-space: nowrap;
+  }
+</style>

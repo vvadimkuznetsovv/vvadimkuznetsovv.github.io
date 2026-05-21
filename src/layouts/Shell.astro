@@ -1,14 +1,24 @@
 ---
 import "../styles/global.css";
+import StatusBar from "../components/StatusBar.astro";
 
 interface Props {
   title: string;
   description?: string;
+  statusLabel?: string;
   noindex?: boolean;
 }
 
-const { title, description, noindex } = Astro.props;
-const fullTitle = title === "VADIM KUZNETSOV" ? title : `${title} — vvadimkuznetsovv`;
+const {
+  title,
+  description,
+  statusLabel = "V.NK://personal_db",
+  noindex,
+} = Astro.props;
+
+const fullTitle = title === "VADIM KUZNETSOV"
+  ? title
+  : `${title} — vvadimkuznetsovv`;
 ---
 
 <!doctype html>
@@ -17,7 +27,7 @@ const fullTitle = title === "VADIM KUZNETSOV" ? title : `${title} — vvadimkuzn
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="dark" />
-    <meta name="theme-color" content="#04060d" />
+    <meta name="theme-color" content="#050508" />
     <title>{fullTitle}</title>
     {description && <meta name="description" content={description} />}
     {noindex && <meta name="robots" content="noindex" />}
@@ -28,7 +38,10 @@ const fullTitle = title === "VADIM KUZNETSOV" ? title : `${title} — vvadimkuzn
     <meta property="og:url" content={new URL(Astro.url.pathname, Astro.site)} />
   </head>
   <body class="relative overflow-x-hidden">
-    <main class="relative z-10 mx-auto w-full max-w-6xl px-5 pb-24 pt-10 sm:px-8 sm:pt-16">
+    <main class="relative z-10 mx-auto w-full max-w-6xl px-4 pb-24 pt-5 sm:px-8 sm:pt-8">
+      <div class="fade-in">
+        <StatusBar label={statusLabel} />
+      </div>
       <slot />
     </main>
   </body>

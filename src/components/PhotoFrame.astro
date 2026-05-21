@@ -1,0 +1,249 @@
+---
+interface Props {
+  src?: string;
+  alt?: string;
+  label?: string;
+  caption?: string;
+  class?: string;
+}
+
+const {
+  src,
+  alt = "Vadim Kuznetsov",
+  label = "AUTH PHOTO :: N/A",
+  caption = "ID-734-VK",
+  class: className = "",
+} = Astro.props;
+---
+
+<figure class:list={["photo-frame", className]}>
+  <div class="photo-frame__chrome">
+    <span class="photo-frame__corner photo-frame__corner--tl" aria-hidden="true"></span>
+    <span class="photo-frame__corner photo-frame__corner--tr" aria-hidden="true"></span>
+    <span class="photo-frame__corner photo-frame__corner--bl" aria-hidden="true"></span>
+    <span class="photo-frame__corner photo-frame__corner--br" aria-hidden="true"></span>
+
+    <span class="photo-frame__tag photo-frame__tag--top" aria-hidden="true">REC_ID 0x734</span>
+    <span class="photo-frame__tag photo-frame__tag--bottom" aria-hidden="true">{caption}</span>
+
+    <div class="photo-frame__inner">
+      {
+        src ? (
+          <img src={src} alt={alt} class="photo-frame__img" loading="eager" />
+        ) : (
+          <svg
+            viewBox="0 0 200 250"
+            class="photo-frame__placeholder"
+            aria-hidden="true"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            <defs>
+              <pattern id="ph-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path
+                  d="M 20 0 L 0 0 0 20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="0.3"
+                  opacity="0.45"
+                ></path>
+              </pattern>
+            </defs>
+            <rect width="200" height="250" fill="url(#ph-grid)"></rect>
+
+            <g stroke="currentColor" stroke-width="1.4" fill="none" opacity="0.55">
+              <circle cx="100" cy="80" r="28"></circle>
+              <path d="M42 250 Q42 150 100 150 Q158 150 158 250"></path>
+              <path d="M100 108 L100 150"></path>
+              <path d="M70 152 L100 142 L130 152" stroke-dasharray="2 2" opacity="0.7"></path>
+            </g>
+
+            <g stroke="currentColor" stroke-width="1" fill="none">
+              <circle cx="100" cy="80" r="36" stroke-dasharray="4 4" opacity="0.75"></circle>
+              <line x1="100" y1="38" x2="100" y2="60"></line>
+              <line x1="100" y1="100" x2="100" y2="122"></line>
+              <line x1="58" y1="80" x2="80" y2="80"></line>
+              <line x1="120" y1="80" x2="142" y2="80"></line>
+            </g>
+
+            <g stroke="currentColor" stroke-width="2" fill="none" opacity="0.9">
+              <path d="M8 8 L8 24 M8 8 L24 8"></path>
+              <path d="M192 8 L192 24 M192 8 L176 8"></path>
+              <path d="M8 242 L8 226 M8 242 L24 242"></path>
+              <path d="M192 242 L192 226 M192 242 L176 242"></path>
+            </g>
+
+            <text
+              x="14"
+              y="148"
+              fill="currentColor"
+              font-family="monospace"
+              font-size="9"
+              letter-spacing="2"
+              transform="rotate(-90 14 148)"
+              opacity="0.75"
+            >
+              SCAN_PENDING
+            </text>
+          </svg>
+        )
+      }
+
+      <div class="photo-frame__scanlines" aria-hidden="true"></div>
+      <div class="photo-frame__scanline" aria-hidden="true"></div>
+      <div class="photo-frame__noise" aria-hidden="true"></div>
+    </div>
+
+    <figcaption class="photo-frame__label">{label}</figcaption>
+  </div>
+</figure>
+
+<style>
+  .photo-frame {
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: 340px;
+    margin: 0;
+  }
+
+  .photo-frame__chrome {
+    position: relative;
+    padding: 14px;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-cyan) 6%, var(--color-deck)),
+      var(--color-deck)
+    );
+    border: 1px solid color-mix(in srgb, var(--color-cyan) 35%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-cyan) 12%, transparent),
+      0 18px 60px -20px rgba(0, 240, 255, 0.35),
+      inset 0 0 24px rgba(0, 240, 255, 0.05);
+    clip-path: polygon(
+      0 0,
+      calc(100% - 22px) 0,
+      100% 22px,
+      100% 100%,
+      22px 100%,
+      0 calc(100% - 22px)
+    );
+  }
+
+  .photo-frame__corner {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--color-yellow);
+    pointer-events: none;
+  }
+  .photo-frame__corner--tl { top: 4px; left: 4px; border-right: 0; border-bottom: 0; }
+  .photo-frame__corner--tr { top: 4px; right: 4px; border-left: 0; border-bottom: 0; }
+  .photo-frame__corner--bl { bottom: 4px; left: 4px; border-right: 0; border-top: 0; }
+  .photo-frame__corner--br { bottom: 4px; right: 4px; border-left: 0; border-top: 0; }
+
+  .photo-frame__tag {
+    position: absolute;
+    background: var(--color-void);
+    padding: 1px 8px;
+    font-family: var(--font-hud);
+    font-size: 13px;
+    color: var(--color-yellow);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    border: 1px solid color-mix(in srgb, var(--color-yellow) 55%, transparent);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .photo-frame__tag--top { top: -9px; left: 22px; }
+  .photo-frame__tag--bottom { bottom: -9px; right: 22px; color: var(--color-cyan); border-color: color-mix(in srgb, var(--color-cyan) 55%, transparent); }
+
+  .photo-frame__inner {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--color-cyan) 6%, var(--color-void)), var(--color-void) 75%);
+    overflow: hidden;
+    color: var(--color-cyan);
+  }
+
+  .photo-frame__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: contrast(1.05) saturate(0.85);
+  }
+
+  .photo-frame__placeholder {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .photo-frame__scanlines {
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.04) 0,
+      rgba(255, 255, 255, 0.04) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+
+  .photo-frame__scanline {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--color-cyan),
+      var(--color-yellow),
+      var(--color-cyan),
+      transparent
+    );
+    box-shadow: 0 0 14px var(--color-cyan);
+    opacity: 0.85;
+    animation: scan-down 4s linear infinite;
+    pointer-events: none;
+  }
+
+  .photo-frame__noise {
+    position: absolute;
+    inset: 0;
+    background: repeating-conic-gradient(
+      rgba(255, 255, 255, 0.018) 0 0.5deg,
+      transparent 0.5deg 1.5deg
+    );
+    pointer-events: none;
+    mix-blend-mode: overlay;
+    opacity: 0.6;
+  }
+
+  @keyframes scan-down {
+    0%   { top: 0%; opacity: 0.5; }
+    8%   { opacity: 1; }
+    92%  { opacity: 1; }
+    100% { top: 100%; opacity: 0.5; }
+  }
+
+  .photo-frame__label {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -30px;
+    text-align: center;
+    font-family: var(--font-hud);
+    font-size: 15px;
+    color: var(--color-yellow);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .photo-frame__scanline { animation: none; opacity: 0; }
+  }
+</style>

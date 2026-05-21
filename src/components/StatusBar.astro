@@ -1,0 +1,77 @@
+---
+interface Props {
+  label?: string;
+}
+
+const { label = "V.NK://personal_db" } = Astro.props;
+const ts = new Date().toISOString().replace("T", " / ").slice(0, 19);
+---
+
+<div class="status-bar">
+  <span class="status-bar__brand">{label}</span>
+  <span class="status-bar__sep" aria-hidden="true">::</span>
+  <span class="status-bar__ts">{ts}</span>
+  <span class="status-bar__online">
+    <span class="status-bar__dot" aria-hidden="true"></span>
+    SYS_ONLINE
+  </span>
+</div>
+
+<style>
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 12px;
+    border: 1px solid color-mix(in srgb, var(--color-cyan) 25%, transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--color-cyan) 6%, transparent),
+      transparent
+    );
+    font-family: var(--font-hud);
+    font-size: 16px;
+    color: var(--color-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    flex-wrap: wrap;
+  }
+
+  .status-bar__brand {
+    color: var(--color-cyan);
+    font-weight: 400;
+  }
+
+  .status-bar__sep {
+    color: color-mix(in srgb, var(--color-cyan) 40%, transparent);
+  }
+
+  .status-bar__ts {
+    color: var(--color-haze);
+    letter-spacing: 0.1em;
+  }
+
+  .status-bar__online {
+    margin-left: auto;
+    color: var(--color-toxic);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0.15em;
+  }
+
+  .status-bar__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-toxic);
+    box-shadow: 0 0 12px var(--color-toxic);
+    animation: status-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes status-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.85); }
+  }
+</style>

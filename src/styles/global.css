@@ -8,16 +8,21 @@
 @import "@fontsource/vt323/400.css";
 
 @theme {
-  --color-bg-void: #04060d;
-  --color-bg-deck: #0a0e1c;
-  --color-bg-rack: #11162a;
-  --color-ink-haze: #c8d0e7;
-  --color-ink-bone: #f1f4ff;
-  --color-ink-dim: #5b6486;
-  --color-neon-cyan: #00f0ff;
-  --color-neon-magenta: #ff2bd6;
-  --color-neon-amber: #ff8a00;
-  --color-neon-acid: #d8ff00;
+  --color-void: #050508;
+  --color-deck: #0a0a18;
+  --color-rack: #11142a;
+
+  --color-haze: #c8d0e7;
+  --color-bone: #f1f4ff;
+  --color-dim: #5b6486;
+
+  --color-cyan: #00f0ff;
+  --color-yellow: #fcee0a;
+  --color-magenta: #ff2bd6;
+  --color-toxic: #00ff9c;
+  --color-pink: #ff003c;
+  --color-amber: #ff8a00;
+  --color-acid: #d8ff00;
 
   --font-display: "Major Mono Display", monospace;
   --font-ui: "Chakra Petch", system-ui, sans-serif;
@@ -31,8 +36,8 @@
   }
 
   html {
-    background: var(--color-bg-void);
-    color: var(--color-ink-haze);
+    background: var(--color-void);
+    color: var(--color-haze);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -40,12 +45,12 @@
 
   body {
     min-height: 100dvh;
+    background-color: var(--color-void);
     background-image:
-      linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
-    background-size: 32px 32px;
+      linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
     background-attachment: fixed;
-    background-position: -1px -1px;
   }
 
   body::before {
@@ -53,8 +58,9 @@
     position: fixed;
     inset: 0;
     background:
-      radial-gradient(ellipse at 20% 0%, rgba(0, 240, 255, 0.12), transparent 50%),
-      radial-gradient(ellipse at 80% 100%, rgba(255, 43, 214, 0.10), transparent 55%);
+      radial-gradient(ellipse 60% 50% at 12% -5%, rgba(252, 238, 10, 0.10), transparent 55%),
+      radial-gradient(ellipse 50% 40% at 105% 30%, rgba(0, 240, 255, 0.16), transparent 60%),
+      radial-gradient(ellipse 55% 45% at 50% 110%, rgba(255, 43, 214, 0.12), transparent 55%);
     pointer-events: none;
     z-index: -1;
   }
@@ -65,8 +71,8 @@
     inset: 0;
     background-image: repeating-linear-gradient(
       0deg,
-      rgba(255, 255, 255, 0.02) 0,
-      rgba(255, 255, 255, 0.02) 1px,
+      rgba(255, 255, 255, 0.025) 0,
+      rgba(255, 255, 255, 0.025) 1px,
       transparent 1px,
       transparent 3px
     );
@@ -77,14 +83,20 @@
 
   h1, h2, h3, h4 {
     font-family: var(--font-ui);
-    color: var(--color-ink-bone);
+    color: var(--color-bone);
     letter-spacing: -0.01em;
     text-wrap: balance;
   }
 
   ::selection {
-    background: var(--color-neon-cyan);
-    color: var(--color-bg-void);
+    background: var(--color-yellow);
+    color: var(--color-void);
+  }
+
+  /* Mobile-friendly focus ring */
+  :focus-visible {
+    outline: 2px solid var(--color-cyan);
+    outline-offset: 3px;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -97,15 +109,28 @@
   }
 }
 
-@utility neon-frame {
-  box-shadow:
-    0 0 0 1px var(--color-neon-cyan),
-    0 0 24px rgba(0, 240, 255, 0.25),
-    inset 0 0 0 1px rgba(0, 240, 255, 0.4);
-}
+@layer components {
+  /* Stagger fade-in for hero content */
+  .fade-in {
+    opacity: 0;
+    animation: hero-in 0.7s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+  }
+  .fade-in-1 { animation-delay: 0.05s; }
+  .fade-in-2 { animation-delay: 0.20s; }
+  .fade-in-3 { animation-delay: 0.35s; }
+  .fade-in-4 { animation-delay: 0.50s; }
+  .fade-in-5 { animation-delay: 0.65s; }
 
-@utility neon-frame-magenta {
-  box-shadow:
-    0 0 0 1px var(--color-neon-magenta),
-    0 0 24px rgba(255, 43, 214, 0.25);
+  @keyframes hero-in {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+      filter: blur(2px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      filter: none;
+    }
+  }
 }

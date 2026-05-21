@@ -1,88 +1,140 @@
 ---
 import Shell from "../layouts/Shell.astro";
+import CautionStripe from "../components/CautionStripe.astro";
+import PhotoFrame from "../components/PhotoFrame.astro";
+import GlitchText from "../components/GlitchText.astro";
+import ProjectCard from "../components/ProjectCard.astro";
 ---
 
 <Shell
   title="VADIM KUZNETSOV"
-  description="Вадим Кузнецов — full-stack разработчик. Проекты, эксперименты, утилиты."
+  description="Вадим Кузнецов — full-stack разработчик. Веб, мобильное, игры. Личная база проектов."
+  statusLabel="V.NK://personal_db_v0.1"
 >
-  <header class="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-[var(--color-ink-dim)]">
-    <span class="font-[family-name:var(--font-hud)] text-base normal-case tracking-normal text-[var(--color-neon-cyan)]">
-      &gt;_ vvadimkuznetsovv
-    </span>
-    <span class="font-[family-name:var(--font-hud)] text-base normal-case tracking-normal">
-      online · v0.1
-    </span>
-  </header>
+  <div class="fade-in fade-in-1 mt-5">
+    <CautionStripe label="// SYS BOOT OK — WELCOME, NETRUNNER" />
+  </div>
 
-  <section class="mt-20 sm:mt-28">
-    <p class="font-[family-name:var(--font-hud)] text-lg text-[var(--color-neon-magenta)] sm:text-xl">
-      // identity
-    </p>
+  <!-- HERO -->
+  <section class="mt-10 grid grid-cols-1 items-start gap-12 sm:mt-14 md:grid-cols-[300px_minmax(0,1fr)] md:gap-14 lg:grid-cols-[360px_minmax(0,1fr)] lg:gap-20">
+    <div class="fade-in fade-in-2 flex justify-center md:justify-start">
+      <PhotoFrame label="AUTH PHOTO :: N/A" caption="ID-734-VK" />
+    </div>
 
-    <h1
-      class="mt-3 font-[family-name:var(--font-display)] text-[clamp(2.4rem,9vw,6.5rem)] leading-[0.95] text-[var(--color-ink-bone)] [text-shadow:0_0_30px_rgba(0,240,255,0.25)]"
-    >
-      vadim<br />kuznetsov
-    </h1>
-
-    <p
-      class="mt-6 max-w-xl font-[family-name:var(--font-ui)] text-base text-[var(--color-ink-haze)] sm:text-lg"
-    >
-      full-stack разработчик. строю веб, мобильное, игры. ниже&nbsp;— живые проекты.
-    </p>
-  </section>
-
-  <section class="mt-16 sm:mt-24">
-    <p class="font-[family-name:var(--font-hud)] text-lg text-[var(--color-neon-cyan)]">
-      // запуски
-    </p>
-
-    <div class="mt-6 flex flex-col gap-4">
-      <a
-        href="/traffic-laws/"
-        class="group relative block overflow-hidden border border-[var(--color-neon-cyan)] bg-[var(--color-bg-deck)] p-5 transition-[transform,box-shadow] duration-200 hover:-translate-y-[2px] hover:shadow-[0_0_0_1px_var(--color-neon-cyan),0_0_30px_rgba(0,240,255,0.35)] sm:p-7"
-        style="clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));"
-      >
-        <div class="flex items-baseline justify-between gap-4">
-          <h2 class="font-[family-name:var(--font-ui)] text-xl font-bold uppercase tracking-wider text-[var(--color-ink-bone)] sm:text-2xl">
-            traffic-laws
-          </h2>
-          <span class="font-[family-name:var(--font-hud)] text-base text-[var(--color-neon-amber)]">
-            WIP
-          </span>
-        </div>
-        <p class="mt-2 max-w-2xl text-sm text-[var(--color-ink-haze)] sm:text-base">
-          Уникальный сайт изучения ПДД категории B: подробные объяснения каждого ответа,
-          разбор картинок, киберпанк‑роман с вшитыми правилами.
-        </p>
-        <p class="mt-4 font-[family-name:var(--font-hud)] text-base text-[var(--color-neon-cyan)] transition-transform group-hover:translate-x-1">
-          → open /traffic-laws/
-        </p>
-      </a>
-
-      <div class="border border-dashed border-[var(--color-ink-dim)] bg-[var(--color-bg-deck)]/40 p-5 text-sm text-[var(--color-ink-dim)] sm:p-6">
-        <span class="font-[family-name:var(--font-hud)] text-base text-[var(--color-neon-magenta)]">
-          // soon
-        </span>
-        <p class="mt-2">
-          полное портфолио: <span class="text-[var(--color-ink-haze)]">кондиционеркин23.рф</span>,
-          <span class="text-[var(--color-ink-haze)]">print.kubstu.ru</span>,
-          <span class="text-[var(--color-ink-haze)]">proverka-cheka.online</span>,
-          <span class="text-[var(--color-ink-haze)]">Fearful Obscured Grounds</span>
-          — наполню после релиза traffic-laws.
-        </p>
+    <div class="flex flex-col gap-7">
+      <div class="fade-in fade-in-2 flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.4em] text-dim">
+        <span class="font-hud text-base normal-case tracking-normal text-yellow">[REC_ID]</span>
+        <span class="font-hud text-base normal-case tracking-normal text-haze">V_KUZNETSOV</span>
+        <span class="font-hud text-base normal-case tracking-normal text-cyan/60">/</span>
+        <span class="font-hud text-base normal-case tracking-normal text-cyan">@vvadimkuznetsovv</span>
       </div>
+
+      <h1 class="fade-in fade-in-3 font-display text-[clamp(2.6rem,11vw,7rem)] leading-[0.88] text-bone [text-shadow:0_0_32px_rgba(0,240,255,0.35)]">
+        <GlitchText text="vadim" />
+        <br />
+        <GlitchText text="kuznetsov" />
+      </h1>
+
+      <dl class="fade-in fade-in-4 grid grid-cols-1 gap-1 font-hud text-lg sm:text-xl">
+        <div class="grid grid-cols-[110px_1fr] gap-3 sm:grid-cols-[140px_1fr]">
+          <dt class="text-dim">&gt; ROLE</dt>
+          <dd class="text-haze">full-stack engineer</dd>
+        </div>
+        <div class="grid grid-cols-[110px_1fr] gap-3 sm:grid-cols-[140px_1fr]">
+          <dt class="text-dim">&gt; STACK</dt>
+          <dd class="text-haze">web · mobile · games</dd>
+        </div>
+        <div class="grid grid-cols-[110px_1fr] gap-3 sm:grid-cols-[140px_1fr]">
+          <dt class="text-dim">&gt; LOCATION</dt>
+          <dd class="text-haze">[REDACTED]</dd>
+        </div>
+        <div class="grid grid-cols-[110px_1fr] gap-3 sm:grid-cols-[140px_1fr]">
+          <dt class="text-dim">&gt; STATUS</dt>
+          <dd class="text-toxic">SHIPPING</dd>
+        </div>
+      </dl>
+
+      <p class="fade-in fade-in-5 max-w-xl font-ui text-base text-haze sm:text-lg">
+        строю продукты в вебе, мобильном и играх. ниже&nbsp;— живые проекты,
+        ниже‑ниже&nbsp;— будет полный реестр.
+      </p>
     </div>
   </section>
 
-  <footer class="mt-24 flex items-center justify-between border-t border-[var(--color-bg-rack)] pt-6 text-xs uppercase tracking-widest text-[var(--color-ink-dim)]">
-    <span>// {new Date().getFullYear()}</span>
-    <a
-      class="text-[var(--color-neon-cyan)] hover:text-[var(--color-ink-bone)]"
-      href="https://github.com/vvadimkuznetsovv"
-      rel="noreferrer noopener"
-      target="_blank">github</a
-    >
+  <div class="fade-in fade-in-5 mt-16">
+    <CautionStripe label="LIVE PROJECTS // 003 ENTRIES" />
+  </div>
+
+  <!-- PROJECTS -->
+  <section class="mt-10">
+    <div class="flex items-baseline justify-between gap-4">
+      <h2 class="font-hud text-2xl uppercase tracking-[0.2em] text-yellow sm:text-3xl">
+        &gt; LIVE_PROJECTS
+      </h2>
+      <span class="font-hud text-base text-dim">[ idx :: 001-003 ]</span>
+    </div>
+
+    <div class="mt-8 flex flex-col gap-5">
+      <ProjectCard
+        index="001"
+        title="TRAFFIC LAWS"
+        status="WIP"
+        statusColor="amber"
+        href="/traffic-laws/"
+      >
+        Уникальный сайт изучения ПДД категории B. Подробные объяснения каждого
+        правильного и неправильного ответа, разбор картинок билетов, киберпанк‑роман
+        со всеми правилами, вшитыми в нарратив.
+      </ProjectCard>
+
+      <ProjectCard
+        index="002"
+        title="vvadimkuznetsovv.github.io"
+        status="LIVE"
+        statusColor="toxic"
+        href="https://github.com/vvadimkuznetsovv/vvadimkuznetsovv.github.io"
+        external
+      >
+        Этот самый сайт. Astro 5 + Svelte 5 + Tailwind 4. Open source, MIT.
+      </ProjectCard>
+
+      <ProjectCard
+        index="003"
+        title="PORTFOLIO_EXTRA"
+        status="LOADING"
+        statusColor="dim"
+        disabled
+      >
+        кондиционеркин23.рф · print.kubstu.ru · proverka-cheka.online ·
+        Fearful Obscured Grounds (Steam). Будут перечислены отдельно после релиза
+        traffic-laws.
+      </ProjectCard>
+    </div>
+  </section>
+
+  <div class="fade-in fade-in-5 mt-16">
+    <CautionStripe />
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="mt-10 flex flex-wrap items-center justify-between gap-4 font-hud text-base text-dim">
+    <span class="text-haze">// EOL :: {new Date().getFullYear()}</span>
+    <div class="flex items-center gap-5">
+      <a
+        class="text-cyan transition-colors hover:text-yellow"
+        href="https://github.com/vvadimkuznetsovv"
+        rel="noreferrer noopener"
+        target="_blank"
+      >
+        &gt; github.com/vvadimkuznetsovv
+      </a>
+      <span class="text-magenta">●</span>
+      <a
+        class="text-cyan transition-colors hover:text-yellow"
+        href="/traffic-laws/"
+      >
+        &gt; /traffic-laws
+      </a>
+    </div>
   </footer>
 </Shell>

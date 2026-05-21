@@ -1,0 +1,71 @@
+---
+interface Props {
+  text: string;
+  as?: string;
+  class?: string;
+}
+
+const { text, as: Tag = "span", class: className = "" } = Astro.props;
+---
+
+<Tag class:list={["glitch", className]} data-text={text}>{text}</Tag>
+
+<style>
+  .glitch {
+    position: relative;
+    display: inline-block;
+    line-height: inherit;
+  }
+
+  .glitch::before,
+  .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 80ms linear;
+  }
+
+  .glitch::before { color: var(--color-cyan); text-shadow: 0 0 12px rgba(0, 240, 255, 0.6); }
+  .glitch::after { color: var(--color-magenta); text-shadow: 0 0 12px rgba(255, 43, 214, 0.6); }
+
+  .glitch:hover::before {
+    opacity: 0.9;
+    animation: glitch-a 480ms steps(6) infinite;
+  }
+
+  .glitch:hover::after {
+    opacity: 0.9;
+    animation: glitch-b 480ms steps(6) infinite;
+  }
+
+  @keyframes glitch-a {
+    0%   { transform: translate(0, 0);     clip-path: inset(20% 0 60% 0); }
+    16%  { transform: translate(-2px, 1px); clip-path: inset(60% 0 20% 0); }
+    32%  { transform: translate(2px, -1px); clip-path: inset(40% 0 40% 0); }
+    48%  { transform: translate(-1px, 1px); clip-path: inset(80% 0 5% 0); }
+    64%  { transform: translate(1px, 0);    clip-path: inset(10% 0 70% 0); }
+    80%  { transform: translate(-2px, 0);   clip-path: inset(30% 0 30% 0); }
+    100% { transform: translate(0, 0);      clip-path: inset(20% 0 60% 0); }
+  }
+
+  @keyframes glitch-b {
+    0%   { transform: translate(0, 0);     clip-path: inset(70% 0 10% 0); }
+    16%  { transform: translate(2px, -1px); clip-path: inset(10% 0 80% 0); }
+    32%  { transform: translate(-2px, 1px); clip-path: inset(50% 0 30% 0); }
+    48%  { transform: translate(1px, -1px); clip-path: inset(20% 0 50% 0); }
+    64%  { transform: translate(-1px, 0);   clip-path: inset(60% 0 20% 0); }
+    80%  { transform: translate(2px, 1px);  clip-path: inset(40% 0 40% 0); }
+    100% { transform: translate(0, 0);      clip-path: inset(70% 0 10% 0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .glitch:hover::before,
+    .glitch:hover::after {
+      animation: none;
+      opacity: 0;
+    }
+  }
+</style>
