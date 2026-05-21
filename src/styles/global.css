@@ -64,32 +64,36 @@
     background-attachment: fixed;
   }
 
-  body::before {
-    /* Synthwave SUN — huge magenta/orange radial bloom on the horizon */
-    content: "";
+  /* Synthwave background lives in a dedicated <div class="cyber-bg"> inside body
+     (body pseudos with negative z-index were hidden behind body's bg-color). */
+  .cyber-bg {
     position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .cyber-bg__sun {
+    position: absolute;
     left: 50%;
-    bottom: 22vh;
+    bottom: 28vh;
     width: min(900px, 100vw);
     height: min(900px, 100vw);
     transform: translateX(-50%);
     background: radial-gradient(
       circle at 50% 50%,
-      rgba(255, 138, 0, 0.55) 0%,
-      rgba(255, 43, 214, 0.45) 22%,
-      rgba(155, 28, 255, 0.25) 42%,
+      rgba(255, 138, 0, 0.6) 0%,
+      rgba(255, 43, 214, 0.5) 22%,
+      rgba(155, 28, 255, 0.28) 42%,
       transparent 62%
     );
     border-radius: 50%;
-    pointer-events: none;
-    z-index: -2;
-    filter: blur(8px);
+    filter: blur(6px);
   }
 
-  /* Tron perspective grid floor */
-  body::after {
-    content: "";
-    position: fixed;
+  .cyber-bg__grid {
+    position: absolute;
     left: -50%;
     right: -50%;
     bottom: 0;
@@ -99,23 +103,20 @@
         180deg,
         transparent 0,
         transparent 47px,
-        rgba(0, 240, 255, 0.55) 47px,
-        rgba(0, 240, 255, 0.55) 48px
+        rgba(0, 240, 255, 0.6) 47px,
+        rgba(0, 240, 255, 0.6) 48px
       ),
       repeating-linear-gradient(
         90deg,
         transparent 0,
         transparent 47px,
-        rgba(0, 240, 255, 0.55) 47px,
-        rgba(0, 240, 255, 0.55) 48px
+        rgba(0, 240, 255, 0.6) 47px,
+        rgba(0, 240, 255, 0.6) 48px
       );
     transform: perspective(450px) rotateX(58deg);
     transform-origin: 50% 100%;
-    pointer-events: none;
-    z-index: -1;
     mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, transparent 80%);
     -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, transparent 80%);
-    mix-blend-mode: screen;
   }
 
   /* body::after (animated scanlines + mix-blend-mode) removed — too expensive */
