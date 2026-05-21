@@ -3,6 +3,14 @@
 @import "@fontsource/major-mono-display/400.css";
 @import "@fontsource/iceland/400.css";
 @import "@fontsource/chakra-petch/500.css";
+
+@font-face {
+  font-family: "Klaxons";
+  src: url("/fonts/Klaxons.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 @import "@fontsource/chakra-petch/700.css";
 @import "@fontsource/geist-mono/400.css";
 @import "@fontsource/geist-mono/500.css";
@@ -359,23 +367,22 @@
   /* ============================================================
      NEON TEXT — Monoton font, strong layered halo (matches reference)
      ============================================================ */
+  /* Klaxons-style neon — white text in front, color shadow halo behind */
   .neon-text {
     --neon: #ff2bd6;
-    font-family: "Iceland", "Major Mono Display", sans-serif;
+    position: relative;
+    display: inline-block;
+    font-family: "Klaxons", "Iceland", sans-serif;
     font-weight: 400;
-    color: var(--neon);
+    color: #fff;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.01em;
     line-height: 1;
+    z-index: 1;
+    /* the glow itself — single big halo + a black inner to anchor the white */
     text-shadow:
-      0 0 1px #fff,
-      0 0 4px #fff,
-      0 0 9px var(--neon),
-      0 0 18px var(--neon),
-      0 0 36px var(--neon),
-      0 0 70px var(--neon),
-      0 0 110px color-mix(in srgb, var(--neon) 55%, transparent);
-    animation: neon-text-flicker 13s infinite steps(1, end);
+      0 0 40px #000,
+      0 0 40px var(--neon);
   }
   .neon-text--cyan    { --neon: #00f0ff; }
   .neon-text--magenta { --neon: #ff2bd6; }
