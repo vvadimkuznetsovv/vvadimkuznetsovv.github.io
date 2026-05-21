@@ -16,7 +16,7 @@
     "@fontsource/chakra-petch": "^5.1.0",
     "@fontsource/geist-mono": "^5.1.0",
     "@fontsource/major-mono-display": "^5.1.0",
-    "@fontsource/permanent-marker": "^5.1.0",
+    "@fontsource/monoton": "^5.1.0",
     "@fontsource/vt323": "^5.1.0",
     "@tailwindcss/vite": "^4.3.0",
     "astro": "^5.18.1",

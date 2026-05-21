@@ -2,7 +2,6 @@
 import Shell from "../layouts/Shell.astro";
 import CautionStripe from "../components/CautionStripe.astro";
 import PhotoFrame from "../components/PhotoFrame.astro";
-import NeonTubes from "../components/NeonTubes.astro";
 import ProjectCard from "../components/ProjectCard.astro";
 ---
 
@@ -29,14 +28,13 @@ import ProjectCard from "../components/ProjectCard.astro";
         <span class="font-hud text-base text-cyan neon-pulse neon-pulse--cyan">@vvadimkuznetsovv</span>
       </div>
 
-      <div class="fade-in fade-in-3">
-        <NeonTubes shape="VK" color="cyan" />
-      </div>
-
-      <h1
-        class="fade-in fade-in-4 hero-name"
-      >
-        vadim kuznetsov
+      <h1 class="fade-in fade-in-3 flex flex-col gap-3 leading-none">
+        <span class="neon-text neon-text--cyan text-[clamp(2.8rem,11vw,6.5rem)]">
+          VADIM
+        </span>
+        <span class="neon-text neon-text--magenta text-[clamp(2.8rem,11vw,6.5rem)]">
+          KUZNETSOV
+        </span>
       </h1>
 
       <dl class="fade-in fade-in-4 grid grid-cols-1 gap-1 font-hud text-lg sm:text-xl">

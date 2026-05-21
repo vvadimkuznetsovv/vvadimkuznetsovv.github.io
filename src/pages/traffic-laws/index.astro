@@ -1,7 +1,6 @@
 ---
 import Shell from "../../layouts/Shell.astro";
 import CautionStripe from "../../components/CautionStripe.astro";
-import NeonTubes from "../../components/NeonTubes.astro";
 
 const modes = [
   {
@@ -53,11 +52,14 @@ const modes = [
     <p class="font-hud text-lg neon-pulse sm:text-xl">
       &gt; build #001 :: skeleton phase
     </p>
-    <div class="mt-4">
-      <NeonTubes shape="TL" color="magenta" />
-    </div>
-
-    <h1 class="mt-6 hero-name">traffic laws</h1>
+    <h1 class="mt-4 flex flex-col gap-3 leading-none">
+      <span class="neon-text neon-text--cyan text-[clamp(2.4rem,10vw,5.5rem)]">
+        TRAFFIC
+      </span>
+      <span class="neon-text neon-text--magenta text-[clamp(2.4rem,10vw,5.5rem)]">
+        LAWS
+      </span>
+    </h1>
     <p class="mt-6 max-w-2xl font-ui text-base text-haze sm:text-lg">
       Изучение правил дорожного движения категории B в формате in‑world терминала.
       Подробные объяснения, разбор картинок билетов, киберпанк‑роман со всеми
