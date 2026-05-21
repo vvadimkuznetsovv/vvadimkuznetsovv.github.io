@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @import "@fontsource/major-mono-display/400.css";
-@import "@fontsource/tilt-neon/400.css";
+@import "@fontsource-variable/tilt-neon";
 @import "@fontsource/chakra-petch/500.css";
 @import "@fontsource/chakra-petch/700.css";
 @import "@fontsource/geist-mono/400.css";
@@ -361,26 +361,34 @@
      ============================================================ */
   .neon-text {
     --neon: #ff2bd6;
-    font-family: "Tilt Neon", "Major Mono Display", sans-serif;
+    font-family: "Tilt Neon Variable", "Major Mono Display", sans-serif;
     font-weight: 400;
-    color: var(--neon);
+    color: #fff;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     line-height: 1;
-    font-feature-settings: "BTSH" 0, "EHLT" 4, "VRTL" 0;
+    /* Tilt Neon variable axes — push EHLT (highlight/depth) to max */
+    font-variation-settings: "EHLT" 24, "YEAR" 2020;
     text-shadow:
-      /* white-hot sparkle in the tube */
-      0 0 1px #fff,
-      0 0 4px #fff,
-      /* close colored bloom */
-      0 0 9px var(--neon),
-      0 0 18px var(--neon),
-      /* mid halo */
+      /* white-hot tube core */
+      0 0 3px #fff,
+      0 0 8px #fff,
+      0 0 14px #fff,
+      /* close intense color bloom */
+      0 0 22px var(--neon),
       0 0 36px var(--neon),
+      0 0 56px var(--neon),
+      /* mid halo (saturated) */
+      0 0 86px var(--neon),
+      0 0 120px var(--neon),
       /* far halo */
-      0 0 70px var(--neon),
+      0 0 160px color-mix(in srgb, var(--neon) 70%, transparent),
       /* atmospheric falloff */
-      0 0 110px color-mix(in srgb, var(--neon) 55%, transparent);
+      0 0 220px color-mix(in srgb, var(--neon) 45%, transparent);
+    /* Extra GPU-cheap glow on top */
+    filter:
+      drop-shadow(0 0 12px var(--neon))
+      drop-shadow(0 0 36px color-mix(in srgb, var(--neon) 60%, transparent));
     animation: neon-text-flicker 13s infinite steps(1, end);
   }
   .neon-text--cyan    { --neon: #00f0ff; }
