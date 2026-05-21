@@ -2,6 +2,9 @@
 
 @import "@fontsource/major-mono-display/400.css";
 @import "@fontsource/iceland/400.css";
+@import "@fontsource/rajdhani/500.css";
+@import "@fontsource/rajdhani/600.css";
+@import "@fontsource/rajdhani/700.css";
 @import "@fontsource/chakra-petch/500.css";
 
 @font-face {
@@ -367,7 +370,7 @@
   /* ============================================================
      NEON TEXT — Monoton font, strong layered halo (matches reference)
      ============================================================ */
-  /* Klaxons-style neon — white text in front, color shadow halo behind */
+  /* Klaxons-style neon — white text in front, layered color halo behind */
   .neon-text {
     --neon: #ff2bd6;
     position: relative;
@@ -379,10 +382,12 @@
     letter-spacing: 0.01em;
     line-height: 1;
     z-index: 1;
-    /* the glow itself — single big halo + a black inner to anchor the white */
     text-shadow:
-      0 0 40px #000,
-      0 0 40px var(--neon);
+      0 0 12px #000,
+      0 0 22px var(--neon),
+      0 0 48px var(--neon),
+      0 0 96px var(--neon),
+      0 0 160px var(--neon);
   }
   .neon-text--cyan    { --neon: #00f0ff; }
   .neon-text--magenta { --neon: #ff2bd6; }
