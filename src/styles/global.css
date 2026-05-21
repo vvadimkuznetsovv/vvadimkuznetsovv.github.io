@@ -483,6 +483,219 @@
   }
 
   /* ============================================================
+     CY-FRAME — sci-fi HUD bar (cyberpunkredone radio style)
+     ============================================================ */
+  .cy-frame {
+    --frame-c: var(--color-cyan);
+    --frame-bg: rgba(0, 240, 255, 0.08);
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 28px 12px 34px;
+    background: linear-gradient(90deg, var(--frame-bg) 0%, transparent 100%);
+    clip-path: polygon(
+      0 0,
+      calc(100% - 18px) 0,
+      100% 50%,
+      calc(100% - 18px) 100%,
+      0 100%
+    );
+    border-left: 0;
+    overflow: hidden;
+  }
+
+  /* 3 vertical accent stripes on the left (one bar + 2 box-shadows) */
+  .cy-frame::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--frame-c);
+    box-shadow:
+      5px 0 0 var(--frame-c),
+      10px 0 0 var(--frame-c);
+  }
+
+  /* Thin glowing outline that follows the clipped shape */
+  .cy-frame::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 1px solid color-mix(in srgb, var(--frame-c) 35%, transparent);
+    clip-path: polygon(
+      0 0,
+      calc(100% - 18px) 0,
+      100% 50%,
+      calc(100% - 18px) 100%,
+      0 100%
+    );
+    pointer-events: none;
+  }
+
+  .cy-frame--cyan {
+    --frame-c: var(--color-cyan);
+    --frame-bg: rgba(0, 240, 255, 0.10);
+  }
+  .cy-frame--magenta {
+    --frame-c: var(--color-magenta);
+    --frame-bg: rgba(255, 43, 214, 0.12);
+  }
+  .cy-frame--yellow {
+    --frame-c: var(--color-yellow);
+    --frame-bg: rgba(252, 238, 10, 0.10);
+  }
+
+  .cy-frame__title {
+    font-family: "Rajdhani", sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-bone);
+    font-size: 1.05rem;
+    line-height: 1;
+    text-shadow: 0 0 8px color-mix(in srgb, var(--frame-c) 60%, transparent);
+  }
+
+  .cy-frame__meta {
+    margin-left: auto;
+    padding-right: 12px;
+    font-family: var(--font-hud);
+    font-size: 1rem;
+    color: color-mix(in srgb, var(--frame-c) 85%, white);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  /* Small label tag — sits ABOVE a frame like "RADIO" tag above the title */
+  .cy-tag {
+    display: inline-block;
+    padding: 2px 10px 2px 14px;
+    margin-bottom: 8px;
+    font-family: "Rajdhani", sans-serif;
+    font-weight: 500;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--color-magenta);
+    border-left: 2px solid var(--color-magenta);
+  }
+  .cy-tag--cyan { color: var(--color-cyan); border-color: var(--color-cyan); }
+  .cy-tag--yellow { color: var(--color-yellow); border-color: var(--color-yellow); }
+
+  /* ============================================================
+     CY-TABS — sci-fi tabs with corner brackets + icon + label
+     (cyberpunkredone style, screenshot reference)
+     ============================================================ */
+  .cy-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    width: 100%;
+  }
+
+  .cy-tab {
+    --tab-c: var(--color-cyan);
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    min-height: 64px;
+    padding: 0;
+    background: rgba(10, 20, 30, 0.45);
+    border: 1px solid color-mix(in srgb, var(--tab-c) 35%, transparent);
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      background 0.18s ease,
+      border-color 0.18s ease,
+      box-shadow 0.25s ease;
+    flex: 1 1 220px;
+  }
+
+  /* Four corner brackets via 8 linear gradients on the ::before pseudo */
+  .cy-tab::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    pointer-events: none;
+    background:
+      linear-gradient(to right, var(--tab-c) 12px, transparent 12px) top left /    12px 1px no-repeat,
+      linear-gradient(to bottom, var(--tab-c) 12px, transparent 12px) top left /    1px 12px no-repeat,
+      linear-gradient(to left, var(--tab-c) 12px, transparent 12px) top right /    12px 1px no-repeat,
+      linear-gradient(to bottom, var(--tab-c) 12px, transparent 12px) top right /   1px 12px no-repeat,
+      linear-gradient(to right, var(--tab-c) 12px, transparent 12px) bottom left / 12px 1px no-repeat,
+      linear-gradient(to top, var(--tab-c) 12px, transparent 12px) bottom left /    1px 12px no-repeat,
+      linear-gradient(to left, var(--tab-c) 12px, transparent 12px) bottom right / 12px 1px no-repeat,
+      linear-gradient(to top, var(--tab-c) 12px, transparent 12px) bottom right /   1px 12px no-repeat;
+  }
+
+  /* Icon area on the left of the tab */
+  .cy-tab__icon {
+    width: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: color-mix(in srgb, var(--tab-c) 85%, white);
+    border-right: 1px solid color-mix(in srgb, var(--tab-c) 25%, transparent);
+    font-family: var(--font-hud);
+    font-size: 1.4rem;
+    background: rgba(0, 240, 255, 0.04);
+  }
+
+  /* Label area on the right */
+  .cy-tab__label {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0 20px;
+    font-family: "Rajdhani", sans-serif;
+    font-weight: 600;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: color-mix(in srgb, var(--tab-c) 80%, white);
+  }
+
+  .cy-tab__count {
+    font-family: var(--font-hud);
+    font-size: 1.05rem;
+    color: color-mix(in srgb, var(--tab-c) 75%, white);
+    letter-spacing: 0.1em;
+  }
+
+  .cy-tab:hover {
+    background: rgba(0, 240, 255, 0.10);
+    border-color: var(--tab-c);
+  }
+
+  .cy-tab--active {
+    background: rgba(0, 240, 255, 0.14);
+    border-color: var(--tab-c);
+    box-shadow:
+      inset 0 0 0 1px var(--tab-c),
+      inset 0 0 30px rgba(0, 240, 255, 0.18),
+      0 0 14px rgba(0, 240, 255, 0.18);
+  }
+
+  .cy-tab--active .cy-tab__label { color: #fff; }
+  .cy-tab--active .cy-tab__icon { background: rgba(0, 240, 255, 0.14); }
+
+  .cy-tab--disabled {
+    --tab-c: var(--color-dim);
+    color: var(--color-dim);
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.7;
+  }
+  .cy-tab--disabled .cy-tab__icon { color: var(--color-dim); }
+  .cy-tab--disabled .cy-tab__label { color: var(--color-dim); }
+
+  /* ============================================================
      STAGGER FADE-IN — after boot-scan completes
      ============================================================ */
   .fade-in {
