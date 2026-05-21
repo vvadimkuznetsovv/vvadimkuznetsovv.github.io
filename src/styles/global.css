@@ -31,9 +31,7 @@
 }
 
 @layer base {
-  :root {
-    color-scheme: dark;
-  }
+  :root { color-scheme: dark; }
 
   html {
     background: var(--color-void);
@@ -56,7 +54,7 @@
 
   @keyframes grid-drift {
     from { background-position: 0 0, 0 0; }
-    to { background-position: 40px 40px, 40px 40px; }
+    to   { background-position: 40px 40px, 40px 40px; }
   }
 
   body::before {
@@ -65,8 +63,8 @@
     inset: 0;
     background:
       radial-gradient(ellipse 60% 50% at 12% -5%, rgba(252, 238, 10, 0.10), transparent 55%),
-      radial-gradient(ellipse 50% 40% at 105% 30%, rgba(0, 240, 255, 0.16), transparent 60%),
-      radial-gradient(ellipse 55% 45% at 50% 110%, rgba(255, 43, 214, 0.12), transparent 55%);
+      radial-gradient(ellipse 50% 40% at 105% 30%, rgba(0, 240, 255, 0.18), transparent 60%),
+      radial-gradient(ellipse 55% 45% at 50% 110%, rgba(255, 43, 214, 0.13), transparent 55%);
     pointer-events: none;
     z-index: -1;
     animation: glow-pulse 9s ease-in-out infinite alternate;
@@ -100,15 +98,9 @@
     text-wrap: balance;
   }
 
-  ::selection {
-    background: var(--color-yellow);
-    color: var(--color-void);
-  }
+  ::selection { background: var(--color-yellow); color: var(--color-void); }
 
-  :focus-visible {
-    outline: 2px solid var(--color-cyan);
-    outline-offset: 3px;
-  }
+  :focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 3px; }
 
   @media (prefers-reduced-motion: reduce) {
     body { animation: none; }
@@ -122,8 +114,209 @@
 }
 
 @layer components {
-  /* ---------- BOOT SCAN ---------- */
-  /* A one-shot CRT power-on overlay played on every page load */
+
+  /* ============================================================
+     NEON GLOW — multi-layer text-shadow + electrical flicker
+     ============================================================ */
+  .neon-glow {
+    --neon-color: var(--color-cyan);
+    color: var(--color-bone);
+    text-shadow:
+      0 0 4px rgba(255, 255, 255, 0.85),
+      0 0 10px var(--neon-color),
+      0 0 22px var(--neon-color),
+      0 0 44px var(--neon-color),
+      0 0 90px color-mix(in srgb, var(--neon-color) 65%, transparent);
+    animation: neon-flicker 6s infinite steps(1, end);
+  }
+  .neon-glow--cyan    { --neon-color: var(--color-cyan); }
+  .neon-glow--yellow  { --neon-color: var(--color-yellow); color: var(--color-yellow); }
+  .neon-glow--magenta { --neon-color: var(--color-magenta); color: var(--color-magenta); }
+  .neon-glow--toxic   { --neon-color: var(--color-toxic); color: var(--color-toxic); }
+  .neon-glow--pink    { --neon-color: var(--color-pink); color: var(--color-pink); }
+
+  /* Asymmetric, "broken neon tube" flicker */
+  @keyframes neon-flicker {
+    0%, 18%, 19.5%, 21%, 23%, 53%, 54.5%, 57%, 86%, 87.5%, 100% {
+      opacity: 1;
+      text-shadow:
+        0 0 4px rgba(255, 255, 255, 0.85),
+        0 0 10px var(--neon-color),
+        0 0 22px var(--neon-color),
+        0 0 44px var(--neon-color),
+        0 0 90px color-mix(in srgb, var(--neon-color) 65%, transparent);
+    }
+    19%, 20%, 22%, 56%, 87% {
+      opacity: 0.35;
+      text-shadow:
+        0 0 1px rgba(255, 255, 255, 0.5),
+        0 0 3px var(--neon-color);
+    }
+  }
+
+  /* Lighter pulse variant for section labels (no opacity drops) */
+  .neon-pulse {
+    --neon-color: var(--color-yellow);
+    color: var(--color-yellow);
+    text-shadow:
+      0 0 4px rgba(255, 255, 255, 0.6),
+      0 0 8px var(--neon-color),
+      0 0 18px var(--neon-color),
+      0 0 36px color-mix(in srgb, var(--neon-color) 60%, transparent);
+    animation: neon-breathe 3.5s ease-in-out infinite alternate;
+  }
+  .neon-pulse--cyan    { --neon-color: var(--color-cyan); color: var(--color-cyan); }
+  .neon-pulse--magenta { --neon-color: var(--color-magenta); color: var(--color-magenta); }
+
+  @keyframes neon-breathe {
+    from {
+      text-shadow:
+        0 0 4px rgba(255, 255, 255, 0.5),
+        0 0 6px var(--neon-color),
+        0 0 14px var(--neon-color),
+        0 0 28px color-mix(in srgb, var(--neon-color) 50%, transparent);
+    }
+    to {
+      text-shadow:
+        0 0 5px rgba(255, 255, 255, 0.85),
+        0 0 12px var(--neon-color),
+        0 0 26px var(--neon-color),
+        0 0 60px color-mix(in srgb, var(--neon-color) 70%, transparent);
+    }
+  }
+
+  /* ============================================================
+     NOTCHED CARD — CP2077 hexagonal-cut shape with neon outline
+     ============================================================ */
+  .notched {
+    --notch: 22px;
+    --border-color: var(--color-cyan);
+    --glow-1: rgba(0, 240, 255, 0.55);
+    --glow-2: rgba(0, 240, 255, 0.22);
+    position: relative;
+    display: block;
+    background: var(--border-color);
+    clip-path: polygon(
+      0 0,
+      calc(100% - var(--notch)) 0,
+      100% var(--notch),
+      100% 100%,
+      var(--notch) 100%,
+      0 calc(100% - var(--notch))
+    );
+    padding: 1.5px;
+    filter:
+      drop-shadow(0 0 12px var(--glow-1))
+      drop-shadow(0 0 32px var(--glow-2));
+    transition: filter 0.3s ease, background 0.25s ease;
+  }
+
+  .notched > .notched__body {
+    position: relative;
+    background: var(--color-deck);
+    /* inner clip slightly smaller so a 1.5px border ring shows */
+    clip-path: polygon(
+      0 0,
+      calc(100% - calc(var(--notch) - 1.5px)) 0,
+      100% calc(var(--notch) - 1.5px),
+      100% 100%,
+      calc(var(--notch) - 1.5px) 100%,
+      0 calc(100% - calc(var(--notch) - 1.5px))
+    );
+    padding: 22px 24px;
+    overflow: hidden;
+  }
+
+  /* Flickering left-edge neon bar (lives inside .notched__body) */
+  .notched__body > .notched__edge {
+    position: absolute;
+    left: 6px;
+    top: 14px;
+    bottom: 14px;
+    width: 2px;
+    background: var(--border-color);
+    box-shadow:
+      0 0 6px var(--border-color),
+      0 0 14px var(--border-color),
+      0 0 28px color-mix(in srgb, var(--border-color) 60%, transparent);
+    animation: edge-flicker 5s infinite steps(1, end);
+  }
+
+  @keyframes edge-flicker {
+    0%, 22%, 24%, 27%, 30%, 65%, 67%, 90%, 100% { opacity: 1; }
+    23%, 25%, 28%, 66%, 91%, 91.5% { opacity: 0.25; }
+  }
+
+  /* Bottom-edge chevron warning strip inside notched body */
+  .notched__body > .notched__chevrons {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 4px;
+    height: 4px;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      var(--color-yellow) 0 6px,
+      var(--color-void) 6px 12px
+    );
+    background-size: 36px 36px;
+    opacity: 0.7;
+    pointer-events: none;
+    animation: chevron-drift 4s linear infinite;
+  }
+
+  @keyframes chevron-drift {
+    from { background-position: 0 0; }
+    to   { background-position: 36px 0; }
+  }
+
+  /* Hover: switch border to yellow with massive glow */
+  .notched--link:hover {
+    background: var(--color-yellow);
+    --border-color: var(--color-yellow);
+    --glow-1: rgba(252, 238, 10, 0.7);
+    --glow-2: rgba(252, 238, 10, 0.35);
+    filter:
+      drop-shadow(0 0 16px var(--glow-1))
+      drop-shadow(0 0 48px var(--glow-2))
+      drop-shadow(0 0 100px rgba(0, 240, 255, 0.18));
+  }
+
+  /* Magenta variant for the "signature" mode card */
+  .notched--magenta {
+    --border-color: var(--color-magenta);
+    --glow-1: rgba(255, 43, 214, 0.6);
+    --glow-2: rgba(255, 43, 214, 0.25);
+  }
+
+  /* Dim/disabled variant */
+  .notched--dim {
+    --border-color: color-mix(in srgb, var(--color-dim) 70%, transparent);
+    --glow-1: rgba(91, 100, 134, 0.25);
+    --glow-2: transparent;
+  }
+
+  /* Sweep highlight on hover (CP2077 scan-pass) */
+  .notched__sweep {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 30%,
+      rgba(0, 240, 255, 0.22) 50%,
+      transparent 70%
+    );
+    transform: translateX(-110%);
+    transition: transform 0.7s ease-out;
+    pointer-events: none;
+  }
+  .notched--link:hover .notched__sweep {
+    transform: translateX(110%);
+  }
+
+  /* ============================================================
+     BOOT SCAN — one-shot CRT power-on overlay
+     ============================================================ */
   .boot-scan {
     position: fixed;
     inset: 0;
@@ -156,7 +349,7 @@
     font-size: 16px;
     letter-spacing: 0.2em;
     color: var(--color-yellow);
-    text-shadow: 0 0 12px var(--color-yellow);
+    text-shadow: 0 0 12px var(--color-yellow), 0 0 32px var(--color-yellow);
     animation: boot-label 1.2s ease-out forwards;
   }
 
@@ -164,12 +357,10 @@
     0%, 55% { opacity: 1; }
     100%    { opacity: 0; visibility: hidden; }
   }
-
   @keyframes boot-scan-line {
-    from { top: 0;    opacity: 1; }
+    from { top: 0; opacity: 1; }
     to   { top: 100%; opacity: 0; }
   }
-
   @keyframes boot-label {
     0%   { opacity: 0; letter-spacing: 0.5em; }
     20%  { opacity: 1; letter-spacing: 0.2em; }
@@ -182,7 +373,9 @@
     .boot-scan::before, .boot-scan::after { display: none; }
   }
 
-  /* ---------- TICKER ---------- */
+  /* ============================================================
+     TICKER — bottom system messages
+     ============================================================ */
   .ticker {
     position: fixed;
     bottom: 0;
@@ -195,7 +388,6 @@
     z-index: 50;
     backdrop-filter: blur(6px);
   }
-
   .ticker__track {
     display: flex;
     gap: 36px;
@@ -210,32 +402,32 @@
     animation: ticker-scroll 42s linear infinite;
     will-change: transform;
   }
-
   .ticker__track > span > strong {
     color: var(--color-yellow);
     font-weight: 400;
     margin-right: 6px;
+    text-shadow: 0 0 6px var(--color-yellow);
   }
-
   .ticker__track > span > em {
     color: var(--color-toxic);
     font-style: normal;
+    text-shadow: 0 0 6px var(--color-toxic);
   }
-
   @keyframes ticker-scroll {
     from { transform: translateX(0); }
     to   { transform: translateX(-50%); }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .ticker__track { animation-duration: 600s; }
   }
 
-  /* ---------- STAGGER FADE-IN ---------- */
+  /* ============================================================
+     STAGGER FADE-IN — after boot-scan completes
+     ============================================================ */
   .fade-in {
     opacity: 0;
     animation: hero-in 0.7s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
-    animation-delay: 0.6s; /* wait until boot-scan completes */
+    animation-delay: 0.6s;
   }
   .fade-in-1 { animation-delay: 0.65s; }
   .fade-in-2 { animation-delay: 0.80s; }

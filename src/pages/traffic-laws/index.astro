@@ -9,28 +9,24 @@ const modes = [
     title: "ИЗУЧЕНИЕ ПО ТЕМАМ",
     body: "Чтение правил с интерактивными примерами и связанными знаками.",
     state: "QUEUED",
-    color: "text-dim",
   },
   {
     code: "M02",
     title: "ТРЕНИРОВКА ПО БИЛЕТАМ",
     body: "20 вопросов с объяснением каждого правильного и неправильного ответа.",
     state: "QUEUED",
-    color: "text-dim",
   },
   {
     code: "M03",
     title: "ЭКЗАМЕН НА ВРЕМЯ",
     body: "Правила ГИБДД: 20 вопросов, 20 минут, ≤ 2 ошибки.",
     state: "QUEUED",
-    color: "text-dim",
   },
   {
     code: "M04",
     title: "СПРАВОЧНИК ЗНАКОВ",
     body: "Поиск, фильтр по группам, типичные ошибки восприятия.",
     state: "QUEUED",
-    color: "text-dim",
   },
 ] as const;
 ---
@@ -43,7 +39,7 @@ const modes = [
   <nav class="mt-5 flex items-center gap-4 font-hud text-base">
     <a
       href="/"
-      class="text-cyan transition-colors hover:text-yellow"
+      class="text-cyan transition-colors hover:text-yellow neon-pulse neon-pulse--cyan"
       >&lt;- back to vvadimkuznetsovv</a
     >
   </nav>
@@ -54,13 +50,16 @@ const modes = [
 
   <!-- HERO -->
   <header class="fade-in fade-in-2 mt-12 sm:mt-16">
-    <p class="font-hud text-lg text-yellow sm:text-xl">
+    <p class="font-hud text-lg neon-pulse sm:text-xl">
       &gt; build #001 :: skeleton phase
     </p>
-    <h1 class="mt-4 font-display text-[clamp(2.2rem,10vw,6rem)] leading-[0.88] text-bone [text-shadow:0_0_32px_rgba(0,240,255,0.3)]">
-      <GlitchText text="traffic" decrypt />
-      <br />
-      <GlitchText text="laws" decrypt />
+    <h1 class="mt-4 font-display text-[clamp(2.2rem,10vw,6rem)] leading-[0.88]">
+      <span class="block neon-glow neon-glow--cyan">
+        <GlitchText text="traffic" decrypt />
+      </span>
+      <span class="block neon-glow neon-glow--magenta">
+        <GlitchText text="laws" decrypt />
+      </span>
     </h1>
     <p class="mt-6 max-w-2xl font-ui text-base text-haze sm:text-lg">
       Изучение правил дорожного движения категории B в формате in‑world терминала.
@@ -76,54 +75,62 @@ const modes = [
   <!-- MODES -->
   <section class="mt-10">
     <div class="flex items-baseline justify-between gap-4">
-      <h2 class="font-hud text-2xl uppercase tracking-[0.2em] text-yellow sm:text-3xl">
+      <h2 class="font-hud text-2xl uppercase tracking-[0.2em] neon-pulse sm:text-3xl">
         &gt; MODES
       </h2>
       <span class="font-hud text-base text-dim">[ idx :: M01-M05 ]</span>
     </div>
 
-    <ul class="mt-8 grid gap-5 sm:grid-cols-2">
+    <ul class="mt-10 grid gap-7 sm:grid-cols-2 sm:gap-8">
       {
         modes.map((mode) => (
-          <li class="relative overflow-hidden border border-rack bg-deck p-5 sm:p-6">
-            <span class="absolute right-0 top-0 h-1 w-20 bg-[repeating-linear-gradient(-45deg,var(--color-yellow)_0_6px,var(--color-void)_6px_12px)] opacity-80" aria-hidden="true" />
+          <li class="notched notched--dim" style="--notch: 22px;">
+            <div class="notched__body">
+              <span class="notched__edge" aria-hidden="true" />
+              <span class="notched__chevrons" aria-hidden="true" />
 
-            <div class="flex items-center justify-between gap-3">
-              <span class="font-hud text-base text-yellow">[ {mode.code} ]</span>
-              <span class:list={["font-hud text-base", mode.color]}>
-                [ {mode.state} ]
-              </span>
+              <div class="flex items-center justify-between gap-3">
+                <span class="font-hud text-base text-yellow drop-shadow-[0_0_6px_var(--color-yellow)]">
+                  [ {mode.code} ]
+                </span>
+                <span class="font-hud text-base text-dim">[ {mode.state} ]</span>
+              </div>
+
+              <h3 class="mt-2 font-ui text-base font-bold uppercase tracking-[0.08em] text-bone sm:text-lg">
+                {mode.title}
+              </h3>
+
+              <p class="mt-2 font-ui text-sm leading-relaxed text-haze sm:text-base">
+                {mode.body}
+              </p>
             </div>
-
-            <h3 class="mt-2 font-ui text-base font-bold uppercase tracking-[0.08em] text-bone sm:text-lg">
-              {mode.title}
-            </h3>
-
-            <p class="mt-2 font-ui text-sm leading-relaxed text-haze sm:text-base">
-              {mode.body}
-            </p>
           </li>
         ))
       }
 
       <!-- Signature mode: cyberpunk novel -->
-      <li class="relative overflow-hidden border-2 border-magenta bg-gradient-to-br from-deck via-deck to-[color-mix(in_srgb,var(--color-magenta)_10%,var(--color-deck))] p-5 sm:col-span-2 sm:p-7">
-        <span class="absolute inset-x-0 top-0 h-1 bg-[repeating-linear-gradient(-45deg,var(--color-magenta)_0_8px,var(--color-void)_8px_16px)] opacity-95" aria-hidden="true" />
+      <li class="notched notched--magenta sm:col-span-2" style="--notch: 28px;">
+        <div class="notched__body">
+          <span class="notched__edge" aria-hidden="true"></span>
+          <span class="notched__chevrons" aria-hidden="true"></span>
 
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <span class="font-hud text-base text-magenta">[ M05 :: SIGNATURE_MODE ]</span>
-          <span class="font-hud text-base text-pink">[ QUEUED ]</span>
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <span class="font-hud text-base text-magenta neon-pulse neon-pulse--magenta">
+              [ M05 :: SIGNATURE_MODE ]
+            </span>
+            <span class="font-hud text-base text-pink">[ QUEUED ]</span>
+          </div>
+
+          <h3 class="mt-3 font-ui text-xl font-bold uppercase tracking-[0.08em] text-bone sm:text-3xl">
+            киберпанк‑роман
+          </h3>
+
+          <p class="mt-3 max-w-3xl font-ui text-sm leading-relaxed text-haze sm:text-base">
+            Интерактивный роман со всеми правилами ПДД, вшитыми в нарратив через мысли
+            героев, выборы и анимированные SVG‑сцены дорожных ситуаций. Главная фишка
+            проекта — никаких сухих формулировок, всё через сюжет.
+          </p>
         </div>
-
-        <h3 class="mt-2 font-ui text-xl font-bold uppercase tracking-[0.08em] text-bone sm:text-2xl">
-          киберпанк‑роман
-        </h3>
-
-        <p class="mt-3 max-w-3xl font-ui text-sm leading-relaxed text-haze sm:text-base">
-          Интерактивный роман со всеми правилами ПДД, вшитыми в нарратив через мысли
-          героев, выборы и анимированные SVG‑сцены дорожных ситуаций. Главная фишка
-          проекта — никаких сухих формулировок, всё через сюжет.
-        </p>
       </li>
     </ul>
   </section>
@@ -134,34 +141,43 @@ const modes = [
 
   <!-- STATUS -->
   <section class="mt-10 grid gap-6 sm:grid-cols-2">
-    <div class="border border-rack bg-deck p-5 sm:p-6">
-      <p class="font-hud text-base text-cyan">// build_status</p>
-      <p class="mt-2 font-ui text-base text-haze">
-        Phase 0: <span class="text-toxic">DONE</span> · скелет проекта в проде.
-      </p>
-      <p class="mt-1 font-ui text-base text-haze">
-        Phase 1.1: <span class="text-toxic">DONE</span> · Astro+Svelte+Tailwind+MDX.
-      </p>
-      <p class="mt-1 font-ui text-base text-haze">
-        Phase 1.2: <span class="text-amber">NEXT</span> · design system + компоненты.
-      </p>
+    <div class="notched" style="--notch: 18px;">
+      <div class="notched__body">
+        <span class="notched__edge" aria-hidden="true"></span>
+        <p class="font-hud text-base neon-pulse neon-pulse--cyan">// build_status</p>
+        <p class="mt-3 font-ui text-base text-haze">
+          Phase 0: <span class="text-toxic neon-pulse" style="--neon-color: var(--color-toxic);">DONE</span> · скелет в проде.
+        </p>
+        <p class="mt-1 font-ui text-base text-haze">
+          Phase 1.1: <span class="text-toxic neon-pulse" style="--neon-color: var(--color-toxic);">DONE</span> · Astro+Svelte+Tailwind+MDX.
+        </p>
+        <p class="mt-1 font-ui text-base text-haze">
+          Phase 1.2: <span class="text-toxic neon-pulse" style="--neon-color: var(--color-toxic);">DONE</span> · CP2077 design system.
+        </p>
+        <p class="mt-1 font-ui text-base text-haze">
+          Phase 1.3: <span class="text-amber">NEXT</span> · open dataset ПДД + знаки.
+        </p>
+      </div>
     </div>
 
-    <div class="border border-rack bg-deck p-5 sm:p-6">
-      <p class="font-hud text-base text-yellow">// up_next</p>
-      <ul class="mt-2 space-y-1 font-ui text-base text-haze">
-        <li>· импорт open dataset вопросов</li>
-        <li>· каталог знаков (SVG, Wikimedia)</li>
-        <li>· quiz UX с разбором каждого ответа</li>
-        <li>· экзамен‑режим с таймером</li>
-        <li>· POC главы романа</li>
-      </ul>
+    <div class="notched" style="--notch: 18px; --border-color: var(--color-yellow); --glow-1: rgba(252,238,10,0.45); --glow-2: rgba(252,238,10,0.18);">
+      <div class="notched__body">
+        <span class="notched__edge" aria-hidden="true" style="background: var(--color-yellow); box-shadow: 0 0 6px var(--color-yellow), 0 0 14px var(--color-yellow);"></span>
+        <p class="font-hud text-base neon-pulse">// up_next</p>
+        <ul class="mt-2 space-y-1 font-ui text-base text-haze">
+          <li>· импорт open dataset вопросов</li>
+          <li>· каталог знаков (SVG, Wikimedia)</li>
+          <li>· quiz UX с разбором каждого ответа</li>
+          <li>· экзамен‑режим с таймером</li>
+          <li>· POC главы романа</li>
+        </ul>
+      </div>
     </div>
   </section>
 
   <footer class="mt-16 flex flex-wrap items-center justify-between gap-4 font-hud text-base text-dim">
     <span class="text-haze">// MODULE_END</span>
-    <a class="text-cyan transition-colors hover:text-yellow" href="/">
+    <a class="text-cyan transition-colors hover:text-yellow neon-pulse neon-pulse--cyan" href="/">
       &lt;- back to root
     </a>
   </footer>

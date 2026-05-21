@@ -22,17 +22,20 @@ import ProjectCard from "../components/ProjectCard.astro";
     </div>
 
     <div class="flex flex-col gap-7">
-      <div class="fade-in fade-in-2 flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.4em] text-dim">
-        <span class="font-hud text-base normal-case tracking-normal text-yellow">[REC_ID]</span>
-        <span class="font-hud text-base normal-case tracking-normal text-haze">V_KUZNETSOV</span>
-        <span class="font-hud text-base normal-case tracking-normal text-cyan/60">/</span>
-        <span class="font-hud text-base normal-case tracking-normal text-cyan">@vvadimkuznetsovv</span>
+      <div class="fade-in fade-in-2 flex flex-wrap items-center gap-3">
+        <span class="font-hud text-base text-yellow neon-pulse">[REC_ID]</span>
+        <span class="font-hud text-base text-haze">V_KUZNETSOV</span>
+        <span class="font-hud text-base text-cyan/60">/</span>
+        <span class="font-hud text-base text-cyan neon-pulse neon-pulse--cyan">@vvadimkuznetsovv</span>
       </div>
 
-      <h1 class="fade-in fade-in-3 font-display text-[clamp(2.6rem,11vw,7rem)] leading-[0.88] text-bone [text-shadow:0_0_32px_rgba(0,240,255,0.35)]">
-        <GlitchText text="vadim" decrypt />
-        <br />
-        <GlitchText text="kuznetsov" decrypt />
+      <h1 class="fade-in fade-in-3 font-display text-[clamp(2.6rem,11vw,7rem)] leading-[0.88]">
+        <span class="block neon-glow neon-glow--cyan">
+          <GlitchText text="vadim" decrypt />
+        </span>
+        <span class="block neon-glow neon-glow--magenta">
+          <GlitchText text="kuznetsov" decrypt />
+        </span>
       </h1>
 
       <dl class="fade-in fade-in-4 grid grid-cols-1 gap-1 font-hud text-lg sm:text-xl">
@@ -50,7 +53,7 @@ import ProjectCard from "../components/ProjectCard.astro";
         </div>
         <div class="grid grid-cols-[110px_1fr] gap-3 sm:grid-cols-[140px_1fr]">
           <dt class="text-dim">&gt; STATUS</dt>
-          <dd class="text-toxic">SHIPPING</dd>
+          <dd class="text-toxic neon-pulse" style="--neon-color: var(--color-toxic);">SHIPPING</dd>
         </div>
       </dl>
 
@@ -68,13 +71,13 @@ import ProjectCard from "../components/ProjectCard.astro";
   <!-- PROJECTS -->
   <section class="mt-10">
     <div class="flex items-baseline justify-between gap-4">
-      <h2 class="font-hud text-2xl uppercase tracking-[0.2em] text-yellow sm:text-3xl">
+      <h2 class="font-hud text-2xl uppercase tracking-[0.2em] neon-pulse sm:text-3xl">
         &gt; LIVE_PROJECTS
       </h2>
       <span class="font-hud text-base text-dim">[ idx :: 001-003 ]</span>
     </div>
 
-    <div class="mt-8 flex flex-col gap-5">
+    <div class="mt-10 flex flex-col gap-7 sm:gap-8">
       <ProjectCard
         index="001"
         title="TRAFFIC LAWS"
@@ -121,7 +124,7 @@ import ProjectCard from "../components/ProjectCard.astro";
     <span class="text-haze">// EOL :: {new Date().getFullYear()}</span>
     <div class="flex items-center gap-5">
       <a
-        class="text-cyan transition-colors hover:text-yellow"
+        class="text-cyan transition-colors hover:text-yellow neon-pulse neon-pulse--cyan"
         href="https://github.com/vvadimkuznetsovv"
         rel="noreferrer noopener"
         target="_blank"
