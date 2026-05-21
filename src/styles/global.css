@@ -361,34 +361,21 @@
      ============================================================ */
   .neon-text {
     --neon: #ff2bd6;
-    font-family: "Tilt Neon Variable", "Major Mono Display", sans-serif;
+    font-family: "Tilt Neon Variable", sans-serif;
     font-weight: 400;
     color: #fff;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     line-height: 1;
-    /* Tilt Neon variable axes — push EHLT (highlight/depth) to max */
-    font-variation-settings: "EHLT" 24, "YEAR" 2020;
+    /* Classic CSS Tricks neon recipe — proven, clean */
     text-shadow:
-      /* white-hot tube core */
-      0 0 3px #fff,
-      0 0 8px #fff,
-      0 0 14px #fff,
-      /* close intense color bloom */
-      0 0 22px var(--neon),
-      0 0 36px var(--neon),
-      0 0 56px var(--neon),
-      /* mid halo (saturated) */
-      0 0 86px var(--neon),
-      0 0 120px var(--neon),
-      /* far halo */
-      0 0 160px color-mix(in srgb, var(--neon) 70%, transparent),
-      /* atmospheric falloff */
-      0 0 220px color-mix(in srgb, var(--neon) 45%, transparent);
-    /* Extra GPU-cheap glow on top */
-    filter:
-      drop-shadow(0 0 12px var(--neon))
-      drop-shadow(0 0 36px color-mix(in srgb, var(--neon) 60%, transparent));
+      0 0 5px #fff,
+      0 0 10px #fff,
+      0 0 20px var(--neon),
+      0 0 30px var(--neon),
+      0 0 40px var(--neon),
+      0 0 55px var(--neon),
+      0 0 75px var(--neon);
     animation: neon-text-flicker 13s infinite steps(1, end);
   }
   .neon-text--cyan    { --neon: #00f0ff; }
