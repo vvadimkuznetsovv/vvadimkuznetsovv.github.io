@@ -65,13 +65,7 @@ const totalQuestions = tickets.reduce((sum, t) => sum + t.questionCount, 0);
     </div>
   </div>
 
-  <section class="mt-16">
-    <div class="cy-frame cy-frame--cyan">
-      <span class="cy-frame__title">Tickets</span>
-      <span class="cy-frame__meta">
-        {tickets.length.toString().padStart(3, "0")} entries
-      </span>
-    </div>
+  <section class="mt-12">
 
     <ul class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
       {
