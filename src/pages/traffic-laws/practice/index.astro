@@ -2,10 +2,15 @@
 import Shell from "../../../layouts/Shell.astro";
 import ModeNav from "../../../components/traffic-laws/ModeNav.astro";
 import HudFrame from "../../../components/ui/HudFrame.astro";
-import { getAllTicketNumbers, getTicketSummary } from "../../../data/pdd";
+import {
+  getAllTicketNumbers,
+  getTicketSummary,
+  getHardQuestions,
+} from "../../../data/pdd";
 
 const tickets = getAllTicketNumbers().map(getTicketSummary);
 const totalQuestions = tickets.reduce((sum, t) => sum + t.questionCount, 0);
+const hardCount = getHardQuestions().length;
 ---
 
 <Shell
@@ -27,49 +32,63 @@ const totalQuestions = tickets.reduce((sum, t) => sum + t.questionCount, 0);
     </p>
   </header>
 
-  <!-- SUB-TABS внутри Practice -->
-  <div class="fade-in fade-in-3 mt-14 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-    <HudFrame
-      as="a"
-      href="/traffic-laws/practice/"
-      variant="tab"
-      color="cyan"
-      active
-    >
-      <span class="hud-tab-icon" aria-hidden="true">▦</span>
-      <span class="hud-tab-body">
-        <span>Билеты</span>
-        <span class="hud-tab-sub">40 шт</span>
-      </span>
-    </HudFrame>
+  <!-- Quick start actions -->
+  <section class="fade-in fade-in-3 mt-12">
+    <p class="mb-3 font-hud text-base uppercase tracking-[0.25em] text-yellow">
+      &gt; быстрый старт
+    </p>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+      <HudFrame
+        as="a"
+        href="/traffic-laws/practice/random/"
+        variant="cyber"
+        color="cyan"
+        class="quick-action block"
+      >
+        <div class="flex items-baseline justify-between gap-3">
+          <span class="font-hud text-base uppercase tracking-[0.2em] text-yellow">
+            ⚂ Случайные
+          </span>
+          <span class="font-hud text-base text-cyan">→ старт</span>
+        </div>
+        <h2 class="mt-2 font-ui text-xl font-semibold text-bone sm:text-2xl">
+          20 случайных вопросов
+        </h2>
+        <p class="mt-2 font-ui text-sm text-haze">
+          Случайная подборка из всех {totalQuestions} вопросов. Можно
+          перегенерить и пройти ещё раз.
+        </p>
+      </HudFrame>
 
-    <HudFrame as="a" href="/traffic-laws/learn/" variant="tab" color="cyan">
-      <span class="hud-tab-icon" aria-hidden="true">▤</span>
-      <span class="hud-tab-body">
-        <span>Темы</span>
-        <span class="hud-tab-sub">26 разделов</span>
-      </span>
-    </HudFrame>
-
-    <HudFrame variant="tab" color="dim" class="opacity-60 cursor-not-allowed">
-      <span class="hud-tab-icon" aria-hidden="true">⚠</span>
-      <span class="hud-tab-body">
-        <span>Сложные</span>
-        <span class="hud-tab-sub">queued</span>
-      </span>
-    </HudFrame>
-
-    <HudFrame variant="tab" color="dim" class="opacity-60 cursor-not-allowed">
-      <span class="hud-tab-icon" aria-hidden="true">⚂</span>
-      <span class="hud-tab-body">
-        <span>Случайно</span>
-        <span class="hud-tab-sub">queued</span>
-      </span>
-    </HudFrame>
-  </div>
+      <HudFrame
+        as="a"
+        href="/traffic-laws/practice/hard/"
+        variant="cyber"
+        color="magenta"
+        class="quick-action block"
+      >
+        <div class="flex items-baseline justify-between gap-3">
+          <span class="font-hud text-base uppercase tracking-[0.2em] text-pink">
+            ⚠ Сложные
+          </span>
+          <span class="font-hud text-base text-magenta">→ старт</span>
+        </div>
+        <h2 class="mt-2 font-ui text-xl font-semibold text-bone sm:text-2xl">
+          100 самых сложных
+        </h2>
+        <p class="mt-2 font-ui text-sm text-haze">
+          Куратор pddmaster.ru на основе статистики ошибок миллионов прохождений.
+          Эти вопросы валят чаще всего.
+        </p>
+      </HudFrame>
+    </div>
+  </section>
 
   <!-- Сетка билетов -->
-  <section class="mt-12">
+  <section class="mt-14">
+    <p class="mb-3 font-hud text-base uppercase tracking-[0.25em] text-cyan">
+      &gt; все билеты · {tickets.length.toString().padStart(2, "0")}
+    </p>
     <ul class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
       {
         tickets.map((t) => (

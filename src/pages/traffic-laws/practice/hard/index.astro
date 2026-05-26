@@ -1,0 +1,42 @@
+---
+import Shell from "../../../../layouts/Shell.astro";
+import ModeNav from "../../../../components/traffic-laws/ModeNav.astro";
+import RandomPractice from "../../../../components/quiz/RandomPractice.svelte";
+import { getHardQuestions } from "../../../../data/pdd";
+
+const pool = getHardQuestions();
+---
+
+<Shell
+  title="Сложные — TRAFFIC LAWS"
+  description="100 самых сложных вопросов ПДД категории B — на основе статистики ошибок реальных прохождений."
+  statusLabel="traffic-laws/practice/hard"
+>
+  <ModeNav />
+
+  <nav class="mt-8 flex flex-wrap items-center gap-4 font-ui text-xs uppercase tracking-[0.25em] text-dim">
+    <a href="/traffic-laws/practice/" class="transition-colors hover:text-cyan">← все режимы</a>
+    <span class="text-dim/50">/</span>
+    <span class="text-haze">сложные</span>
+  </nav>
+
+  <header class="fade-in fade-in-2 mt-10 sm:mt-14">
+    <h1 class="flex flex-col gap-2 leading-none">
+      <span class="neon-text neon-text--magenta text-[clamp(1.8rem,7vw,3.5rem)]">
+        HARD 100
+      </span>
+    </h1>
+    <p class="mt-6 max-w-2xl font-ui text-base leading-relaxed text-haze sm:text-lg">
+      {pool.length} самых сложных вопросов — те, на которых чаще всего валят
+      реальные кандидаты в водители. Источник: статистика
+      <a href="https://pddmaster.ru/autoschools/100-slozhnyh-voprosov.html"
+         class="text-cyan transition-colors hover:text-yellow"
+         rel="noreferrer noopener" target="_blank">pddmaster.ru</a>.
+      Каждый прогон даёт случайные 20 из этих 100.
+    </p>
+  </header>
+
+  <section class="mt-10">
+    <RandomPractice pool={pool} count={20} label="Сложные" client:load />
+  </section>
+</Shell>

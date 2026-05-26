@@ -1,0 +1,38 @@
+---
+import Shell from "../../../../layouts/Shell.astro";
+import ModeNav from "../../../../components/traffic-laws/ModeNav.astro";
+import RandomPractice from "../../../../components/quiz/RandomPractice.svelte";
+import { getAllQuestionsFlat } from "../../../../data/pdd";
+
+const pool = getAllQuestionsFlat();
+---
+
+<Shell
+  title="Случайные 20 — TRAFFIC LAWS"
+  description="20 случайных вопросов ПДД категории B с подробным разбором."
+  statusLabel="traffic-laws/practice/random"
+>
+  <ModeNav />
+
+  <nav class="mt-8 flex flex-wrap items-center gap-4 font-ui text-xs uppercase tracking-[0.25em] text-dim">
+    <a href="/traffic-laws/practice/" class="transition-colors hover:text-cyan">← все режимы</a>
+    <span class="text-dim/50">/</span>
+    <span class="text-haze">случайные</span>
+  </nav>
+
+  <header class="fade-in fade-in-2 mt-10 sm:mt-14">
+    <h1 class="flex flex-col gap-2 leading-none">
+      <span class="neon-text neon-text--cyan text-[clamp(1.8rem,7vw,3.5rem)]">
+        RANDOM 20
+      </span>
+    </h1>
+    <p class="mt-6 max-w-2xl font-ui text-base leading-relaxed text-haze sm:text-lg">
+      Случайные 20 вопросов из {pool.length} всех вопросов категории B.
+      Кнопка «↻ Новый набор» — перегенерация без перезагрузки страницы.
+    </p>
+  </header>
+
+  <section class="mt-10">
+    <RandomPractice pool={pool} count={20} label="Случайные" client:load />
+  </section>
+</Shell>

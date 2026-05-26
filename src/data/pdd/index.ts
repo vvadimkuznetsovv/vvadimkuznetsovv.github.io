@@ -1,5 +1,6 @@
 import type { Question, Sign, SignsByCategory } from "./types";
 import signsData from "./signs.json";
+import hardData from "./hard-questions.json";
 
 const ticketModules = import.meta.glob<{ default: Question[] }>(
   "./tickets/*.json",
@@ -29,6 +30,20 @@ export function getAllQuestionsFlat(): Question[] {
   const out: Question[] = [];
   for (const qs of tickets.values()) out.push(...qs);
   return out;
+}
+
+// 100 «сложных» вопросов — куратор pddmaster.ru (статистика ошибок).
+// Источник: PDF /img/pdf/ekzamen-difficult-ab-pddmaster.ru.pdf
+let _hardQuestions: Question[] | null = null;
+export function getHardQuestions(): Question[] {
+  if (_hardQuestions) return _hardQuestions;
+  const idSet = new Set((hardData as { ids: string[] }).ids);
+  const byId = new Map<string, Question>();
+  for (const q of getAllQuestionsFlat()) byId.set(q.id, q);
+  _hardQuestions = (hardData as { ids: string[] }).ids
+    .map((id) => byId.get(id))
+    .filter((q): q is Question => Boolean(q));
+  return _hardQuestions;
 }
 
 let _topicMap: Map<string, Question[]> | null = null;
